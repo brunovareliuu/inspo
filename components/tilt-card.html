@@ -1,0 +1,168 @@
+<!--inspo
+{"id":"tilt-card","name":"Tilt Cards","category":"cursor","tags":["3d-tilt","glare","cards","hover","perspective","pricing"],"description":"Three physical-feeling cards with perspective tilt, layered depth and a glare that follows the cursor; great for membership tiers, product cards or a pricing section.","deps":[]}
+-->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tilt Cards</title>
+<script>
+(function(){var q=new URLSearchParams(location.search);['bg','fg','muted','accent','accent2'].forEach(function(k){var v=q.get(k);if(v)document.documentElement.style.setProperty('--'+k,v)});var fd=q.get('fontDisplay'),fb=q.get('fontBody');if(fd||fb){var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?'+[fd,fb].filter(Boolean).map(function(f){return 'family='+encodeURIComponent(f)+':wght@400;500;600;700'}).join('&')+'&display=swap';document.head.appendChild(l);if(fd)document.documentElement.style.setProperty('--font-display','"'+fd+'"');if(fb)document.documentElement.style.setProperty('--font-body','"'+fb+'"')}})();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#0b0b0d; --fg:#f3f1ec; --muted:#86868f; --accent:#ff5a1f; --accent2:#7c5cff;
+  --font-display:"Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-body:"Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, monospace;
+  --cw:min(24vw, 46vh * .63, 300px);
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden}
+body{
+  background:
+    radial-gradient(60% 50% at 50% 110%, color-mix(in oklab, var(--accent2) 22%, transparent), transparent 70%),
+    radial-gradient(40% 40% at 50% -10%, color-mix(in oklab, var(--accent) 10%, transparent), transparent 70%),
+    var(--bg);
+  color:var(--fg); font-family:var(--font-body);
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:min(6vh, 56px); -webkit-font-smoothing:antialiased; user-select:none;
+}
+header{text-align:center; padding:0 16px}
+.eyebrow{font:500 clamp(9px, 1.1vw, 12px)/1 var(--mono); letter-spacing:.18em; text-transform:uppercase; color:var(--muted); display:inline-flex; align-items:center; gap:.8em}
+.eyebrow i{width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 12px var(--accent)}
+h1{font:500 clamp(20px, min(5vw, 7.4vh), 72px)/1 var(--font-display); letter-spacing:-.035em; margin:.45em 0 0}
+h1 em{font-style:normal; color:transparent; background:linear-gradient(90deg,var(--accent),var(--accent2)); -webkit-background-clip:text; background-clip:text}
+
+.row{display:flex; gap:calc(var(--cw) * .14); perspective:1400px}
+.card{
+  --rx:0deg; --ry:0deg; --gx:50%; --gy:30%; --lift:0px; --hue:0;
+  position:relative; width:var(--cw); aspect-ratio:63/88; border-radius:calc(var(--cw) * .07);
+  transform-style:preserve-3d; transform:rotateX(var(--rx)) rotateY(var(--ry)) translateZ(var(--lift));
+  will-change:transform; cursor:pointer;
+}
+.face{
+  position:absolute; inset:0; border-radius:inherit; overflow:hidden; transform-style:preserve-3d;
+  box-shadow:0 30px 60px -18px rgba(0,0,0,.65), 0 0 0 1px color-mix(in oklab, var(--fg) 12%, transparent) inset;
+}
+.shadow{position:absolute; inset:8% 6% -6%; border-radius:inherit; background:#000; filter:blur(calc(var(--cw)*.09)); opacity:.55; transform:translateZ(-40px) translate(calc(var(--ry) * -1.2), calc(var(--rx) * 1.2))}
+/* card skins */
+.c1 .face{background:
+  radial-gradient(120% 80% at 110% 110%, color-mix(in oklab, var(--accent) 85%, transparent), transparent 55%),
+  radial-gradient(80% 60% at -10% 0%, color-mix(in oklab, var(--accent2) 45%, transparent), transparent 60%),
+  linear-gradient(160deg, #1b1b20, #0c0c0f)}
+.c2 .face{background:
+  radial-gradient(90% 70% at 20% 10%, color-mix(in oklab, var(--fg) 55%, transparent), transparent 55%),
+  radial-gradient(120% 90% at 90% 100%, var(--accent), transparent 60%),
+  linear-gradient(200deg, var(--accent2), color-mix(in oklab, var(--accent2) 40%, var(--accent)))}
+.c3 .face{background:
+  radial-gradient(100% 70% at 100% 0%, color-mix(in oklab, var(--accent2) 20%, transparent), transparent 60%),
+  linear-gradient(170deg, var(--fg), color-mix(in oklab, var(--fg) 82%, var(--muted)))}
+.c3{color:#101012}
+.c3 .num,.c3 .meta{color:color-mix(in oklab, #101012 70%, transparent)}
+/* layers */
+.holo{position:absolute; inset:0; mix-blend-mode:color-dodge; opacity:.35;
+  background:repeating-linear-gradient(115deg, transparent 0 6%, hsl(calc(var(--hue) + 0) 90% 60% / .5) 9%, hsl(calc(var(--hue) + 120) 90% 60% / .45) 12%, transparent 16% 22%);
+  background-size:220% 220%; background-position:var(--gx) var(--gy)}
+.c3 .holo{mix-blend-mode:multiply; opacity:.12}
+.grain{position:absolute; inset:0; opacity:.18; mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
+.glare{position:absolute; inset:0; mix-blend-mode:soft-light;
+  background:radial-gradient(circle at var(--gx) var(--gy), rgba(255,255,255,.85), rgba(255,255,255,.12) 28%, rgba(0,0,0,.25) 80%)}
+.glare2{position:absolute; inset:0; background:radial-gradient(circle at var(--gx) var(--gy), rgba(255,255,255,.22), transparent 38%)}
+.content{position:absolute; inset:0; padding:calc(var(--cw)*.085); display:flex; flex-direction:column; transform:translateZ(38px); pointer-events:none}
+.top{display:flex; justify-content:space-between; align-items:flex-start}
+.brand{font:600 calc(var(--cw)*.062)/1 var(--font-display); letter-spacing:-.02em}
+.brand small{display:block; font:500 calc(var(--cw)*.036)/1 var(--mono); letter-spacing:.14em; opacity:.6; margin-top:.6em}
+.nfc{width:calc(var(--cw)*.09); height:auto; opacity:.8}
+.chip{width:calc(var(--cw)*.2); aspect-ratio:1.3; border-radius:calc(var(--cw)*.03); margin-top:calc(var(--cw)*.14);
+  background:linear-gradient(135deg,#f6e7b0,#b89a4e 45%,#f1dea2 60%,#9b7f37);
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.25); position:relative; overflow:hidden}
+.chip::before,.chip::after{content:""; position:absolute; inset:28% -2%; border-top:1px solid rgba(0,0,0,.35); border-bottom:1px solid rgba(0,0,0,.35)}
+.chip::after{inset:-2% 38%; border:0; border-left:1px solid rgba(0,0,0,.35); border-right:1px solid rgba(0,0,0,.35)}
+.bottom{margin-top:auto}
+.tier{font:500 calc(var(--cw)*.2)/.9 var(--font-display); letter-spacing:-.05em; transform:translateZ(20px)}
+.num{font:400 calc(var(--cw)*.05)/1 var(--mono); letter-spacing:.12em; margin-top:calc(var(--cw)*.06); color:color-mix(in oklab, var(--fg) 80%, transparent)}
+.meta{display:flex; justify-content:space-between; font:500 calc(var(--cw)*.036)/1 var(--mono); letter-spacing:.14em; text-transform:uppercase; margin-top:calc(var(--cw)*.05); color:color-mix(in oklab, var(--fg) 60%, transparent)}
+.hint{font:400 clamp(9px,1vw,12px)/1 var(--mono); letter-spacing:.14em; text-transform:uppercase; color:var(--muted)}
+@media (max-height:420px){ .hint{display:none} body{gap:5vh} }
+</style>
+</head>
+<body>
+<header>
+  <div class="eyebrow"><i></i>Membership / 2026</div>
+  <h1>Cards that feel <em>physical.</em></h1>
+</header>
+
+<div class="row" id="row">
+  <div class="card c1"><div class="shadow"></div><div class="face"><div class="holo"></div><div class="grain"></div><div class="glare"></div><div class="glare2"></div></div>
+    <div class="content"><div class="top"><div class="brand">Nº 01<small>STANDARD</small></div><svg class="nfc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M8.5 8.5a5 5 0 0 1 0 7"/><path d="M12 6a8.5 8.5 0 0 1 0 12"/><path d="M15.5 3.5a12 12 0 0 1 0 17"/></svg></div>
+      <div class="chip"></div><div class="bottom"><div class="tier">Onyx</div><div class="num">•••• 4291</div><div class="meta"><span>A. Moreau</span><span>09/29</span></div></div></div></div>
+  <div class="card c2"><div class="shadow"></div><div class="face"><div class="holo"></div><div class="grain"></div><div class="glare"></div><div class="glare2"></div></div>
+    <div class="content"><div class="top"><div class="brand">Nº 02<small>PRIVATE</small></div><svg class="nfc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M8.5 8.5a5 5 0 0 1 0 7"/><path d="M12 6a8.5 8.5 0 0 1 0 12"/><path d="M15.5 3.5a12 12 0 0 1 0 17"/></svg></div>
+      <div class="chip"></div><div class="bottom"><div class="tier">Aura</div><div class="num">•••• 0816</div><div class="meta"><span>A. Moreau</span><span>09/29</span></div></div></div></div>
+  <div class="card c3"><div class="shadow"></div><div class="face"><div class="holo"></div><div class="grain"></div><div class="glare"></div><div class="glare2"></div></div>
+    <div class="content"><div class="top"><div class="brand">Nº 03<small>STUDIO</small></div><svg class="nfc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M8.5 8.5a5 5 0 0 1 0 7"/><path d="M12 6a8.5 8.5 0 0 1 0 12"/><path d="M15.5 3.5a12 12 0 0 1 0 17"/></svg></div>
+      <div class="chip"></div><div class="bottom"><div class="tier">Paper</div><div class="num">•••• 7730</div><div class="meta"><span>A. Moreau</span><span>09/29</span></div></div></div></div>
+</div>
+<div class="hint">Hover to tilt</div>
+
+<script>
+(function(){
+  var RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var cards = [].slice.call(document.querySelectorAll('.card'));
+  var st = cards.map(function(el,i){ return {el:el, rx:0, ry:0, gx:50, gy:30, lift:0, hover:false, tx:0, ty:0, phase:i*2.1}; });
+  var lastMove = -1e9;
+  cards.forEach(function(el,i){
+    var s = st[i];
+    el.addEventListener('pointermove', function(e){
+      var r = el.getBoundingClientRect();
+      var px = (e.clientX - r.left)/r.width, py = (e.clientY - r.top)/r.height;
+      s.hover = true; s.tx = px; s.ty = py; lastMove = performance.now();
+    });
+    el.addEventListener('pointerleave', function(){ s.hover = false; });
+  });
+  addEventListener('pointermove', function(){ lastMove = performance.now(); });
+
+  var ext=false, running=false, raf=0, last=0, t=0;
+  function ok(){ return !ext && !document.hidden; }
+  function start(){ if(running||!ok()) return; running=true; last=performance.now(); raf=requestAnimationFrame(tick); }
+  function stop(){ running=false; cancelAnimationFrame(raf); }
+  function sync(){ ok()?start():stop(); }
+  document.addEventListener('visibilitychange', sync);
+  addEventListener('message', function(e){ if(e.data==='inspo:pause'){ext=true;sync();} else if(e.data==='inspo:play'){ext=false;sync();} });
+
+  function tick(now){
+    var dt = Math.max(0,Math.min(.05,(now-last)/1000)); last = now; t += dt * (RM ? .35 : 1);
+    var idle = now - lastMove > 1800;
+    for (var i=0;i<st.length;i++){
+      var s = st[i], px, py, lift;
+      if (s.hover){ px = s.tx; py = s.ty; lift = 40; }
+      else if (idle){
+        // slow figure-eight so the board shows the effect without a cursor
+        var a = t*.7 + s.phase;
+        px = .5 + Math.sin(a)*.42; py = .5 + Math.sin(a*1.3+.6)*.36; lift = 10 + Math.sin(a*.5)*6;
+      } else { px = .5; py = .5; lift = 0; }
+      var k = 1 - Math.pow(.001, dt*(s.hover?1.4:.9));
+      s.rx += ((.5-py)*22 - s.rx)*k;
+      s.ry += ((px-.5)*26 - s.ry)*k;
+      s.gx += (px*100 - s.gx)*k; s.gy += (py*100 - s.gy)*k;
+      s.lift += (lift - s.lift)*k;
+      var el = s.el.style;
+      el.setProperty('--rx', s.rx.toFixed(2)+'deg');
+      el.setProperty('--ry', s.ry.toFixed(2)+'deg');
+      el.setProperty('--gx', s.gx.toFixed(1)+'%');
+      el.setProperty('--gy', s.gy.toFixed(1)+'%');
+      el.setProperty('--lift', s.lift.toFixed(1)+'px');
+      el.setProperty('--hue', ((s.gx+s.gy)*1.8).toFixed(0));
+    }
+    if (running) raf = requestAnimationFrame(tick);
+  }
+  sync();
+})();
+</script>
+</body>
+</html>

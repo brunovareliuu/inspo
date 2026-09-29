@@ -1,0 +1,148 @@
+<!--inspo
+{"id":"text-reveal","name":"Editorial Text Reveal","category":"text","tags":["typography","stagger","reveal","editorial","hero","masked"],"description":"A huge editorial headline that reveals line by line with staggered, masked characters and cycles through statements; ideal for studio or agency hero sections.","deps":[]}
+-->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Editorial Text Reveal</title>
+<script>
+(function(){var q=new URLSearchParams(location.search);['bg','fg','muted','accent','accent2'].forEach(function(k){var v=q.get(k);if(v)document.documentElement.style.setProperty('--'+k,v)});var fd=q.get('fontDisplay'),fb=q.get('fontBody');if(fd||fb){var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?'+[fd,fb].filter(Boolean).map(function(f){return 'family='+encodeURIComponent(f)+':wght@400;500;600;700'}).join('&')+'&display=swap';document.head.appendChild(l);if(fd)document.documentElement.style.setProperty('--font-display','"'+fd+'"');if(fb)document.documentElement.style.setProperty('--font-body','"'+fb+'"')}})();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap">
+<style>
+:root{
+  --bg:#f0ede6; --fg:#131211; --muted:#8b867d; --accent:#ff4d00; --accent2:#2b59ff;
+  --font-display:"Inter Tight", ui-sans-serif, system-ui, sans-serif;
+  --font-body:"Inter Tight", ui-sans-serif, system-ui, sans-serif;
+  --serif:"Instrument Serif", ui-serif, Georgia, serif;
+  --pad:clamp(16px, 3vw, 44px);
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden}
+body{background:var(--bg); color:var(--fg); font-family:var(--font-body); -webkit-font-smoothing:antialiased;
+  display:grid; grid-template-rows:auto 1fr auto; padding:var(--pad)}
+.bar{display:flex; justify-content:space-between; align-items:center; font:500 clamp(10px,1vw,13px)/1.2 var(--font-body); letter-spacing:-.005em}
+.bar .muted{color:var(--muted)}
+.logo{display:flex; align-items:center; gap:.55em; font-weight:600}
+.logo b{width:.8em;height:.8em;border-radius:50%;background:var(--fg);display:inline-block}
+.idx{display:flex; align-items:center; gap:.9em; font-variant-numeric:tabular-nums}
+.track{width:clamp(40px,6vw,90px); height:1px; background:color-mix(in oklab, var(--fg) 18%, transparent); position:relative; overflow:hidden}
+.track i{position:absolute; inset:0; background:var(--fg); transform-origin:left; transform:scaleX(0)}
+main{display:flex; align-items:center}
+h1{margin:0; font:500 min(10.6vw, 16.5vh)/.9 var(--font-display); letter-spacing:-.055em; width:100%}
+.line{display:block; overflow:hidden; padding:.02em 0 .09em; margin-bottom:-.09em}
+.line:nth-child(2){padding-left:min(12vw, 18vh)}
+.w{display:inline-block; white-space:nowrap}
+.c{display:inline-block; will-change:transform; transform:translateY(110%); transform-origin:0 100%}
+.it{font-family:var(--serif); font-style:italic; font-weight:400; letter-spacing:-.03em; color:var(--accent); padding-right:.04em}
+.foot{display:flex; justify-content:space-between; align-items:flex-end; gap:24px; font:400 clamp(10px,1vw,13px)/1.45 var(--font-body)}
+.foot p{margin:0; max-width:32ch; color:var(--muted)}
+.foot p strong{color:var(--fg); font-weight:500}
+.cta{display:inline-flex; align-items:center; gap:.7em; font-weight:500; white-space:nowrap}
+.cta span.dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 0 color-mix(in oklab,var(--accent) 60%,transparent);animation:pulse 2.2s infinite}
+@keyframes pulse{70%{box-shadow:0 0 0 10px transparent}100%{box-shadow:0 0 0 0 transparent}}
+.inspo-paused *{animation-play-state:paused!important}
+@media (max-width:640px){ .foot p{display:none} .foot{justify-content:flex-end} }
+@media (prefers-reduced-motion:reduce){ .cta span.dot{animation-duration:6s} }
+</style>
+</head>
+<body>
+<div class="bar">
+  <div class="logo"><b></b>Hallam&nbsp;Studio</div>
+  <div class="idx"><span id="n">01</span><span class="track"><i id="prog"></i></span><span class="muted" id="tot">03</span></div>
+</div>
+<main><h1 id="h" aria-live="polite"></h1></main>
+<div class="foot">
+  <p><strong>Independent design practice.</strong> Identity, product and spatial work for companies that plan to be around for a while.</p>
+  <a class="cta"><span class="dot"></span>Now booking — Q1 2027</a>
+</div>
+<script>
+(function(){
+  var RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // *word* renders in the italic serif accent
+  var SETS = [
+    ['We shape', '*quiet* brands', 'that last.'],
+    ['Less noise,', 'more *signal*,', 'fewer pixels.'],
+    ['Made slowly.', '*Built* to stay', 'for decades.']
+  ];
+  var h = document.getElementById('h'), nEl = document.getElementById('n'), prog = document.getElementById('prog');
+  document.getElementById('tot').textContent = String(SETS.length).padStart(2,'0');
+  var chars = [], set = 0, phase = 'in', t0 = 0, clock = 0;
+  var IN = RM ? 1400 : 1150, STEP = RM ? 0 : 24, LINE = RM ? 180 : 110, HOLD = RM ? 4200 : 2600, OUT = RM ? 900 : 620, OSTEP = RM ? 0 : 9;
+
+  function build(lines){
+    h.innerHTML = ''; chars = [];
+    var ci = 0;
+    lines.forEach(function(txt, li){
+      var line = document.createElement('span'); line.className = 'line';
+      txt.split(/(\*[^*]+\*)/).filter(Boolean).forEach(function(part){
+        var ital = part[0] === '*'; if (ital) part = part.slice(1,-1);
+        part.split(/( )/).forEach(function(word){
+          if (word === ' '){ line.appendChild(document.createTextNode(' ')); return; }
+          if (!word) return;
+          var w = document.createElement('span'); w.className = 'w' + (ital ? ' it' : '');
+          for (var k=0;k<word.length;k++){
+            var c = document.createElement('span'); c.className = 'c'; c.textContent = word[k];
+            w.appendChild(c);
+            chars.push({el:c, inD: li*LINE + ci*STEP, outD: ci*OSTEP}); ci++;
+          }
+          line.appendChild(w);
+        });
+      });
+      h.appendChild(line);
+    });
+    h.setAttribute('aria-label', lines.join(' ').replace(/\*/g,''));
+    nEl.textContent = String(set+1).padStart(2,'0');
+  }
+  function outExpo(x){ return x>=1 ? 1 : 1 - Math.pow(2, -10*x); }
+  function inCubic(x){ return x*x*x; }
+  var inTotal = 0, outTotal = 0;
+  function measure(){ inTotal = chars.reduce(function(m,c){return Math.max(m,c.inD)},0) + IN; outTotal = chars.reduce(function(m,c){return Math.max(m,c.outD)},0) + OUT; }
+
+  function render(){
+    var e = clock - t0, i, c, p, y, r;
+    if (phase === 'in'){
+      for (i=0;i<chars.length;i++){ c=chars[i];
+        p = Math.min(1, Math.max(0, (e - c.inD)/IN));
+        if (RM){ c.el.style.transform='none'; c.el.style.opacity = p; continue; }
+        p = outExpo(p); y = (1-p)*110; r = (1-p)*7;
+        c.el.style.transform = 'translateY('+y.toFixed(2)+'%) rotate('+r.toFixed(2)+'deg)';
+      }
+      prog.style.transform = 'scaleX(' + Math.min(1, e/(inTotal+HOLD)).toFixed(4) + ')';
+      if (e > inTotal){ phase = 'hold'; t0 = clock; }
+    } else if (phase === 'hold'){
+      prog.style.transform = 'scaleX(' + Math.min(1, (inTotal+e)/(inTotal+HOLD)).toFixed(4) + ')';
+      if (e > HOLD){ phase = 'out'; t0 = clock; }
+    } else if (phase === 'out'){
+      for (i=0;i<chars.length;i++){ c=chars[i];
+        p = Math.min(1, Math.max(0, (e - c.outD)/OUT));
+        if (RM){ c.el.style.opacity = 1-p; continue; }
+        p = inCubic(p);
+        c.el.style.transform = 'translateY(' + (-p*110).toFixed(2) + '%) rotate(' + (-p*4).toFixed(2) + 'deg)';
+      }
+      prog.style.transform = 'scaleX(1)';
+      prog.style.transformOrigin = 'right';
+      prog.style.transform = 'scaleX(' + (1-Math.min(1,e/outTotal)).toFixed(4) + ')';
+      if (e > outTotal + 120){ set = (set+1) % SETS.length; build(SETS[set]); measure(); phase='in'; t0=clock; prog.style.transformOrigin='left'; }
+    }
+  }
+
+  var ext=false, running=false, raf=0, last=0;
+  function ok(){ return !ext && !document.hidden; }
+  function start(){ if(running||!ok()) return; running=true; last=performance.now(); raf=requestAnimationFrame(tick); }
+  function stop(){ running=false; cancelAnimationFrame(raf); }
+  function sync(){ ok()?start():stop(); document.documentElement.classList.toggle('inspo-paused', !ok()); }
+  function tick(now){ clock += Math.max(0,Math.min(64, now-last)); last = now; render(); if(running) raf=requestAnimationFrame(tick); }
+  document.addEventListener('visibilitychange', sync);
+  addEventListener('message', function(e){ if(e.data==='inspo:pause'){ext=true;sync();} else if(e.data==='inspo:play'){ext=false;sync();} });
+
+  build(SETS[0]); measure(); clock = 0; t0 = 150;
+  (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(function(){ sync(); });
+  setTimeout(sync, 800); // never wait on fonts forever
+})();
+</script>
+</body>
+</html>

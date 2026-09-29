@@ -1,0 +1,154 @@
+<!--inspo
+{"id":"magnetic-buttons","name":"Magnetic Buttons","category":"cursor","tags":["buttons","magnetic","hover","cta","micro-interaction","links"],"description":"A call-to-action set where buttons and links are magnetically pulled toward the cursor and fill from the point of entry; perfect for contact sections and hero CTAs.","deps":[]}
+-->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Magnetic Buttons</title>
+<script>
+(function(){var q=new URLSearchParams(location.search);['bg','fg','muted','accent','accent2'].forEach(function(k){var v=q.get(k);if(v)document.documentElement.style.setProperty('--'+k,v)});var fd=q.get('fontDisplay'),fb=q.get('fontBody');if(fd||fb){var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?'+[fd,fb].filter(Boolean).map(function(f){return 'family='+encodeURIComponent(f)+':wght@400;500;600;700'}).join('&')+'&display=swap';document.head.appendChild(l);if(fd)document.documentElement.style.setProperty('--font-display','"'+fd+'"');if(fb)document.documentElement.style.setProperty('--font-body','"'+fb+'"')}})();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600&family=Inter:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#0f0f11; --fg:#f4f3ef; --muted:#7e7d85; --accent:#7b61ff; --accent2:#2ee6a8;
+  --font-display:"Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+  --font-body:"Inter", ui-sans-serif, system-ui, sans-serif;
+  --u:clamp(11px, min(1.25vw, 2vh), 18px);
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden}
+body{background:radial-gradient(70% 60% at 50% 100%, color-mix(in oklab, var(--accent) 14%, transparent), transparent 70%), var(--bg);
+  color:var(--fg); font-family:var(--font-body); -webkit-font-smoothing:antialiased;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:16px}
+.eyebrow{font:500 calc(var(--u)*.8)/1 var(--font-body); letter-spacing:.16em; text-transform:uppercase; color:var(--muted)}
+h2{font:500 clamp(24px, min(6.4vw, 10vh), 104px)/.95 var(--font-display); letter-spacing:-.045em; margin:.35em 0 .55em; max-width:14ch}
+h2 em{font-style:normal; color:var(--accent)}
+.set{display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:calc(var(--u)*1.4)}
+.mag{position:relative; display:inline-flex; align-items:center; justify-content:center; text-decoration:none; color:inherit; will-change:transform; cursor:pointer}
+.mag .in{display:inline-flex; align-items:center; gap:.6em; position:relative; z-index:1; will-change:transform; pointer-events:none}
+/* primary: fill from entry point + rolling label */
+.btn{height:calc(var(--u)*3.6); padding:0 calc(var(--u)*1.7); border-radius:999px; font:500 var(--u)/1 var(--font-body); overflow:hidden; isolation:isolate}
+.p{background:var(--fg); color:var(--bg)}
+.btn::before{content:""; position:absolute; left:var(--x,50%); top:var(--y,50%); width:300%; aspect-ratio:1; border-radius:50%; background:var(--accent); transform:translate(-50%,-50%) scale(0); transition:transform .55s cubic-bezier(.2,.8,.2,1); z-index:0}
+.btn.hov::before{transform:translate(-50%,-50%) scale(1)}
+.p.hov{color:#fff}
+.roll{display:inline-block; overflow:hidden; height:1.15em; line-height:1.15}
+.roll span{display:block; transition:transform .55s cubic-bezier(.7,0,.2,1)}
+.hov .roll span{transform:translateY(-100%)}
+.arr{width:1em; height:1em; transition:transform .5s cubic-bezier(.7,0,.2,1)}
+.hov .arr{transform:translateX(.2em)}
+/* secondary: outline, fill wipes up */
+.s{box-shadow:inset 0 0 0 1px color-mix(in oklab, var(--fg) 28%, transparent); color:var(--fg); transition:color .4s}
+.s::before{left:50%; top:auto; bottom:0; width:160%; aspect-ratio:auto; height:260%; border-radius:50% 50% 0 0; background:var(--fg); transform:translate(-50%,100%); transition:transform .6s cubic-bezier(.7,0,.2,1), border-radius .6s}
+.s.hov::before{transform:translate(-50%,30%); border-radius:0}
+.s.hov{color:var(--bg)}
+/* round */
+.r{width:calc(var(--u)*3.6); height:calc(var(--u)*3.6); border-radius:50%; background:color-mix(in oklab, var(--fg) 8%, transparent); box-shadow:inset 0 0 0 1px color-mix(in oklab, var(--fg) 14%, transparent); overflow:hidden; isolation:isolate}
+.r::before{content:""; position:absolute; inset:0; border-radius:50%; background:var(--accent2); transform:scale(0); transition:transform .5s cubic-bezier(.2,.8,.2,1)}
+.r.hov::before{transform:scale(1)}
+.r svg{width:calc(var(--u)*1.2); height:auto; transition:transform .6s cubic-bezier(.7,0,.2,1), color .3s}
+.r.hov svg{transform:rotate(45deg); color:var(--bg)}
+/* link */
+.l{font:500 var(--u)/1 var(--font-body); padding:calc(var(--u)*.6) calc(var(--u)*.3)}
+.l .in::after{content:""; position:absolute; left:0; right:0; bottom:-.35em; height:1px; background:currentColor; transform-origin:right; transition:transform .45s cubic-bezier(.7,0,.2,1)}
+.l.hov .in::after{transform:scaleX(0)}
+.l .in::before{content:""; position:absolute; left:0; right:0; bottom:-.35em; height:1px; background:var(--accent2); transform:scaleX(0); transform-origin:left; transition:transform .45s .25s cubic-bezier(.7,0,.2,1)}
+.l.hov .in::before{transform:scaleX(1)}
+.note{margin-top:calc(var(--u)*2.4); font:400 calc(var(--u)*.78)/1.4 var(--font-body); color:var(--muted); display:flex; gap:1.6em; justify-content:center}
+.note b{font-weight:500; color:var(--fg)}
+.ghost{position:fixed; left:0; top:0; width:22px; height:22px; margin:-11px 0 0 -11px; border-radius:50%; border:1.5px solid #fff; mix-blend-mode:difference; pointer-events:none; z-index:10; transition:opacity .4s, width .3s, height .3s, margin .3s; opacity:0}
+.ghost::after{content:""; position:absolute; left:50%; top:50%; width:4px; height:4px; margin:-2px; border-radius:50%; background:#fff}
+.ghost.on{opacity:.9}
+.ghost.press{width:14px;height:14px;margin:-7px 0 0 -7px}
+@media (max-height:420px){ .note{display:none} }
+</style>
+</head>
+<body>
+<div class="eyebrow">Contact — Open for Q1</div>
+<h2>Let's make something <em>that moves.</em></h2>
+<div class="set">
+  <a class="mag btn p" data-s=".4"><span class="in"><span class="roll"><span>Start a project</span><span>Start a project</span></span><svg class="arr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a>
+  <a class="mag btn s" data-s=".35"><span class="in"><span class="roll"><span>View work</span><span>View work</span></span></span></a>
+  <a class="mag r" data-s=".6" aria-label="Open"><span class="in"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M8 7h9v9"/></svg></span></a>
+  <a class="mag l" data-s=".3"><span class="in">hello@hallam.studio</span></a>
+</div>
+<div class="note"><span><b>Reply</b> in 24h</span><span><b>Based</b> in Lisbon &amp; Remote</span></div>
+<div class="ghost" id="ghost"></div>
+<script>
+(function(){
+  var RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var els = [].slice.call(document.querySelectorAll('.mag'));
+  var items = els.map(function(el){ return {el:el, inner:el.querySelector('.in'), s:+el.dataset.s, x:0,y:0,vx:0,vy:0, tx:0,ty:0, hov:false, rect:null}; });
+  var ghost = document.getElementById('ghost');
+  var mouse = {x:-1e4, y:-1e4}, lastReal = -1e9;
+  addEventListener('pointermove', function(e){ if(e.pointerType==='mouse'||e.pointerType==='pen'){ mouse.x=e.clientX; mouse.y=e.clientY; lastReal=performance.now(); } });
+  document.documentElement.addEventListener('pointerleave', function(){ mouse.x = mouse.y = -1e4; });
+  function measure(){ items.forEach(function(it){ var r = it.el.getBoundingClientRect(); it.rect = {cx:r.left+r.width/2 - it.x, cy:r.top+r.height/2 - it.y, w:r.width, h:r.height}; }); }
+  addEventListener('resize', measure);
+
+  // ghost cursor that tours the buttons when nobody is pointing
+  var gp = {x:innerWidth*.5, y:innerHeight*.85}, seg = {from:null, to:null, t0:0, dur:1, dwell:1.2}, ti = -1, clock = 0;
+  function nextTarget(){
+    ti = (ti + 1) % (items.length + 1);
+    var r;
+    if (ti === items.length) r = {cx:innerWidth*(.3+Math.random()*.4), cy:Math.min(innerHeight-20, items[0].rect.cy + items[0].rect.h*2.2)};
+    else r = items[ti].rect;
+    seg.from = {x:gp.x, y:gp.y};
+    seg.to = {x:r.cx + (Math.random()-.5)*(r.w||0)*.3, y:r.cy + (Math.random()-.5)*(r.h||0)*.2};
+    seg.t0 = clock; seg.dur = RM ? 1.6 : .95; seg.dwell = ti === items.length ? .5 : (RM ? 2.4 : 1.35);
+  }
+  function ease(x){ return x<.5 ? 4*x*x*x : 1 - Math.pow(-2*x+2,3)/2; }
+
+  var ext=false, running=false, raf=0, last=0;
+  function ok(){ return !ext && !document.hidden; }
+  function start(){ if(running||!ok()) return; running=true; last=performance.now(); raf=requestAnimationFrame(tick); }
+  function stop(){ running=false; cancelAnimationFrame(raf); }
+  function sync(){ ok()?start():stop(); }
+  function tick(now){
+    var dt = Math.max(0,Math.min(.05,(now-last)/1000)); last = now; clock += dt;
+    var real = now - lastReal < 2500, px, py;
+    if (real){ px = mouse.x; py = mouse.y; ghost.classList.remove('on'); }
+    else {
+      if (!seg.to || clock > seg.t0 + seg.dur + seg.dwell) nextTarget();
+      var k = Math.min(1, (clock - seg.t0)/seg.dur), e = ease(k);
+      var arc = Math.sin(k*Math.PI) * 40;
+      var dx = seg.to.x - seg.from.x, dy = seg.to.y - seg.from.y, len = Math.hypot(dx,dy) || 1;
+      gp.x = seg.from.x + dx*e + (-dy/len)*arc; gp.y = seg.from.y + dy*e + (dx/len)*arc;
+      if (k >= 1){ var w = clock - seg.t0 - seg.dur; gp.x += Math.sin(w*3.2)*14; gp.y += Math.sin(w*4.1)*6; }
+      ghost.style.transform = 'translate(' + gp.x.toFixed(1) + 'px,' + gp.y.toFixed(1) + 'px)';
+      ghost.classList.add('on');
+      px = gp.x; py = gp.y;
+    }
+    for (var i=0;i<items.length;i++){
+      var it = items[i], r = it.rect, dxm = px - r.cx, dym = py - r.cy;
+      var rx = r.w/2 + 50, ry = r.h/2 + 40;
+      var inside = Math.abs(dxm) < rx && Math.abs(dym) < ry;
+      var hovNow = Math.abs(dxm) < r.w/2 + 4 && Math.abs(dym) < r.h/2 + 4;
+      if (hovNow && !it.hov){
+        it.el.style.setProperty('--x', (dxm + r.w/2 - it.x) + 'px');
+        it.el.style.setProperty('--y', (dym + r.h/2 - it.y) + 'px');
+      }
+      if (hovNow !== it.hov){ it.hov = hovNow; it.el.classList.toggle('hov', hovNow); if(!real) ghost.classList.toggle('press', hovNow); }
+      it.tx = inside ? dxm * it.s : 0; it.ty = inside ? dym * it.s : 0;
+      if (RM){ it.tx *= .3; it.ty *= .3; }
+      // spring
+      var K = 170, D = 16;
+      it.vx += ((it.tx - it.x)*K - it.vx*D)*dt; it.vy += ((it.ty - it.y)*K - it.vy*D)*dt;
+      it.x += it.vx*dt; it.y += it.vy*dt;
+      it.el.style.transform = 'translate3d(' + it.x.toFixed(2) + 'px,' + it.y.toFixed(2) + 'px,0)';
+      it.inner.style.transform = 'translate3d(' + (it.x*.35).toFixed(2) + 'px,' + (it.y*.35).toFixed(2) + 'px,0)';
+    }
+    if (running) raf = requestAnimationFrame(tick);
+  }
+  document.addEventListener('visibilitychange', sync);
+  addEventListener('message', function(e){ if(e.data==='inspo:pause'){ext=true;sync();} else if(e.data==='inspo:play'){ext=false;sync();} });
+  measure(); sync();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(measure);
+})();
+</script>
+</body>
+</html>

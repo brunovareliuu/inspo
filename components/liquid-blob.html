@@ -1,0 +1,214 @@
+<!--inspo
+{"id":"liquid-blob","name":"Liquid Blob","category":"3d","tags":["webgl","three.js","shader","hero","noise","iridescent"],"description":"A noise-displaced iridescent sphere that breathes and leans toward the cursor, built as a statement hero for product launches or creative studios.","deps":["three@0.170.0"]}
+-->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Liquid Blob</title>
+<script>
+(function(){var q=new URLSearchParams(location.search);['bg','fg','muted','accent','accent2'].forEach(function(k){var v=q.get(k);if(v)document.documentElement.style.setProperty('--'+k,v)});var fd=q.get('fontDisplay'),fb=q.get('fontBody');if(fd||fb){var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?'+[fd,fb].filter(Boolean).map(function(f){return 'family='+encodeURIComponent(f)+':wght@400;500;600;700'}).join('&')+'&display=swap';document.head.appendChild(l);if(fd)document.documentElement.style.setProperty('--font-display','"'+fd+'"');if(fb)document.documentElement.style.setProperty('--font-body','"'+fb+'"')}})();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter+Tight:wght@400;500;600&display=swap">
+<style>
+:root{--bg:#07070a;--fg:#f2efe9;--muted:#8b8795;--accent:#6d4dff;--accent2:#ff5fb8;--font-display:"Instrument Serif";--font-body:"Inter Tight"}
+html,body{margin:0;height:100%;overflow:hidden}
+body{background:
+  radial-gradient(46% 52% at 50% 50%,color-mix(in oklab,var(--accent) 26%,transparent),transparent 72%),
+  radial-gradient(30% 30% at 62% 38%,color-mix(in oklab,var(--accent2) 14%,transparent),transparent 70%),
+  var(--bg);
+  color:var(--fg);font-family:var(--font-body),system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
+.grain{position:fixed;inset:-50%;pointer-events:none;opacity:.07;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+.ui{position:fixed;inset:0;pointer-events:none;display:flex;flex-direction:column;justify-content:space-between;padding:clamp(16px,3.2vw,44px)}
+.top{display:flex;justify-content:space-between;align-items:center;font-size:clamp(11px,1vw,14px);letter-spacing:.01em}
+.brand{display:flex;align-items:center;gap:.6em;font-weight:600}
+.brand i{width:.8em;height:.8em;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:inline-block}
+nav{display:flex;gap:2.2em;color:var(--muted)}
+nav b{color:var(--fg);font-weight:500}
+.bottom{display:flex;justify-content:space-between;align-items:flex-end;gap:24px}
+h1{margin:0;font-family:var(--font-display),Georgia,serif;font-weight:400;font-size:clamp(40px,9vw,148px);line-height:.88;letter-spacing:-.025em}
+h1 em{font-style:italic;background:linear-gradient(90deg,var(--fg),color-mix(in oklab,var(--accent2) 70%,var(--fg)));-webkit-background-clip:text;background-clip:text;color:transparent;padding-right:.06em}
+.meta{max-width:25ch;font-size:clamp(11px,.95vw,14px);line-height:1.5;color:var(--muted);text-align:right}
+.meta span{display:block;color:var(--fg);margin-bottom:.4em;font-weight:500}
+@media (max-width:700px){nav a:not(:last-child){display:none}.meta{display:none}}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
+</head>
+<body>
+<div class="grain"></div>
+<div class="ui">
+  <div class="top"><div class="brand"><i></i>Lumen</div><nav><a>Work</a><a>Studio</a><a>Journal</a><b>Contact</b></nav></div>
+  <div class="bottom">
+    <h1>Form follows<br><em>feeling.</em></h1>
+    <p class="meta"><span>Material study 04</span>Soft matter, rendered in real time. Move to disturb the surface.</p>
+  </div>
+</div>
+<script type="module">
+import * as THREE from 'three';
+
+const probe = document.createElement('canvas').getContext('2d', { willReadFrequently: true });
+function cssColor(name, fallback) {
+  const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
+  probe.clearRect(0, 0, 1, 1); probe.fillStyle = fallback; probe.fillStyle = v; probe.fillRect(0, 0, 1, 1);
+  const d = probe.getImageData(0, 0, 1, 1).data;
+  return new THREE.Color().setRGB(d[0] / 255, d[1] / 255, d[2] / 255, THREE.SRGBColorSpace);
+}
+const C = { fg: cssColor('--fg', '#f2efe9'), a: cssColor('--accent', '#6d4dff'), b: cssColor('--accent2', '#ff5fb8'), bg: cssColor('--bg', '#07070a') };
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setClearColor(0x000000, 0);
+document.body.prepend(renderer.domElement);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 100);
+
+const noise = /* glsl */`
+vec3 mod289(vec3 x){return x-floor(x*(1.0/289.0))*289.0;}
+vec4 mod289(vec4 x){return x-floor(x*(1.0/289.0))*289.0;}
+vec4 permute(vec4 x){return mod289(((x*34.0)+1.0)*x);}
+vec4 taylorInvSqrt(vec4 r){return 1.79284291400159-0.85373472095314*r;}
+float snoise(vec3 v){
+  const vec2 C=vec2(1.0/6.0,1.0/3.0);const vec4 D=vec4(0.0,0.5,1.0,2.0);
+  vec3 i=floor(v+dot(v,C.yyy));vec3 x0=v-i+dot(i,C.xxx);
+  vec3 g=step(x0.yzx,x0.xyz);vec3 l=1.0-g;vec3 i1=min(g.xyz,l.zxy);vec3 i2=max(g.xyz,l.zxy);
+  vec3 x1=x0-i1+C.xxx;vec3 x2=x0-i2+C.yyy;vec3 x3=x0-D.yyy;
+  i=mod289(i);
+  vec4 p=permute(permute(permute(i.z+vec4(0.0,i1.z,i2.z,1.0))+i.y+vec4(0.0,i1.y,i2.y,1.0))+i.x+vec4(0.0,i1.x,i2.x,1.0));
+  float n_=0.142857142857;vec3 ns=n_*D.wyz-D.xzx;
+  vec4 j=p-49.0*floor(p*ns.z*ns.z);vec4 x_=floor(j*ns.z);vec4 y_=floor(j-7.0*x_);
+  vec4 x=x_*ns.x+ns.yyyy;vec4 y=y_*ns.x+ns.yyyy;vec4 h=1.0-abs(x)-abs(y);
+  vec4 b0=vec4(x.xy,y.xy);vec4 b1=vec4(x.zw,y.zw);
+  vec4 s0=floor(b0)*2.0+1.0;vec4 s1=floor(b1)*2.0+1.0;vec4 sh=-step(h,vec4(0.0));
+  vec4 a0=b0.xzyw+s0.xzyw*sh.xxyy;vec4 a1=b1.xzyw+s1.xzyw*sh.zzww;
+  vec3 p0=vec3(a0.xy,h.x);vec3 p1=vec3(a0.zw,h.y);vec3 p2=vec3(a1.xy,h.z);vec3 p3=vec3(a1.zw,h.w);
+  vec4 norm=taylorInvSqrt(vec4(dot(p0,p0),dot(p1,p1),dot(p2,p2),dot(p3,p3)));
+  p0*=norm.x;p1*=norm.y;p2*=norm.z;p3*=norm.w;
+  vec4 m=max(0.6-vec4(dot(x0,x0),dot(x1,x1),dot(x2,x2),dot(x3,x3)),0.0);m=m*m;
+  return 42.0*dot(m*m,vec4(dot(p0,x0),dot(p1,x1),dot(p2,x2),dot(p3,x3)));
+}`;
+
+const uniforms = {
+  uTime: { value: 0 }, uAmp: { value: 0.22 }, uPull: { value: 0 },
+  uMouse: { value: new THREE.Vector3(0, 0, 1) },
+  uA: { value: C.a }, uB: { value: C.b }, uFg: { value: C.fg }, uBg: { value: C.bg },
+};
+
+const material = new THREE.ShaderMaterial({
+  uniforms,
+  vertexShader: /* glsl */`
+    uniform float uTime; uniform float uAmp; uniform float uPull; uniform vec3 uMouse;
+    varying vec3 vN; varying vec3 vView; varying float vD;
+    ${noise}
+    float disp(vec3 n){
+      vec3 q = n * .78 + vec3(uTime * .19, uTime * .11, -uTime * .15);
+      float d = snoise(q) * uAmp + snoise(q * 1.9 + 7.3) * uAmp * .14;
+      d += uPull * smoothstep(.35, 1.0, dot(n, uMouse));
+      return d;
+    }
+    vec3 P(vec3 n){ return n * (1.0 + disp(n)); }
+    void main(){
+      vec3 n = normalize(position);
+      vec3 helper = abs(n.y) > .99 ? vec3(1.,0.,0.) : vec3(0.,1.,0.);
+      vec3 t = normalize(cross(n, helper));
+      vec3 b = cross(n, t);
+      float e = .012;
+      vec3 p0 = P(n);
+      vec3 p1 = P(normalize(n + t * e));
+      vec3 p2 = P(normalize(n + b * e));
+      vec3 nn = normalize(cross(p1 - p0, p2 - p0));
+      vD = disp(n);
+      vec4 mv = modelViewMatrix * vec4(p0, 1.0);
+      vN = normalize(normalMatrix * nn);
+      vView = -mv.xyz;
+      gl_Position = projectionMatrix * mv;
+    }`,
+  fragmentShader: /* glsl */`
+    uniform vec3 uA; uniform vec3 uB; uniform vec3 uFg; uniform vec3 uBg; uniform float uTime;
+    varying vec3 vN; varying vec3 vView; varying float vD;
+    void main(){
+      vec3 N = normalize(vN); vec3 V = normalize(vView);
+      float ndv = clamp(dot(N, V), 0., 1.);
+      float fres = pow(1. - ndv, 2.6);
+      float m = smoothstep(-.4, .5, vD * 1.4 + N.y * .6 - N.x * .35);
+      vec3 base = mix(uA, uB, m);
+      vec3 L = normalize(vec3(-.55, .75, .65));
+      float diff = clamp(dot(N, L) * .5 + .5, 0., 1.);
+      float spec = pow(clamp(dot(N, normalize(L + V)), 0., 1.), 90.);
+      vec3 L2 = normalize(vec3(.8, -.35, .4));
+      float spec2 = pow(clamp(dot(N, normalize(L2 + V)), 0., 1.), 18.);
+      vec3 film = .5 + .5 * cos(6.28318 * (ndv * 1.25 + vD * 1.8 + vec3(0., .33, .67) + uTime * .03));
+      float lumB = dot(base, vec3(.2126, .7152, .0722));
+      vec3 filmTint = mix(film * (lumB * 2. + .12), base, .45);
+      vec3 col = base * (.08 + .92 * diff * diff);
+      col = mix(col, filmTint * 1.6, fres * .85);
+      col += uFg * spec * 1.1 + mix(uB, uFg, .3) * spec2 * .35;
+      col += uFg * pow(fres, 4.) * .35;
+      gl_FragColor = vec4(col, 1.);
+      #include <colorspace_fragment>
+    }`,
+});
+
+const blob = new THREE.Mesh(new THREE.IcosahedronGeometry(1, 64), material);
+scene.add(blob);
+
+function resize() {
+  const w = innerWidth, h = innerHeight, asp = w / h;
+  renderer.setSize(w, h, false);
+  camera.aspect = asp;
+  // keep the blob ~62% of the short side
+  const fit = asp >= 1 ? 1 : 1 / asp;
+  camera.position.set(0, 0, 5.6 * Math.max(1, fit * .85));
+  blob.position.y = asp > 1.2 ? .08 : .25;
+  camera.updateProjectionMatrix();
+  renderer.render(scene, camera);
+}
+addEventListener('resize', resize); resize();
+
+const mouse = new THREE.Vector2(), target = new THREE.Vector2();
+let lastMove = -10, velocity = 0;
+addEventListener('pointermove', e => {
+  const nx = (e.clientX / innerWidth) * 2 - 1, ny = -(e.clientY / innerHeight) * 2 + 1;
+  velocity = Math.min(1, velocity + Math.hypot(nx - target.x, ny - target.y) * 2);
+  target.set(nx, ny); lastMove = clock;
+});
+
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const SPEED = reduce ? .25 : 1;
+let clock = 0, raf = 0, last = 0, paused = false;
+const md = new THREE.Vector3();
+
+function frame(now) {
+  raf = 0;
+  const dt = Math.max(0, Math.min((now - last) / 1000, 1 / 20)) * SPEED; last = now;
+  clock += dt;
+  if (clock - lastMove > 2.5) { // idle: drift on a slow lissajous so it looks alive
+    target.set(Math.sin(clock * .37) * .55, Math.sin(clock * .23 + 1.3) * .4);
+  }
+  mouse.lerp(target, 1 - Math.pow(.02, dt));
+  velocity *= Math.pow(.25, dt);
+  uniforms.uTime.value = clock;
+  uniforms.uAmp.value = .18 + velocity * .08 + Math.sin(clock * .6) * .03;
+  uniforms.uPull.value += ((.06 + velocity * .08) - uniforms.uPull.value) * (1 - Math.pow(.05, dt));
+  md.set(mouse.x, mouse.y, .9).normalize();
+  uniforms.uMouse.value.copy(md);
+  blob.rotation.y = mouse.x * .35 + clock * .05;
+  blob.rotation.x = -mouse.y * .25;
+  uniforms.uMouse.value.applyAxisAngle(new THREE.Vector3(0, 1, 0), -blob.rotation.y);
+  renderer.render(scene, camera);
+  schedule();
+}
+function schedule() { if (!raf && !paused && !document.hidden) raf = requestAnimationFrame(frame); }
+function start() { if (!raf) { last = performance.now(); schedule(); } }
+function stop() { cancelAnimationFrame(raf); raf = 0; }
+document.addEventListener('visibilitychange', () => document.hidden ? stop() : start());
+addEventListener('message', e => { if (e.data === 'inspo:pause') { paused = true; stop(); } if (e.data === 'inspo:play') { paused = false; start(); } });
+start();
+</script>
+</body>
+</html>

@@ -1,0 +1,120 @@
+<!--inspo
+{"id":"velocity-marquee","name":"Velocity Marquee","category":"motion","tags":["marquee","typography","scroll-velocity","drag","skew","loop"],"description":"Giant type marquees running in opposite directions that speed up and skew with scroll or drag velocity; a bold services strip or section divider for agencies and brands.","deps":[]}
+-->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Velocity Marquee</title>
+<script>
+(function(){var q=new URLSearchParams(location.search);['bg','fg','muted','accent','accent2'].forEach(function(k){var v=q.get(k);if(v)document.documentElement.style.setProperty('--'+k,v)});var fd=q.get('fontDisplay'),fb=q.get('fontBody');if(fd||fb){var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?'+[fd,fb].filter(Boolean).map(function(f){return 'family='+encodeURIComponent(f)+':wght@400;500;600;700'}).join('&')+'&display=swap';document.head.appendChild(l);if(fd)document.documentElement.style.setProperty('--font-display','"'+fd+'"');if(fb)document.documentElement.style.setProperty('--font-body','"'+fb+'"')}})();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Instrument+Serif:ital@1&family=Inter:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#0c0c0c; --fg:#eeede8; --muted:#77756f; --accent:#c8ff2e; --accent2:#ff3d7f;
+  --font-display:"Anton", Impact, "Arial Narrow", sans-serif;
+  --font-body:"Inter", ui-sans-serif, system-ui, sans-serif;
+  --serif:"Instrument Serif", Georgia, serif;
+  --fs:min(19vh, 15vw);
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden}
+body{background:var(--bg); color:var(--fg); font-family:var(--font-body); -webkit-font-smoothing:antialiased;
+  display:flex; flex-direction:column; justify-content:center; cursor:grab; user-select:none; touch-action:pan-y}
+body.drag{cursor:grabbing}
+.row{position:relative; white-space:nowrap; line-height:1; padding:.02em 0}
+.track{display:inline-flex; will-change:transform}
+.unit{display:inline-flex; align-items:center; font:400 var(--fs)/1 var(--font-display); text-transform:uppercase; letter-spacing:-.005em}
+.unit > span{padding:0 .18em}
+.unit .it{font-family:var(--serif); font-style:italic; text-transform:none; letter-spacing:-.02em; font-size:.92em}
+.star{display:inline-block; width:.42em; height:.42em; margin:0 .12em; color:var(--accent)}
+.outline .unit > span:not(.star){color:transparent; -webkit-text-stroke:max(1px, .012em) var(--fg)}
+.outline .unit .it{-webkit-text-stroke:0; color:var(--accent2)}
+.band{background:var(--accent); color:var(--bg); transform:rotate(-2.2deg) scale(1.04); margin:.08em 0; z-index:2; box-shadow:0 .1em .4em rgba(0,0,0,.4)}
+.band .star{color:var(--bg)}
+.muted-row{color:color-mix(in oklab, var(--fg) 30%, var(--bg))}
+.muted-row .star{color:var(--accent2)}
+.hud{position:fixed; left:0; right:0; display:flex; justify-content:space-between; padding:clamp(12px,2vw,28px); font:500 clamp(10px,.95vw,12px)/1 var(--font-body); letter-spacing:.08em; text-transform:uppercase; mix-blend-mode:difference; color:#fff; z-index:5; pointer-events:none}
+.hud.top{top:0} .hud.bot{bottom:0}
+.meter{display:inline-flex; align-items:center; gap:.8em; font-variant-numeric:tabular-nums}
+.meter i{display:block; width:clamp(40px,6vw,80px); height:2px; background:rgba(255,255,255,.25); position:relative; overflow:hidden}
+.meter i b{position:absolute; inset:0; background:#fff; transform-origin:left; transform:scaleX(.1)}
+@media (max-height:420px){ .hud.bot .hint{display:none} }
+</style>
+</head>
+<body>
+<div class="hud top"><span>Capabilities</span><span>(Index 04)</span></div>
+<div class="row" data-dir="-1" data-words="Strategy|*and*|Identity"></div>
+<div class="row outline" data-dir="1" data-words="Motion|Systems|*for*|Screens"></div>
+<div class="row band" data-dir="-1" data-words="Brand worlds|*that*|Move"></div>
+<div class="row muted-row" data-dir="1" data-words="Type|Code|*&amp;*|Sound"></div>
+<div class="hud bot"><span class="hint">Scroll or drag to add momentum</span><span class="meter">Velocity <i><b id="vb"></b></i></span></div>
+<script>
+(function(){
+  var RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var STAR = '<svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0l2.6 8.4L23 12l-8.4 2.6L12 24l-2.6-9.4L1 12l8.4-3.6z"/></svg>';
+  var rows = [].slice.call(document.querySelectorAll('.row')).map(function(row){
+    var track = document.createElement('div'); track.className = 'track';
+    var unit = document.createElement('div'); unit.className = 'unit';
+    unit.innerHTML = row.dataset.words.split('|').map(function(w){
+      return w[0]==='*' ? '<span class="it">'+w.slice(1,-1)+'</span>' : '<span>'+w+'</span>'+STAR;
+    }).join('') ;
+    track.appendChild(unit); row.appendChild(track);
+    return {row:row, track:track, unit:unit, dir:+row.dataset.dir, x:0, w:1};
+  });
+  function layout(){
+    rows.forEach(function(r){
+      while (r.track.children.length > 1) r.track.removeChild(r.track.lastChild);
+      r.w = r.unit.getBoundingClientRect().width || 1;
+      var n = Math.ceil((innerWidth*1.1) / r.w) + 1;
+      for (var i=0;i<n;i++) r.track.appendChild(r.unit.cloneNode(true));
+      r.x = -Math.random()*r.w;
+    });
+  }
+
+  // velocity input
+  var vel = 0, lastInput = -1e9, dragging = false, px = 0;
+  addEventListener('wheel', function(e){ vel += e.deltaY * 6; lastInput = performance.now(); }, {passive:true});
+  addEventListener('pointerdown', function(e){ dragging = true; px = e.clientX; document.body.classList.add('drag'); });
+  addEventListener('pointermove', function(e){ if(!dragging) return; vel += (px - e.clientX) * 22; px = e.clientX; lastInput = performance.now(); });
+  addEventListener('pointerup', function(){ dragging = false; document.body.classList.remove('drag'); });
+  addEventListener('pointercancel', function(){ dragging = false; document.body.classList.remove('drag'); });
+
+  var ext=false, running=false, raf=0, last=0, t=0, skew=0;
+  var vb = document.getElementById('vb');
+  function ok(){ return !ext && !document.hidden; }
+  function start(){ if(running||!ok()) return; running=true; last=performance.now(); raf=requestAnimationFrame(tick); }
+  function stop(){ running=false; cancelAnimationFrame(raf); }
+  function sync(){ ok()?start():stop(); }
+  function tick(now){
+    var dt = Math.max(0,Math.min(.05,(now-last)/1000)); last = now; t += dt;
+    vel = Math.max(-9000, Math.min(9000, vel));
+    // when idle, "gusts" of momentum keep it alive on the board
+    var idle = now - lastInput > 2500;
+    var gust = idle && !RM ? 2600 * Math.pow(Math.max(0, Math.sin(t*.62 - .1)), 6) : 0;
+    vel += (gust - vel) * (1 - Math.exp(-dt * (idle ? 2.2 : 3)));
+    var base = RM ? 22 : 70, fs = rows[0].unit.getBoundingClientRect().height || 100;
+    var speed = (base + vel*.35) * (fs/160);
+    var targetSkew = Math.max(-16, Math.min(16, -vel * .006)) * (RM ? .2 : 1);
+    skew += (targetSkew - skew) * (1 - Math.exp(-dt*8));
+    for (var i=0;i<rows.length;i++){
+      var r = rows[i];
+      r.x += r.dir * speed * dt;
+      if (r.x <= -r.w) r.x += r.w; if (r.x > 0) r.x -= r.w;
+      r.track.style.transform = 'translate3d(' + r.x.toFixed(2) + 'px,0,0) skewX(' + (skew * r.dir * -1).toFixed(2) + 'deg)';
+    }
+    vb.style.transform = 'scaleX(' + Math.min(1, .08 + Math.abs(vel)/2800).toFixed(3) + ')';
+    if (running) raf = requestAnimationFrame(tick);
+  }
+  document.addEventListener('visibilitychange', sync);
+  addEventListener('message', function(e){ if(e.data==='inspo:pause'){ext=true;sync();} else if(e.data==='inspo:play'){ext=false;sync();} });
+  var rz; addEventListener('resize', function(){ clearTimeout(rz); rz = setTimeout(layout, 120); });
+  layout(); sync();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(layout);
+})();
+</script>
+</body>
+</html>

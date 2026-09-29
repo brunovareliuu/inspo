@@ -1,0 +1,245 @@
+<!--inspo
+{"id":"dot-globe","name":"Dot Globe","category":"3d","tags":["webgl","three.js","globe","data-viz","fintech","hero"],"description":"A dotted-matrix Earth with glowing arcs flying between cities, the classic global-reach hero for fintech, logistics or SaaS landing pages.","deps":["three@0.170.0"]}
+-->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dot Globe</title>
+<script>
+(function(){var q=new URLSearchParams(location.search);['bg','fg','muted','accent','accent2'].forEach(function(k){var v=q.get(k);if(v)document.documentElement.style.setProperty('--'+k,v)});var fd=q.get('fontDisplay'),fb=q.get('fontBody');if(fd||fb){var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?'+[fd,fb].filter(Boolean).map(function(f){return 'family='+encodeURIComponent(f)+':wght@400;500;600;700'}).join('&')+'&display=swap';document.head.appendChild(l);if(fd)document.documentElement.style.setProperty('--font-display','"'+fd+'"');if(fb)document.documentElement.style.setProperty('--font-body','"'+fb+'"')}})();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400&display=swap">
+<style>
+:root{--bg:#05060a;--fg:#eef1f7;--muted:#7b8194;--accent:#4d86ff;--accent2:#6ff0c4;--font-display:"Geist";--font-body:"Geist"}
+html,body{margin:0;height:100%;overflow:hidden}
+body{background:radial-gradient(60% 80% at 70% 60%,color-mix(in oklab,var(--accent) 12%,var(--bg)),var(--bg) 70%);color:var(--fg);font-family:var(--font-body),system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
+.ui{position:fixed;inset:0;pointer-events:none;display:flex;flex-direction:column;justify-content:space-between;padding:clamp(16px,3vw,44px)}
+.top{display:flex;justify-content:space-between;align-items:center;font-size:clamp(11px,.95vw,14px)}
+.brand{font-weight:600;letter-spacing:-.02em;display:flex;align-items:center;gap:.5em}
+.brand i{width:1em;height:1em;border-radius:50%;border:1.5px solid var(--accent2);box-sizing:border-box;position:relative}
+.brand i::after{content:"";position:absolute;inset:25%;border-radius:50%;background:var(--accent2)}
+nav{display:flex;gap:2em;color:var(--muted)}
+.pill{padding:.6em 1.1em;border-radius:999px;border:1px solid color-mix(in oklab,var(--fg) 18%,transparent);background:color-mix(in oklab,var(--fg) 5%,transparent);backdrop-filter:blur(8px)}
+.copy{max-width:min(46vw,640px)}
+.tag{display:inline-flex;align-items:center;gap:.6em;font-family:"Geist Mono",ui-monospace,monospace;font-size:clamp(9px,.78vw,11.5px);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:clamp(10px,1.6vw,22px)}
+.tag::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--accent2);box-shadow:0 0 10px var(--accent2)}
+h1{margin:0;font-family:var(--font-display),system-ui,sans-serif;font-weight:500;font-size:clamp(28px,5.6vw,92px);line-height:.96;letter-spacing:-.055em}
+h1 span{color:var(--muted)}
+.sub{margin:clamp(10px,1.5vw,22px) 0 0;max-width:38ch;color:var(--muted);font-size:clamp(11px,1.05vw,16px);line-height:1.5}
+.stats{display:flex;gap:clamp(20px,4vw,64px);font-size:clamp(10px,.85vw,12.5px);color:var(--muted)}
+.stats b{display:block;color:var(--fg);font-weight:400;font-size:clamp(18px,2vw,30px);letter-spacing:-.03em;margin-bottom:.15em}
+@media (max-width:700px){nav,.sub,.stats{display:none}.copy{max-width:60vw}}
+@media (max-aspect-ratio:1/1){.copy{max-width:100%}}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
+</head>
+<body>
+<div class="ui">
+  <div class="top"><div class="brand"><i></i>Meridian Pay</div><nav><a>Products</a><a>Developers</a><a>Pricing</a></nav><div class="pill">Sign in</div></div>
+  <div class="copy">
+    <div class="tag">Live in 186 countries</div>
+    <h1>Money that moves<br><span>like the internet.</span></h1>
+    <p class="sub">One API to accept, hold and send funds across every border, settled in seconds.</p>
+  </div>
+  <div class="stats"><div><b>$2.4T</b>processed yearly</div><div><b>0.8s</b>median settlement</div><div><b>99.999%</b>uptime</div></div>
+</div>
+<script type="module">
+import * as THREE from 'three';
+
+const probe = document.createElement('canvas').getContext('2d', { willReadFrequently: true });
+function cssColor(name, fallback) {
+  const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
+  probe.clearRect(0, 0, 1, 1); probe.fillStyle = fallback; probe.fillStyle = v; probe.fillRect(0, 0, 1, 1);
+  const d = probe.getImageData(0, 0, 1, 1).data;
+  return new THREE.Color().setRGB(d[0] / 255, d[1] / 255, d[2] / 255, THREE.SRGBColorSpace);
+}
+const C = { bg: cssColor('--bg', '#05060a'), fg: cssColor('--fg', '#eef1f7'), muted: cssColor('--muted', '#7b8194'), a: cssColor('--accent', '#4d86ff'), b: cssColor('--accent2', '#6ff0c4') };
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+const PR = Math.min(devicePixelRatio, 2);
+renderer.setPixelRatio(PR);
+renderer.setClearColor(0, 0);
+document.body.prepend(renderer.domElement);
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
+camera.position.set(0, 0, 6);
+
+const tilt = new THREE.Group(); tilt.rotation.set(0.38, 0, -0.12);
+const globe = new THREE.Group();
+tilt.add(globe); scene.add(tilt);
+
+// ---------- land mask: rough continents + value noise edges ----------
+const hash = (x, y, z) => { const s = Math.sin(x * 127.1 + y * 311.7 + z * 74.7) * 43758.5453; return s - Math.floor(s); };
+function vnoise(x, y, z) {
+  const xi = Math.floor(x), yi = Math.floor(y), zi = Math.floor(z), xf = x - xi, yf = y - yi, zf = z - zi;
+  const u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf), w = zf * zf * (3 - 2 * zf);
+  const l = (a, b, t) => a + (b - a) * t;
+  return l(l(l(hash(xi, yi, zi), hash(xi + 1, yi, zi), u), l(hash(xi, yi + 1, zi), hash(xi + 1, yi + 1, zi), u), v),
+           l(l(hash(xi, yi, zi + 1), hash(xi + 1, yi, zi + 1), u), l(hash(xi, yi + 1, zi + 1), hash(xi + 1, yi + 1, zi + 1), u), v), w);
+}
+const blobs = [ // lat, lon, rLat, rLon
+  [50,-100,15,28],[62,-115,11,32],[36,-96,11,19],[22,-103,7,8],[13,-87,4,5],[68,-80,8,14],[72,-42,9,13],
+  [-5,-63,12,14],[-20,-57,11,11],[-38,-67,10,6],[8,-70,5,8],
+  [50,12,8,17],[63,17,7,8],[40,-4,4,6],[54,-3,4,3],[57,40,10,20],
+  [15,12,11,22],[1,22,11,13],[-17,27,11,10],[8,42,6,6],[-20,47,5,3],
+  [27,45,8,10],[60,95,12,45],[45,95,12,28],[33,110,10,12],[21,78,9,7],[16,103,7,7],[-3,115,4,15],[-5,140,4,7],[37,138,6,3],[66,160,7,18],
+  [-25,134,9,15],[-42,172,5,3],
+];
+function isLand(lat, lon, x, y, z) {
+  const n = vnoise(x * 3.2 + 10, y * 3.2, z * 3.2) * .6 + vnoise(x * 7, y * 7, z * 7) * .4;
+  for (const [la, lo, rla, rlo] of blobs) {
+    let dl = lon - lo; dl = ((dl + 540) % 360) - 180;
+    const d = ((lat - la) / rla) ** 2 + (dl / rlo) ** 2;
+    if (d < 0.55 + n * 0.9) return true;
+  }
+  return false;
+}
+
+// ---------- dots ----------
+const N = 26000, landPos = [], seaPos = [];
+const golden = Math.PI * (3 - Math.sqrt(5));
+for (let i = 0; i < N; i++) {
+  const y = 1 - (i / (N - 1)) * 2, r = Math.sqrt(1 - y * y), th = golden * i;
+  const x = Math.cos(th) * r, z = Math.sin(th) * r;
+  const lat = Math.asin(y) * 180 / Math.PI;
+  const lon = Math.atan2(-z, x) * 180 / Math.PI; // matches latLon() below
+  if (isLand(lat, lon, x, y, z)) landPos.push(x, y, z); else if (i % 3 === 0) seaPos.push(x, y, z);
+}
+const dotMat = (color, alpha, size) => new THREE.ShaderMaterial({
+  transparent: true, depthWrite: false,
+  uniforms: { uColor: { value: color }, uAlpha: { value: alpha }, uSize: { value: size } },
+  vertexShader: `uniform float uSize; varying float vFace;
+    void main(){ vec4 mv = modelViewMatrix * vec4(position, 1.); vec3 n = normalize(normalMatrix * position);
+      vFace = dot(n, normalize(-mv.xyz)); gl_Position = projectionMatrix * mv; gl_PointSize = uSize / -mv.z; }`,
+  fragmentShader: `uniform vec3 uColor; uniform float uAlpha; varying float vFace;
+    void main(){ float d = length(gl_PointCoord - .5); if (d > .5) discard; float a = smoothstep(.5, .3, d) * uAlpha * smoothstep(-.05, .35, vFace);
+      gl_FragColor = vec4(uColor, a);
+      #include <colorspace_fragment>
+    }`,
+});
+const mk = (arr) => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(arr, 3)); return g; };
+const landMat = dotMat(C.fg.clone().lerp(C.b, .15), .92, 30 * PR);
+const seaMat = dotMat(C.muted, .22, 22 * PR);
+globe.add(new THREE.Points(mk(landPos), landMat), new THREE.Points(mk(seaPos), seaMat));
+
+// occluder + atmosphere
+const core = new THREE.Mesh(new THREE.SphereGeometry(.985, 64, 64), new THREE.ShaderMaterial({
+  uniforms: { uBg: { value: C.bg }, uA: { value: C.a } },
+  vertexShader: 'varying vec3 vN; varying vec3 vV; void main(){ vec4 mv = modelViewMatrix * vec4(position,1.); vN = normalize(normalMatrix*normal); vV = normalize(-mv.xyz); gl_Position = projectionMatrix*mv; }',
+  fragmentShader: `uniform vec3 uBg, uA; varying vec3 vN; varying vec3 vV;
+    void main(){ float f = pow(1. - max(dot(vN, vV), 0.), 3.); vec3 c = mix(uBg * 1.1, uA, f * .45 + .03); gl_FragColor = vec4(c, 1.);
+      #include <colorspace_fragment>
+    }`,
+}));
+globe.add(core);
+const atmo = new THREE.Mesh(new THREE.SphereGeometry(1.22, 64, 64), new THREE.ShaderMaterial({
+  uniforms: { uA: { value: C.a } }, side: THREE.BackSide, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+  vertexShader: 'varying vec3 vN; varying vec3 vV; void main(){ vec4 mv = modelViewMatrix * vec4(position,1.); vN = normalize(normalMatrix*normal); vV = normalize(-mv.xyz); gl_Position = projectionMatrix*mv; }',
+  fragmentShader: `uniform vec3 uA; varying vec3 vN; varying vec3 vV;
+    void main(){ float d = dot(vN, vV); float g = pow(clamp(1. + d * 1.6, 0., 1.), 3.);
+      gl_FragColor = vec4(uA, g * .55);
+      #include <colorspace_fragment>
+    }`,
+}));
+tilt.add(atmo);
+
+// ---------- arcs ----------
+const latLon = (lat, lon, r = 1) => {
+  const phi = (90 - lat) * Math.PI / 180, th = (lon + 180) * Math.PI / 180;
+  return new THREE.Vector3(-Math.sin(phi) * Math.cos(th) * r, Math.cos(phi) * r, Math.sin(phi) * Math.sin(th) * r);
+};
+const cities = [[40.7,-74],[37.8,-122.4],[51.5,-.1],[6.5,3.4],[-23.5,-46.6],[19,72.8],[1.35,103.8],[35.7,139.7],[-33.9,151.2],[19.4,-99.1],[25.2,55.3],[52.5,13.4],[-1.3,36.8],[43.7,-79.4],[-34.6,-58.4],[31.2,121.5]].map(c => latLon(c[0], c[1]));
+const arcU = () => ({ uHead: { value: 0 }, uA: { value: C.a }, uB: { value: C.b }, uFg: { value: C.fg } });
+const arcFrag = `uniform float uHead; uniform vec3 uA, uB, uFg; varying vec2 vUv;
+  void main(){ float x = vUv.x; float tail = .45;
+    float a = smoothstep(uHead - tail, uHead, x) * step(x, uHead);
+    vec3 c = mix(uA, uB, smoothstep(uHead - tail, uHead, x));
+    c = mix(c, uFg, smoothstep(uHead - .04, uHead, x) * .7);
+    gl_FragColor = vec4(c, a);
+    #include <colorspace_fragment>
+  }`;
+const arcVert = 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.); }';
+const ringGeo = new THREE.RingGeometry(.6, 1, 48);
+const arcs = [];
+let seed = 11; const rnd = () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
+function spawn(arc, head0 = 0) {
+  let i = Math.floor(rnd() * cities.length), j = Math.floor(rnd() * cities.length);
+  while (j === i || cities[i].angleTo(cities[j]) < .5) j = Math.floor(rnd() * cities.length);
+  const a = cities[i], b = cities[j];
+  const dist = a.angleTo(b);
+  const lift = 1 + dist * .32;
+  const c1 = a.clone().lerp(b, .25).normalize().multiplyScalar(lift), c2 = a.clone().lerp(b, .75).normalize().multiplyScalar(lift);
+  const curve = new THREE.CubicBezierCurve3(a.clone().multiplyScalar(1.004), c1, c2, b.clone().multiplyScalar(1.004));
+  arc.mesh.geometry.dispose();
+  arc.mesh.geometry = new THREE.TubeGeometry(curve, 72, .0045, 5, false);
+  arc.head = head0; arc.speed = .45 + rnd() * .2; arc.end = b;
+  arc.ring.position.copy(b.clone().multiplyScalar(1.006)); arc.ring.lookAt(b.clone().multiplyScalar(2));
+  arc.ring.scale.setScalar(0.0001);
+}
+for (let k = 0; k < 9; k++) {
+  const mesh = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.ShaderMaterial({ uniforms: arcU(), vertexShader: arcVert, fragmentShader: arcFrag, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+  const ring = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ color: C.b, transparent: true, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending }));
+  globe.add(mesh, ring);
+  const arc = { mesh, ring };
+  spawn(arc, .2 + (k / 9) * 1.4);
+  arcs.push(arc);
+}
+// city markers
+const cityGeo = mk(cities.flatMap(v => [v.x * 1.005, v.y * 1.005, v.z * 1.005]));
+globe.add(new THREE.Points(cityGeo, dotMat(C.b, 1, 70 * PR)));
+
+// ---------- layout ----------
+function resize() {
+  const w = innerWidth, h = innerHeight, asp = w / h;
+  renderer.setSize(w, h, false);
+  camera.aspect = asp; camera.updateProjectionMatrix();
+  const vh = 2 * camera.position.z * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)), vw = vh * asp;
+  if (asp >= 1) {
+    const s = Math.min(vh * .5, vw * .3);
+    tilt.scale.setScalar(s);
+    tilt.position.set(vw * .5 - s * 1.05, -vh * .08, 0);
+  } else {
+    const s = vw * .48;
+    tilt.scale.setScalar(s);
+    tilt.position.set(0, -vh * .5 + s * .9, 0);
+  }
+}
+addEventListener('resize', resize); resize();
+
+const mouse = new THREE.Vector2(), target = new THREE.Vector2();
+addEventListener('pointermove', e => target.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1));
+
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const RATE = reduce ? .3 : 1;
+let clock = 0, raf = 0, last = 0, paused = false;
+function frame(now) {
+  raf = 0;
+  const dt = Math.max(0, Math.min((now - last) / 1000, 1 / 20)) * RATE; last = now;
+  clock += dt;
+  mouse.lerp(target, 1 - Math.pow(.05, dt));
+  globe.rotation.y = -1.9 + clock * .07 + mouse.x * .3;
+  tilt.rotation.x = .38 - mouse.y * .15;
+  for (const arc of arcs) {
+    arc.head += dt * arc.speed;
+    arc.mesh.material.uniforms.uHead.value = arc.head;
+    const t = arc.head - 1;
+    if (t > 0) { const s = .02 + t * .09; arc.ring.scale.setScalar(s); arc.ring.material.opacity = Math.max(0, 1 - t * 1.8); }
+    if (arc.head > 1.6) spawn(arc, -rnd() * .6);
+  }
+  renderer.render(scene, camera);
+  schedule();
+}
+function schedule() { if (!raf && !paused && !document.hidden) raf = requestAnimationFrame(frame); }
+function start() { if (!raf) { last = performance.now(); schedule(); } }
+function stop() { cancelAnimationFrame(raf); raf = 0; }
+document.addEventListener('visibilitychange', () => document.hidden ? stop() : start());
+addEventListener('message', e => { if (e.data === 'inspo:pause') { paused = true; stop(); } if (e.data === 'inspo:play') { paused = false; start(); } });
+start();
+</script>
+</body>
+</html>

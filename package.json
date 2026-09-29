@@ -1,0 +1,55 @@
+{
+  "name": "inspo-mcp",
+  "version": "0.1.0",
+  "description": "Design research agent for Claude Code: scrapes Awwwards, Dribbble, Mobbin & co, screenshots live sites, and gives you a board to vote on references, styles and 3D components.",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "board": "node bin/inspo.js serve",
+    "doctor": "node bin/inspo.js doctor",
+    "test": "node --test test/"
+  },
+  "keywords": [
+    "mcp",
+    "claude-code",
+    "design",
+    "inspiration",
+    "awwwards",
+    "dribbble",
+    "mobbin",
+    "moodboard",
+    "three.js",
+    "plugin",
+    "skill"
+  ],
+  "author": "Bruno Varela <https://github.com/brunovareliuu>",
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.31.0",
+    "playwright": "^1.63.0",
+    "zod": "^4.6.5"
+  },
+  "bin": {
+    "inspo": "bin/inspo.js",
+    "inspo-mcp": "src/server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/brunovareliuu/inspo"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "files": [
+    "src",
+    "bin",
+    "components",
+    "skills",
+    ".claude-plugin",
+    ".mcp.json",
+    "README.md",
+    "README.es.md",
+    "LICENSE"
+  ]
+}

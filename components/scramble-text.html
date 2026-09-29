@@ -1,0 +1,157 @@
+<!--inspo
+{"id":"scramble-text","name":"Scramble Text","category":"text","tags":["scramble","decode","typography","monospace","hero","tech"],"description":"A monospace hero where headings decode through random glyphs and cycle words, with meta labels that re-scramble; suited to dev tools, AI and tech brand heroes.","deps":[]}
+-->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Scramble Text</title>
+<script>
+(function(){var q=new URLSearchParams(location.search);['bg','fg','muted','accent','accent2'].forEach(function(k){var v=q.get(k);if(v)document.documentElement.style.setProperty('--'+k,v)});var fd=q.get('fontDisplay'),fb=q.get('fontBody');if(fd||fb){var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?'+[fd,fb].filter(Boolean).map(function(f){return 'family='+encodeURIComponent(f)+':wght@400;500;600;700'}).join('&')+'&display=swap';document.head.appendChild(l);if(fd)document.documentElement.style.setProperty('--font-display','"'+fd+'"');if(fb)document.documentElement.style.setProperty('--font-body','"'+fb+'"')}})();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#0a0b0a; --fg:#e9ece5; --muted:#6c7169; --accent:#4dffb5; --accent2:#b18cff;
+  --font-display:"JetBrains Mono", ui-monospace, monospace;
+  --font-body:"JetBrains Mono", ui-monospace, monospace;
+  --u:clamp(9px, min(.95vw, 1.55vh), 13px);
+  --pad:clamp(16px, 2.6vw, 40px);
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden}
+body{background:var(--bg); color:var(--fg); font:400 var(--u)/1.5 var(--font-body); -webkit-font-smoothing:antialiased;
+  display:grid; grid-template-rows:auto 1fr auto; padding:var(--pad); position:relative}
+body::before{content:""; position:absolute; inset:0; pointer-events:none; opacity:.5;
+  background-image:radial-gradient(color-mix(in oklab, var(--fg) 16%, transparent) 1px, transparent 1.2px); background-size:calc(var(--u)*2.4) calc(var(--u)*2.4);
+  -webkit-mask:radial-gradient(80% 70% at 70% 50%, #000, transparent 80%); mask:radial-gradient(80% 70% at 70% 50%, #000, transparent 80%)}
+.bar{display:flex; justify-content:space-between; gap:24px; text-transform:uppercase; letter-spacing:.06em; position:relative}
+.bar .dim{color:var(--muted)}
+.logo{font-weight:700; letter-spacing:.02em}
+.logo i{font-style:normal; color:var(--accent)}
+.status{display:inline-flex; align-items:center; gap:.7em}
+.status b{width:.6em; height:.6em; background:var(--accent); box-shadow:0 0 12px var(--accent); animation:blink 1.4s steps(2) infinite}
+@keyframes blink{50%{opacity:.25}}
+main{display:flex; flex-direction:column; justify-content:center; position:relative}
+.kicker{color:var(--muted); margin-bottom:calc(var(--u)*1.6); letter-spacing:.04em}
+.kicker span{color:var(--accent)}
+h1{margin:0; font:500 min(8.4vw, 13.5vh)/1 var(--font-display); letter-spacing:-.06em; white-space:nowrap}
+h1 .l1{display:block} h1 .l2{color:var(--accent); display:flex; align-items:center}
+.caret{display:inline-block; width:.5em; height:.82em; background:var(--accent); margin-left:.12em; animation:blink 1s steps(2) infinite; transform:translateY(.04em)}
+.g{color:var(--accent2); opacity:.9}
+h1 .l2 .g{color:color-mix(in oklab, var(--accent) 45%, var(--bg))}
+.cols{display:grid; grid-template-columns:repeat(4, 1fr); gap:calc(var(--u)*2.4); position:relative; border-top:1px solid color-mix(in oklab, var(--fg) 12%, transparent); padding-top:calc(var(--u)*1.4)}
+.cols div{min-width:0}
+.cols .n{color:var(--muted); display:block; margin-bottom:.5em}
+.cols .t{text-transform:uppercase; letter-spacing:.04em; display:block; white-space:nowrap; overflow:hidden}
+.cols .d{color:var(--muted); display:block; margin-top:.35em}
+.log{position:absolute; right:0; top:50%; transform:translateY(-50%); width:34ch; color:var(--muted); line-height:1.9; border-left:1px solid color-mix(in oklab, var(--fg) 12%, transparent); padding-left:calc(var(--u)*1.6)}
+.log .ttl{color:var(--fg); text-transform:uppercase; letter-spacing:.06em; margin-bottom:.8em; display:flex; justify-content:space-between}
+.log .ttl span{color:var(--accent)}
+.log div.r{white-space:nowrap; overflow:hidden; display:flex; justify-content:space-between; gap:1em}
+.log div.r:last-child{color:var(--fg)}
+.log div.r em{font-style:normal; color:var(--accent)}
+.inspo-paused *{animation-play-state:paused!important}
+@media (max-width:1100px){ .log{display:none} }
+@media (max-width:760px), (max-height:520px){
+  .cols{grid-template-columns:repeat(3,1fr)} .cols div:nth-child(4){display:none} .cols .d{display:none}
+  .bar .coords{display:none}
+}
+</style>
+</head>
+<body>
+<div class="bar">
+  <div class="logo">NØDE<i>/</i>LABS</div>
+  <div class="dim coords" data-scr>40.7128° N — 74.0060° W</div>
+  <div class="status"><b></b><span data-scr>SYS.ONLINE</span></div>
+</div>
+<main>
+  <div class="kicker"><span>&gt;</span> <span style="color:inherit" data-scr>initializing studio.runtime v4.2</span></div>
+  <div class="log" id="log"><div class="ttl">Build log <span id="lc">#4821</span></div></div>
+  <h1><span class="l1" id="l1">We engineer</span><span class="l2"><span id="l2">interfaces</span><i class="caret"></i></span></h1>
+</main>
+<div class="cols">
+  <div><span class="n">[01]</span><span class="t" data-scr>Research</span><span class="d">Signal over noise</span></div>
+  <div><span class="n">[02]</span><span class="t" data-scr>Prototype</span><span class="d">Ideas you can touch</span></div>
+  <div><span class="n">[03]</span><span class="t" data-scr>Ship</span><span class="d">Weekly, not someday</span></div>
+  <div><span class="n">[04]</span><span class="t" data-scr>Iterate</span><span class="d">Measured in hours</span></div>
+</div>
+<script>
+(function(){
+  var RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var GLYPHS = '!<>-_\\/[]{}—=+*^?#01ABCDEFXYZ$%&@';
+  function Scr(el){ this.el = el; this.q = []; this.frame = 0; this.done = true; this.text = el.textContent; }
+  Scr.prototype.set = function(to, spread){
+    var from = this.text, len = Math.max(from.length, to.length); spread = spread || 26;
+    this.q = [];
+    for (var i=0;i<len;i++){
+      var s = Math.floor(Math.random()*spread*.6), e = s + 8 + Math.floor(Math.random()*spread);
+      this.q.push({from:from[i]||'', to:to[i]||'', s:s, e:e, ch:''});
+    }
+    this.frame = 0; this.done = false; this.text = to;
+  };
+  Scr.prototype.step = function(){
+    if (this.done) return;
+    var out = '', complete = 0;
+    for (var i=0;i<this.q.length;i++){
+      var c = this.q[i];
+      if (this.frame >= c.e){ complete++; out += esc(c.to); }
+      else if (this.frame >= c.s){
+        if (!c.ch || Math.random() < .3) c.ch = GLYPHS[Math.floor(Math.random()*GLYPHS.length)];
+        out += c.to === ' ' && c.from === ' ' ? ' ' : '<span class="g">' + esc(c.ch) + '</span>';
+      } else out += esc(c.from);
+    }
+    this.el.innerHTML = out; this.frame++;
+    if (complete === this.q.length) this.done = true;
+  };
+  function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+
+  var WORDS = ['interfaces', 'protocols', 'machines', 'futures', 'rituals'];
+  var h1 = new Scr(document.getElementById('l1')), h2 = new Scr(document.getElementById('l2'));
+  var metas = [].slice.call(document.querySelectorAll('[data-scr]')).map(function(el){ var s = new Scr(el); s.orig = el.textContent; return s; });
+  // boot: decode everything from noise
+  h1.text = ''; h1.set('We engineer', 30);
+  h2.text = ''; h2.set(WORDS[0], 40);
+  metas.forEach(function(s){ s.text = ''; s.set(s.orig, 34); });
+  var wi = 0, clock = 0, frameAcc = 0, nextWord = 3.2, nextMeta = 2.4, FPS = RM ? 12 : 30;
+
+  // live build log (wide screens only)
+  var log = document.getElementById('log'), lc = document.getElementById('lc'), build = 4821, nextLog = .2;
+  var LOGS = ['fetch deps','compile shaders','lint /src','test 1,204 specs','bundle edge','optimize images','sign artifacts','deploy eu-west','deploy us-east','warm caches','verify health','publish'];
+  var li = 0, rows = [], logScr = [];
+  function addLog(){
+    var r = document.createElement('div'); r.className = 'r';
+    var a = document.createElement('span'), b = document.createElement('em');
+    b.textContent = (Math.random()*900+40|0) + 'ms';
+    r.appendChild(a); r.appendChild(b); log.appendChild(r);
+    var sc = new Scr(a); sc.set(LOGS[li % LOGS.length], 14); logScr.push(sc);
+    li++; if (li % LOGS.length === 0){ build++; lc.textContent = '#' + build; }
+    rows.push(r); if (rows.length > 9){ log.removeChild(rows.shift()); logScr.shift(); }
+  }
+  var wide = matchMedia('(min-width:1101px)');
+
+  var ext=false, running=false, raf=0, last=0;
+  function ok(){ return !ext && !document.hidden; }
+  function start(){ if(running||!ok()) return; running=true; last=performance.now(); raf=requestAnimationFrame(tick); }
+  function stop(){ running=false; cancelAnimationFrame(raf); }
+  function sync(){ ok()?start():stop(); document.documentElement.classList.toggle('inspo-paused', !ok()); }
+  function step(s){ s.step(); }
+  function tick(now){
+    var dt = Math.max(0,Math.min(.05,(now-last)/1000)); last = now; clock += dt; frameAcc += dt;
+    if (clock > nextWord){ nextWord = clock + (RM ? 5 : 3.2); wi = (wi+1) % WORDS.length; h2.set(WORDS[wi], 22); }
+    if (clock > nextMeta){ nextMeta = clock + (RM ? 4 : 1.6); var s = metas[Math.floor(Math.random()*metas.length)]; s.set(s.orig, 20); }
+    if (wide.matches && clock > nextLog){ nextLog = clock + (RM ? 1.4 : .55); addLog(); }
+    while (frameAcc > 1/FPS){ frameAcc -= 1/FPS; h1.step(); h2.step(); metas.forEach(step); logScr.forEach(step); }
+    if (running) raf = requestAnimationFrame(tick);
+  }
+  document.addEventListener('visibilitychange', sync);
+  addEventListener('message', function(e){ if(e.data==='inspo:pause'){ext=true;sync();} else if(e.data==='inspo:play'){ext=false;sync();} });
+  // hover a heading to re-decode it
+  document.querySelector('h1').addEventListener('pointerenter', function(){ h1.set('We engineer', 18); });
+  sync();
+})();
+</script>
+</body>
+</html>

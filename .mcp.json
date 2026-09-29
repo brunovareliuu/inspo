@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "inspo": {
+      "command": "sh",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/bin/inspo-mcp.sh"]
+    }
+  }
+}

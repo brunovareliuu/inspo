@@ -1,0 +1,107 @@
+<!--inspo
+{"id":"cursor-blend","name":"Blend Cursor","category":"cursor","tags":["custom-cursor","mix-blend-mode","difference","typography","hero"],"description":"A liquid custom-cursor blob with mix-blend-mode difference that inverts giant type as it passes and swells over words; a signature hero for portfolios and studios.","deps":[]}
+-->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Blend Cursor</title>
+<script>
+(function(){var q=new URLSearchParams(location.search);['bg','fg','muted','accent','accent2'].forEach(function(k){var v=q.get(k);if(v)document.documentElement.style.setProperty('--'+k,v)});var fd=q.get('fontDisplay'),fb=q.get('fontBody');if(fd||fb){var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?'+[fd,fb].filter(Boolean).map(function(f){return 'family='+encodeURIComponent(f)+':wght@400;500;600;700'}).join('&')+'&display=swap';document.head.appendChild(l);if(fd)document.documentElement.style.setProperty('--font-display','"'+fd+'"');if(fb)document.documentElement.style.setProperty('--font-body','"'+fb+'"')}})();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Instrument+Serif:ital@1&family=Inter:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#0a0a0a; --fg:#f2f0e9; --muted:#6f6d68; --accent:#ff5b2e; --accent2:#3fe0ff;
+  --font-display:"Syne", ui-sans-serif, system-ui, sans-serif;
+  --font-body:"Inter", ui-sans-serif, system-ui, sans-serif;
+  --serif:"Instrument Serif", Georgia, serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden}
+body{background:var(--bg); color:var(--fg); font-family:var(--font-body); -webkit-font-smoothing:antialiased; cursor:none;
+  display:grid; grid-template-rows:auto 1fr auto; padding:clamp(14px,2.4vw,36px)}
+nav,footer{display:flex; justify-content:space-between; align-items:center; font:500 clamp(10px,.95vw,13px)/1 var(--font-body); letter-spacing:.02em; position:relative; z-index:1}
+.logo{font:700 clamp(13px,1.4vw,19px)/1 var(--font-display); letter-spacing:-.02em}
+.logo sup{font-size:.5em; color:var(--accent)}
+.links{display:flex; gap:clamp(12px,2.2vw,32px)} .links a{color:var(--fg); text-decoration:none; opacity:.8}
+footer span{color:var(--muted)} footer .live{color:var(--fg); display:inline-flex; gap:.6em; align-items:center}
+footer .live i{width:6px;height:6px;border-radius:50%;background:var(--accent2)}
+main{display:flex; flex-direction:column; justify-content:center; position:relative; z-index:1}
+h1{margin:0; font:800 min(12.6vw, 19.5vh)/.86 var(--font-display); letter-spacing:-.055em; text-transform:uppercase}
+h1 .ln{display:block}
+h1 .ln:nth-child(2){text-align:right}
+h1 .ln:nth-child(3){padding-left:8vw}
+.w{display:inline-block}
+.it{font:400 1.02em/.8 var(--serif); font-style:italic; text-transform:none; letter-spacing:-.03em; color:var(--accent)}
+.blob{position:fixed; left:0; top:0; width:var(--s); height:var(--s); margin:calc(var(--s)/-2) 0 0 calc(var(--s)/-2); --s:clamp(84px, 17vmin, 220px);
+  background:var(--fg); mix-blend-mode:difference; pointer-events:none; z-index:5; will-change:transform;
+  border-radius:42% 58% 63% 37% / 45% 43% 57% 55%; animation:morph 7s ease-in-out infinite}
+.dot{position:fixed; left:0; top:0; width:6px; height:6px; margin:-3px 0 0 -3px; border-radius:50%; background:var(--fg); mix-blend-mode:difference; pointer-events:none; z-index:6}
+@keyframes morph{
+  0%,100%{border-radius:42% 58% 63% 37% / 45% 43% 57% 55%}
+  33%{border-radius:61% 39% 44% 56% / 58% 62% 38% 42%}
+  66%{border-radius:37% 63% 52% 48% / 38% 47% 53% 62%}
+}
+.inspo-paused *{animation-play-state:paused!important}
+@media (max-width:640px){ .links a:nth-child(n+2){display:none} }
+@media (prefers-reduced-motion:reduce){ .blob{animation-duration:20s} }
+</style>
+</head>
+<body>
+<nav><div class="logo">Oda<sup>®</sup></div><div class="links"><a>Work</a><a>Studio</a><a>Journal</a><a>Contact</a></div></nav>
+<main>
+  <h1>
+    <span class="ln"><span class="w">Design</span></span>
+    <span class="ln"><span class="w">that</span> <span class="w it">feels</span></span>
+    <span class="ln"><span class="w">alive.</span></span>
+  </h1>
+</main>
+<footer><span class="live"><i></i>Available for 2027</span><span>Brand &amp; digital — Mexico City</span></footer>
+<div class="blob" id="blob"></div><div class="dot" id="dot"></div>
+<script>
+(function(){
+  var RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var blob = document.getElementById('blob'), dot = document.getElementById('dot');
+  var m = {x:innerWidth*.5, y:innerHeight*.5}, lastReal = -1e9;
+  var p = {x:m.x, y:m.y}, vx = 0, vy = 0, scale = .2, sx = 1, sy = 1, ang = 0;
+  addEventListener('pointermove', function(e){ m.x = e.clientX; m.y = e.clientY; lastReal = performance.now(); });
+  function overWord(x, y){ var el = document.elementFromPoint(x, y); return !!(el && el.closest && el.closest('.w')); }
+
+  var ext=false, running=false, raf=0, last=0, t=0;
+  function ok(){ return !ext && !document.hidden; }
+  function start(){ if(running||!ok()) return; running=true; last=performance.now(); raf=requestAnimationFrame(tick); }
+  function stop(){ running=false; cancelAnimationFrame(raf); }
+  function sync(){ ok()?start():stop(); document.documentElement.classList.toggle('inspo-paused', !ok()); }
+  function tick(now){
+    var dt = Math.max(0,Math.min(.05,(now-last)/1000)); last = now; t += dt * (RM ? .35 : 1);
+    var tx, ty;
+    if (now - lastReal < 2500){ tx = m.x; ty = m.y; }
+    else { // idle: wander across the headline on a slow lissajous
+      var W = innerWidth, H = innerHeight;
+      tx = W*.5 + Math.sin(t*.53)*W*.36 + Math.sin(t*1.31)*W*.05;
+      ty = H*.5 + Math.sin(t*.77 + 1.2)*H*.26 + Math.cos(t*1.7)*H*.04;
+    }
+    var k = 1 - Math.exp(-dt * 7.5);
+    var nx = p.x + (tx - p.x)*k, ny = p.y + (ty - p.y)*k;
+    vx = (nx - p.x)/Math.max(dt,1e-3); vy = (ny - p.y)/Math.max(dt,1e-3); p.x = nx; p.y = ny;
+    var sp = Math.min(1, Math.hypot(vx,vy)/2400);
+    var big = overWord(p.x, p.y) ? 1.75 : 1;
+    scale += (big - scale) * (1 - Math.exp(-dt*6));
+    // squash & stretch along the direction of travel
+    if (sp > .02) ang = Math.atan2(vy, vx) * 180/Math.PI;
+    sx += ((1 + sp*.45) - sx) * (1 - Math.exp(-dt*10)); sy += ((1 - sp*.28) - sy) * (1 - Math.exp(-dt*10));
+    blob.style.transform = 'translate3d(' + p.x.toFixed(1) + 'px,' + p.y.toFixed(1) + 'px,0) rotate(' + ang.toFixed(1) + 'deg) scale(' + (scale*sx).toFixed(3) + ',' + (scale*sy).toFixed(3) + ')';
+    var dx = now - lastReal < 2500 ? tx : p.x + (tx - p.x)*.6, dy = now - lastReal < 2500 ? ty : p.y + (ty - p.y)*.6;
+    dot.style.transform = 'translate3d(' + dx.toFixed(1) + 'px,' + dy.toFixed(1) + 'px,0)';
+    if (running) raf = requestAnimationFrame(tick);
+  }
+  document.addEventListener('visibilitychange', sync);
+  addEventListener('message', function(e){ if(e.data==='inspo:pause'){ext=true;sync();} else if(e.data==='inspo:play'){ext=false;sync();} });
+  t = 2.2; sync();
+})();
+</script>
+</body>
+</html>

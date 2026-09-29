@@ -1,0 +1,14 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "inspo",
+  "description": "Design research for web projects: references, style directions and live 3D components you vote on.",
+  "owner": { "name": "Bruno Varela", "url": "https://github.com/brunovareliuu" },
+  "plugins": [
+    {
+      "name": "inspo",
+      "description": "Idea → research (Awwwards, Dribbble, Mobbin, Land-book…) → voting board with styles, references and live 3D/motion components → design brief.",
+      "source": "./",
+      "category": "design"
+    }
+  ]
+}

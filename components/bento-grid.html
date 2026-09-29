@@ -1,0 +1,250 @@
+<!--inspo
+{"id":"bento-grid","name":"Bento Grid","category":"layout","tags":["bento","grid","dashboard","counters","charts","saas","features"],"description":"A modern bento feature grid with living tiles: counting stats, a self-drawing revenue chart, animated bars, a progress ring and a toggle; ideal for SaaS feature and product overview sections.","deps":[]}
+-->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bento Grid</title>
+<script>
+(function(){var q=new URLSearchParams(location.search);['bg','fg','muted','accent','accent2'].forEach(function(k){var v=q.get(k);if(v)document.documentElement.style.setProperty('--'+k,v)});var fd=q.get('fontDisplay'),fb=q.get('fontBody');if(fd||fb){var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?'+[fd,fb].filter(Boolean).map(function(f){return 'family='+encodeURIComponent(f)+':wght@400;500;600;700'}).join('&')+'&display=swap';document.head.appendChild(l);if(fd)document.documentElement.style.setProperty('--font-display','"'+fd+'"');if(fb)document.documentElement.style.setProperty('--font-body','"'+fb+'"')}})();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#f8f7f3; --fg:#111113; --muted:#8a8883; --accent:#3a5bff; --accent2:#ffb224;
+  --font-display:"Geist", ui-sans-serif, system-ui, sans-serif;
+  --font-body:"Geist", ui-sans-serif, system-ui, sans-serif;
+  --mono:"Geist Mono", ui-monospace, monospace;
+  --page:color-mix(in oklab, var(--bg) 93%, var(--fg));
+  --line:color-mix(in oklab, var(--fg) 9%, transparent);
+  --u:clamp(9px, min(1.05vw, 1.7vh), 15px);
+  --r:calc(var(--u)*1.5);
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden}
+body{background:var(--page); color:var(--fg); font:400 var(--u)/1.35 var(--font-body); -webkit-font-smoothing:antialiased; padding:calc(var(--u)*1.8)}
+.grid{height:100%; display:grid; gap:calc(var(--u)*1.1); grid-template-columns:1.1fr 1.1fr 1fr 1.15fr; grid-template-rows:1fr 1fr .95fr}
+.tile{position:relative; background:var(--bg); border-radius:var(--r); padding:calc(var(--u)*1.6); overflow:hidden; box-shadow:0 0 0 1px var(--line), 0 1px 2px rgba(0,0,0,.04);
+  display:flex; flex-direction:column; transition:transform .5s cubic-bezier(.2,.8,.2,1), box-shadow .5s; min-width:0; min-height:0}
+.tile:hover{transform:translateY(-4px); box-shadow:0 0 0 1px color-mix(in oklab, var(--fg) 14%, transparent), 0 18px 40px -18px rgba(0,0,0,.28)}
+.lbl{font:500 calc(var(--u)*.78)/1 var(--mono); letter-spacing:.08em; text-transform:uppercase; color:var(--muted); display:flex; align-items:center; gap:.6em}
+.lbl i{width:.55em;height:.55em;border-radius:50%;background:#22c55e;box-shadow:0 0 0 0 rgba(34,197,94,.5);animation:ping 2s infinite}
+@keyframes ping{70%{box-shadow:0 0 0 .6em rgba(34,197,94,0)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}}
+.big{font:500 calc(var(--u)*3.4)/1 var(--font-display); letter-spacing:-.045em; font-variant-numeric:tabular-nums; margin-top:auto}
+.sub{color:var(--muted); margin-top:.5em}
+/* hero */
+.hero{grid-column:1/3; grid-row:1/3; background:var(--fg); color:var(--bg); padding:calc(var(--u)*2.4); box-shadow:none}
+.hero .lbl{color:color-mix(in oklab, var(--bg) 55%, transparent)}
+.hero h1{font:500 calc(var(--u)*4.4)/.98 var(--font-display); letter-spacing:-.05em; margin:auto 0 0; position:relative; z-index:1}
+.hero h1 span{color:color-mix(in oklab, var(--bg) 45%, transparent)}
+.hero .row{display:flex; align-items:center; gap:calc(var(--u)*1.2); margin-top:calc(var(--u)*1.8); position:relative; z-index:1}
+.pill{background:var(--bg); color:var(--fg); border-radius:99px; padding:.8em 1.3em; font-weight:500; display:inline-flex; gap:.5em; align-items:center}
+.pill svg{width:1em;height:1em}
+.hero .row small{color:color-mix(in oklab, var(--bg) 55%, transparent); font-size:.9em}
+.orb{position:absolute; width:70%; aspect-ratio:1; right:-18%; top:-30%; border-radius:50%; filter:blur(calc(var(--u)*3));
+  background:conic-gradient(from var(--a,0deg), var(--accent), var(--accent2), color-mix(in oklab, var(--accent) 50%, #ff3d7f), var(--accent)); opacity:.75}
+.hero .ticks{position:absolute; right:calc(var(--u)*2.4); top:calc(var(--u)*2.4); font:500 calc(var(--u)*.78)/1.6 var(--mono); color:color-mix(in oklab, var(--bg) 60%, transparent); text-align:right; z-index:1}
+/* uptime */
+.up .bars{display:flex; gap:2px; height:calc(var(--u)*2); margin-top:calc(var(--u)*1)}
+.up .bars b{flex:1; border-radius:2px; background:#22c55e; opacity:.85}
+.up .bars b.warn{background:var(--accent2)}
+/* toggle */
+.tg .sw{margin-top:auto; display:flex; align-items:center; justify-content:space-between}
+.sw .k{width:calc(var(--u)*3.4); height:calc(var(--u)*2); border-radius:99px; background:color-mix(in oklab, var(--fg) 14%, transparent); position:relative; transition:background .45s}
+.sw .k::after{content:""; position:absolute; top:3px; left:3px; height:calc(100% - 6px); aspect-ratio:1; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.25); transition:transform .45s cubic-bezier(.5,1.6,.4,1)}
+.on .sw .k{background:var(--accent)} .on .sw .k::after{transform:translateX(calc(var(--u)*1.4))}
+.tg .t{font:500 calc(var(--u)*1.35)/1.1 var(--font-display); letter-spacing:-.02em}
+.chip{display:inline-flex; align-items:center; gap:.5em; margin-top:calc(var(--u)*.9); padding:.45em .8em; border-radius:99px; background:color-mix(in oklab, var(--fg) 5%, transparent); font:500 calc(var(--u)*.8)/1 var(--mono); color:var(--muted); transition:opacity .4s, transform .4s; width:max-content}
+.chip b{width:.5em;height:.5em;border-radius:50%;background:var(--muted); transition:background .4s}
+.on .chip{color:var(--fg)} .on .chip b{background:#22c55e}
+/* revenue */
+.rev{grid-column:4; grid-row:1/3}
+.rev .big{margin-top:calc(var(--u)*1)}
+.delta{display:inline-flex; align-items:center; gap:.35em; font:500 calc(var(--u)*.85)/1 var(--mono); color:#16a34a; background:rgba(34,197,94,.12); padding:.4em .6em; border-radius:99px; margin-top:calc(var(--u)*.7); width:max-content}
+.chart{position:relative; flex:1; margin:calc(var(--u)*1.2) calc(var(--u)*-1.6) calc(var(--u)*-1.6)}
+.chart svg{position:absolute; inset:0; width:100%; height:100%; overflow:visible}
+.chart .ln{fill:none; stroke:var(--accent); stroke-width:2.2; vector-effect:non-scaling-stroke; stroke-linejoin:round; stroke-linecap:round}
+.chart .grid-l{stroke:var(--line); stroke-width:1; vector-effect:non-scaling-stroke; stroke-dasharray:3 4}
+.cursor{position:absolute; width:calc(var(--u)*.9); height:calc(var(--u)*.9); margin:calc(var(--u)*-.45) 0 0 calc(var(--u)*-.45); border-radius:50%; background:var(--bg); border:2px solid var(--accent); box-shadow:0 0 0 5px color-mix(in oklab, var(--accent) 18%, transparent)}
+.tip{position:absolute; transform:translate(-50%, calc(-100% - var(--u)*1.1)); background:var(--fg); color:var(--bg); font:500 calc(var(--u)*.8)/1 var(--mono); padding:.5em .7em; border-radius:.5em; white-space:nowrap}
+.vline{position:absolute; top:0; bottom:0; width:1px; background:color-mix(in oklab, var(--accent) 35%, transparent)}
+/* people */
+.ppl .av{display:flex; margin-top:auto}
+.ppl .av span{width:calc(var(--u)*2.8); height:calc(var(--u)*2.8); border-radius:50%; margin-right:calc(var(--u)*-.8); border:2px solid var(--bg); display:grid; place-items:center; font:600 calc(var(--u)*.8)/1 var(--font-body); color:#fff; transition:transform .4s cubic-bezier(.2,.8,.2,1)}
+.ppl:hover .av span{transform:translateX(calc(var(--i)*3px))}
+.ppl .av span:last-child{background:var(--fg); color:var(--bg); font-size:calc(var(--u)*.72)}
+.ppl .t{font:500 calc(var(--u)*1.35)/1.1 var(--font-display); letter-spacing:-.02em; margin-top:calc(var(--u)*.9)}
+/* bars */
+.wk{grid-column:2/4}
+.wk .head{display:flex; justify-content:space-between; align-items:flex-start}
+.wk .head .big{margin:calc(var(--u)*.6) 0 0; font-size:calc(var(--u)*2.4)}
+.bars7{flex:1; display:flex; align-items:flex-end; gap:calc(var(--u)*.7); margin-top:calc(var(--u)*1)}
+.bars7 div{flex:1; display:flex; flex-direction:column; align-items:center; gap:.45em; height:100%; justify-content:flex-end}
+.bars7 b{width:100%; border-radius:calc(var(--u)*.45); background:color-mix(in oklab, var(--fg) 10%, transparent); height:var(--h,20%); transition:height .9s cubic-bezier(.2,.8,.2,1), background .5s}
+.bars7 b.hi{background:var(--accent)}
+.bars7 small{font:500 calc(var(--u)*.7)/1 var(--mono); color:var(--muted)}
+/* ring */
+.ring{align-items:center; justify-content:center; text-align:center}
+.ring .rw{position:relative; width:min(62%, 70% * 1); aspect-ratio:1; max-height:70%}
+.ring svg{width:100%; height:100%; transform:rotate(-90deg)}
+.ring circle{fill:none; stroke-width:9}
+.ring .bgc{stroke:color-mix(in oklab, var(--fg) 8%, transparent)}
+.ring .fgc{stroke:var(--accent2); stroke-linecap:round; transition:stroke-dashoffset 1.4s cubic-bezier(.2,.8,.2,1)}
+.ring .val{position:absolute; inset:0; display:grid; place-items:center; font:500 calc(var(--u)*1.7)/1 var(--font-display); letter-spacing:-.04em; font-variant-numeric:tabular-nums}
+.ring .lbl{margin-top:calc(var(--u)*.9)}
+.inspo-paused *{animation-play-state:paused!important}
+/* compact (board thumbnails, phones) */
+@media (max-width:760px), (max-height:520px){
+  :root{--u:clamp(8px, min(1.8vw, 2.7vh), 13px)}
+  .grid{grid-template-columns:1fr 1fr 1fr; grid-template-rows:1fr 1fr}
+  .hero{grid-column:1/3; grid-row:1}
+  .hero h1{font-size:calc(var(--u)*2.9)}
+  .hero .ticks, .hero .row small{display:none}
+  .hero .row{margin-top:calc(var(--u)*1)}
+  .rev{grid-column:3; grid-row:1/3}
+  .up{grid-column:1; grid-row:2}
+  .wk{grid-column:2; grid-row:2}
+  .wk .head .big{display:none}
+  .tg,.ppl,.ring{display:none}
+  .up .big{font-size:calc(var(--u)*2.6)}
+}
+</style>
+</head>
+<body>
+<div class="grid">
+  <section class="tile hero">
+    <div class="orb" id="orb"></div>
+    <div class="lbl">Platform / 04</div>
+    <div class="ticks">EU-WEST · 12ms<br>US-EAST · 18ms<br>AP-SOUTH · 41ms</div>
+    <h1>Ship faster.<br><span>Meet less.</span></h1>
+    <div class="row"><span class="pill">Start building <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span><small>Free for teams under 10</small></div>
+  </section>
+
+  <section class="tile up">
+    <div class="lbl"><i></i>Uptime</div>
+    <div class="big"><span data-count="99.98" data-dec="2">0</span>%</div>
+    <div class="sub">Last 90 days</div>
+    <div class="bars" id="upbars"></div>
+  </section>
+
+  <section class="tile tg" id="tg">
+    <div class="lbl">Pipeline</div>
+    <div class="sw"><div class="t">Auto-deploy<br>on merge</div><div class="k"></div></div>
+    <div class="chip"><b></b><span id="chipt">Preview ready · 38s</span></div>
+  </section>
+
+  <section class="tile rev">
+    <div class="lbl">Revenue</div>
+    <div class="big">$<span data-count="482.6" data-dec="1">0</span>k</div>
+    <div class="delta">▲ 24.1% <span style="color:var(--muted)">vs Q2</span></div>
+    <div class="chart" id="chart">
+      <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+        <defs><linearGradient id="fillg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="var(--accent)" stop-opacity=".28"/><stop offset="1" stop-color="var(--accent)" stop-opacity="0"/></linearGradient></defs>
+        <line class="grid-l" x1="0" x2="100" y1="30" y2="30"/><line class="grid-l" x1="0" x2="100" y1="60" y2="60"/>
+        <clipPath id="clip"><rect id="cliprect" x="0" y="-10" width="0" height="120"/></clipPath>
+        <g clip-path="url(#clip)"><path id="area" fill="url(#fillg)"/><path id="line" class="ln"/></g>
+      </svg>
+      <div class="vline" id="vline"></div><div class="cursor" id="cur"></div><div class="tip" id="tip">$0k</div>
+    </div>
+  </section>
+
+  <section class="tile ppl">
+    <div class="lbl">Community</div>
+    <div class="av" id="av"></div>
+    <div class="t"><span data-count="2400" data-dec="0" data-sep="1">0</span>+ teams</div>
+  </section>
+
+  <section class="tile wk">
+    <div class="head"><div><div class="lbl">Deploys this week</div><div class="big"><span id="wkt">0</span></div></div><div class="lbl" style="color:var(--accent)">● Live</div></div>
+    <div class="bars7" id="bars7"></div>
+  </section>
+
+  <section class="tile ring">
+    <div class="rw"><svg viewBox="0 0 100 100"><circle class="bgc" cx="50" cy="50" r="42"/><circle class="fgc" id="rc" cx="50" cy="50" r="42"/></svg><div class="val"><span><span id="rv">0</span>%</span></div></div>
+    <div class="lbl">Build cache hit</div>
+  </section>
+</div>
+<script>
+(function(){
+  var RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var SPEED = RM ? .4 : 1;
+  // uptime bars
+  var ub = document.getElementById('upbars');
+  for (var i=0;i<30;i++){ var b=document.createElement('b'); if(i===19) b.className='warn'; ub.appendChild(b); }
+  // avatars
+  var av = document.getElementById('av'), ini = ['AK','ML','JR','SO','TP'];
+  var cs = getComputedStyle(document.documentElement);
+  ini.forEach(function(s,i){ var e=document.createElement('span'); e.textContent=s; e.style.setProperty('--i', i);
+    e.style.background='linear-gradient(135deg, color-mix(in oklab, var(--accent) '+(100-i*18)+'%, var(--accent2)), color-mix(in oklab, var(--accent2) '+(30+i*14)+'%, #111))'; av.appendChild(e); });
+  var more=document.createElement('span'); more.textContent='+2k'; av.appendChild(more);
+  // weekly bars
+  var days = ['M','T','W','T','F','S','S'], b7 = document.getElementById('bars7'), bars = [];
+  days.forEach(function(d){ var c=document.createElement('div'); var b=document.createElement('b'); var s=document.createElement('small'); s.textContent=d; c.appendChild(b); c.appendChild(s); b7.appendChild(c); bars.push(b); });
+  // chart data
+  var pts = [], N = 28;
+  (function(){ var v = 70; for (var i=0;i<N;i++){ v += (Math.sin(i*.9)*6 + Math.cos(i*.37)*5 - 1.9); pts.push([i/(N-1)*100, Math.max(12, Math.min(88, v))]); } })();
+  function pathD(n){
+    var d = 'M' + pts[0][0] + ',' + pts[0][1];
+    for (var i=1;i<n;i++){ var p0=pts[i-1], p1=pts[i], mx=(p0[0]+p1[0])/2; d += ' C' + mx + ',' + p0[1] + ' ' + mx + ',' + p1[1] + ' ' + p1[0] + ',' + p1[1]; }
+    return d;
+  }
+  var line = document.getElementById('line'), area = document.getElementById('area');
+  line.setAttribute('d', pathD(N)); area.setAttribute('d', pathD(N) + ' L100,100 L0,100 Z');
+  var LEN = line.getTotalLength();
+  var cliprect = document.getElementById('cliprect');
+  var chart = document.getElementById('chart'), cur = document.getElementById('cur'), tip = document.getElementById('tip'), vline = document.getElementById('vline');
+  // counters
+  var counters = [].slice.call(document.querySelectorAll('[data-count]')).map(function(el){ return {el:el, to:+el.dataset.count, dec:+el.dataset.dec, sep:!!el.dataset.sep}; });
+  function fmt(v, c){ var s = v.toFixed(c.dec); return c.sep ? Number(s).toLocaleString('en-US') : s; }
+  var rc = document.getElementById('rc'), rv = document.getElementById('rv'), C = 2*Math.PI*42;
+  rc.style.strokeDasharray = C; rc.style.strokeDashoffset = C;
+  var tg = document.getElementById('tg'), chipt = document.getElementById('chipt'), wkt = document.getElementById('wkt'), orb = document.getElementById('orb');
+  function outExpo(x){ return x>=1?1:1-Math.pow(2,-10*x); }
+
+  var clock = 0, nextBars = 0, nextToggle = 1.6, nextRing = .3, ringVal = 0, ringTarget = 72, week = 0;
+  function render(dt){
+    clock += dt * SPEED;
+    var p = outExpo(Math.min(1, clock/1.8));
+    counters.forEach(function(c){ c.el.textContent = fmt(c.to * p, c); });
+    // chart draw + scrubbing cursor
+    var d = outExpo(Math.min(1, clock/2.2));
+    cliprect.setAttribute('width', (d*101).toFixed(2));
+    var u = d < 1 ? d*.97 : .6 + .37*Math.cos((clock-2.2)*.5);
+    u = Math.max(.02, Math.min(.98, u));
+    var pt = line.getPointAtLength(LEN*u), W = chart.clientWidth, H = chart.clientHeight;
+    var x = pt.x/100*W, y = pt.y/100*H;
+    cur.style.transform = vline.style.transform = tip.style.transform = '';
+    cur.style.left = x + 'px'; cur.style.top = y + 'px'; vline.style.left = x + 'px';
+    tip.style.left = Math.max(40, Math.min(W-40, x)) + 'px'; tip.style.top = y + 'px';
+    tip.textContent = '$' + (180 + (100-pt.y)*3.4).toFixed(1) + 'k';
+    // bars every 3s
+    if (clock >= nextBars){ nextBars = clock + 3; var mx = -1, mi = 0, tot = 0;
+      var hs = bars.map(function(){ return 18 + Math.random()*78; });
+      hs.forEach(function(h,i){ if(h>mx){mx=h;mi=i;} tot += Math.round(h*1.7); });
+      bars.forEach(function(b,i){ setTimeout(function(){ b.style.setProperty('--h', hs[i]+'%'); b.classList.toggle('hi', i===mi); }, i*60); });
+      week = tot; }
+    wkt.textContent = Math.round(week * p);
+    // toggle every 3.2s
+    if (clock >= nextToggle){ nextToggle = clock + 3.2; var on = !tg.classList.contains('on'); tg.classList.toggle('on', on); chipt.textContent = on ? 'Preview ready · ' + (28 + Math.floor(Math.random()*20)) + 's' : 'Waiting for merge'; }
+    // ring
+    if (clock >= nextRing){ nextRing = clock + 4.5; ringTarget = 64 + Math.round(Math.random()*30); rc.style.strokeDashoffset = (C*(1-ringTarget/100)).toFixed(2); }
+    ringVal += (ringTarget - ringVal) * (1 - Math.exp(-dt*3)); rv.textContent = Math.round(ringVal);
+    orb.style.setProperty('--a', (clock*40 % 360).toFixed(1) + 'deg');
+  }
+
+  var ext=false, running=false, raf=0, last=0;
+  function ok(){ return !ext && !document.hidden; }
+  function start(){ if(running||!ok()) return; running=true; last=performance.now(); raf=requestAnimationFrame(tick); }
+  function stop(){ running=false; cancelAnimationFrame(raf); }
+  function sync(){ ok()?start():stop(); document.documentElement.classList.toggle('inspo-paused', !ok()); }
+  function tick(now){ var dt = Math.max(0,Math.min(.05,(now-last)/1000)); last = now; render(dt); if(running) raf=requestAnimationFrame(tick); }
+  document.addEventListener('visibilitychange', sync);
+  addEventListener('message', function(e){ if(e.data==='inspo:pause'){ext=true;sync();} else if(e.data==='inspo:play'){ext=false;sync();} });
+  sync();
+})();
+</script>
+</body>
+</html>

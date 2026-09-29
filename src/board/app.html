@@ -1,0 +1,697 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>inspo board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23d6ff3d'/%3E%3Ccircle cx='16' cy='16' r='6' fill='%230b0b0c'/%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#0b0b0c; --panel:#131315; --panel-2:#1a1a1d; --line:#26262a; --line-2:#34343a;
+  --fg:#f2f1ec; --dim:#a3a29c; --faint:#6d6c68;
+  --acc:#d6ff3d; --acc-ink:#0b0b0c; --like:#d6ff3d; --nope:#ff5a4e; --star:#ffc53d;
+  --r:14px; --r-sm:9px;
+  --font:'Geist',ui-sans-serif,system-ui,sans-serif; --mono:'Geist Mono',ui-monospace,monospace; --serif:'Instrument Serif',Georgia,serif;
+  --ease:cubic-bezier(.2,.7,.2,1);
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.45 var(--font);-webkit-font-smoothing:antialiased}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none;padding:0}
+a{color:inherit}
+::selection{background:var(--acc);color:var(--acc-ink)}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px;border-radius:6px}
+
+/* ── Top bar ─────────────────────────────── */
+.top{position:sticky;top:0;z-index:40;background:color-mix(in oklab,var(--bg) 86%,transparent);backdrop-filter:blur(14px) saturate(1.4);border-bottom:1px solid var(--line)}
+.bar{display:flex;align-items:center;gap:18px;padding:12px 24px;min-height:62px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:600;letter-spacing:-.02em;font-size:17px;white-space:nowrap}
+.logo i{width:22px;height:22px;border-radius:7px;background:var(--acc);display:grid;place-items:center}
+.logo i:after{content:"";width:8px;height:8px;border-radius:50%;background:var(--acc-ink)}
+.sess{display:flex;flex-direction:column;min-width:0;max-width:340px}
+.sess select{appearance:none;background:transparent;border:0;font-weight:500;padding:0 16px 0 0;cursor:pointer;text-overflow:ellipsis;max-width:100%;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23a3a29c' fill='none' stroke-width='1.5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right center}
+.sess select option{background:var(--panel)}
+.sess small{color:var(--faint);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tabs{display:flex;gap:2px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:3px;margin:0 auto}
+.tab{padding:7px 14px;border-radius:999px;color:var(--dim);font-weight:500;display:flex;gap:7px;align-items:center;transition:color .2s,background .2s}
+.tab:hover{color:var(--fg)}
+.tab[aria-selected=true]{background:var(--fg);color:var(--bg)}
+.tab .n{font:500 11px var(--mono);opacity:.6}
+.right{display:flex;align-items:center;gap:12px}
+.progress{display:flex;align-items:center;gap:10px;color:var(--dim);font:12px var(--mono);white-space:nowrap}
+.meter{width:90px;height:4px;border-radius:4px;background:var(--line);overflow:hidden}
+.meter b{display:block;height:100%;background:var(--acc);width:0;transition:width .5s var(--ease)}
+.saved{font:12px var(--mono);color:var(--faint);min-width:52px;text-align:right;transition:color .3s}
+.saved.on{color:var(--acc)}
+.btn{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 14px;border-radius:999px;border:1px solid var(--line-2);font-weight:500;transition:background .2s,border-color .2s,transform .15s}
+.btn:hover{border-color:var(--dim)}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}
+.btn.primary:hover{filter:brightness(1.06)}
+.btn.ghost{border-color:transparent;color:var(--dim)}
+.lang{font:500 12px var(--mono);color:var(--faint);padding:6px}
+.lang:hover{color:var(--fg)}
+
+.sub{display:flex;align-items:center;gap:8px;padding:0 24px 12px;flex-wrap:wrap}
+.chip{height:30px;padding:0 12px;border-radius:999px;border:1px solid var(--line);color:var(--dim);font-size:13px;display:inline-flex;align-items:center;gap:6px;transition:all .15s;white-space:nowrap}
+.chip:hover{color:var(--fg);border-color:var(--line-2)}
+.chip[aria-pressed=true]{background:var(--panel-2);color:var(--fg);border-color:var(--line-2)}
+.chip .n{font:11px var(--mono);color:var(--faint)}
+.sep{width:1px;height:18px;background:var(--line);margin:0 6px}
+.grow{flex:1}
+.hint{color:var(--faint);font-size:12px}
+kbd{font:11px var(--mono);border:1px solid var(--line-2);border-bottom-width:2px;border-radius:5px;padding:1px 5px;color:var(--dim)}
+
+main{padding:22px 24px 120px}
+.round-h{display:flex;align-items:baseline;gap:12px;margin:10px 0 16px}
+.round-h h2{font:italic 400 30px/1 var(--serif);margin:0;letter-spacing:-.01em}
+.round-h span{color:var(--faint);font-size:13px}
+
+/* ── Vote controls ───────────────────────── */
+.votes{display:flex;align-items:center;gap:4px}
+.v{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;color:var(--dim);transition:all .15s var(--ease);border:1px solid transparent}
+.v svg{width:17px;height:17px}
+.v:hover{background:var(--panel-2);color:var(--fg)}
+.v.like.on{background:var(--like);color:var(--acc-ink)}
+.v.nope.on{background:var(--nope);color:#fff}
+.v.star.on{color:var(--star)}
+.v.star.on svg{fill:currentColor}
+.v.pop{animation:pop .35s var(--ease)}
+@keyframes pop{40%{transform:scale(1.22)}}
+.reasons{display:flex;flex-wrap:wrap;gap:5px}
+.reasons button{font-size:12px;height:24px;padding:0 9px;border-radius:999px;border:1px solid var(--line);color:var(--dim)}
+.reasons button:hover{color:var(--fg)}
+.reasons button[aria-pressed=true]{border-color:currentColor;color:var(--like)}
+.nope-mode .reasons button[aria-pressed=true]{color:var(--nope)}
+
+/* ── Reference grid ──────────────────────── */
+.masonry{columns:var(--cols,4) 280px;column-gap:16px}
+.card{break-inside:avoid;margin:0 0 16px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;position:relative;transition:border-color .2s,transform .3s var(--ease),opacity .3s}
+.card:hover{border-color:var(--line-2)}
+.card.liked{border-color:color-mix(in oklab,var(--like) 70%,transparent);box-shadow:0 0 0 1px color-mix(in oklab,var(--like) 40%,transparent)}
+.card.disliked{opacity:.42}
+.card.disliked:hover{opacity:.9}
+.media{position:relative;display:block;width:100%;background:var(--panel-2);cursor:zoom-in;overflow:hidden}
+.media img,.media video{display:block;width:100%;height:auto}
+.media.tall{max-height:560px}
+.media.tall:after{content:"";position:absolute;inset:auto 0 0;height:70px;background:linear-gradient(transparent,var(--panel))}
+.media video{position:absolute;inset:0;height:100%;object-fit:cover;opacity:0;transition:opacity .3s}
+.media:hover video{opacity:1}
+.badge{position:absolute;top:10px;left:10px;display:flex;gap:6px;z-index:2}
+.badge span{font:500 11px var(--mono);padding:4px 8px;border-radius:999px;background:rgba(10,10,11,.72);backdrop-filter:blur(8px);color:#e9e8e3;border:1px solid rgba(255,255,255,.08)}
+.badge .new{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}
+.foot{display:flex;align-items:center;gap:10px;padding:10px 10px 10px 14px}
+.foot .t{flex:1;min-width:0}
+.foot .t b{display:block;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.foot .t small{display:block;color:var(--faint);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card .reasons{padding:0 12px 12px;display:none}
+.card.voted .reasons{display:flex}
+.card .note-dot{position:absolute;top:10px;right:10px;width:8px;height:8px;border-radius:50%;background:var(--acc);box-shadow:0 0 0 3px rgba(0,0,0,.4)}
+
+/* ── Styles ──────────────────────────────── */
+.styles{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,560px),1fr));gap:22px}
+.style{background:var(--panel);border:1px solid var(--line);border-radius:18px;overflow:hidden;display:flex;flex-direction:column;transition:border-color .2s,opacity .3s}
+.style.liked{border-color:var(--like);box-shadow:0 0 0 1px var(--like)}
+.style.disliked{opacity:.45}
+.style.disliked:hover{opacity:.95}
+.frame{position:relative;aspect-ratio:16/10;overflow:hidden;background:var(--panel-2);border-bottom:1px solid var(--line)}
+.frame iframe{position:absolute;top:0;left:0;width:1440px;height:900px;border:0;transform-origin:0 0;transform:scale(var(--s,.4));pointer-events:none;background:#fff}
+.frame .open{position:absolute;inset:0;cursor:zoom-in}
+.frame .mood{position:absolute;inset:0;display:grid;grid-template-columns:repeat(3,1fr);grid-auto-rows:1fr;gap:3px;background:var(--bg);opacity:0;transition:opacity .3s;pointer-events:none}
+.frame .mood img{width:100%;height:100%;object-fit:cover}
+.frame .mood img:first-child{grid-row:span 2;grid-column:span 2}
+.style.show-mood .mood{opacity:1}
+.sbody{padding:16px 18px 18px;display:grid;gap:14px}
+.shead{display:flex;align-items:flex-start;gap:12px}
+.shead h3{margin:0;font-size:20px;font-weight:600;letter-spacing:-.02em}
+.shead p{margin:4px 0 0;color:var(--dim)}
+.shead .votes{margin-left:auto}
+.spec{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.swatches{display:flex;border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.swatches span{width:30px;height:30px;position:relative}
+.swatches span:hover:after{content:attr(title);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);font:11px var(--mono);background:var(--fg);color:var(--bg);padding:3px 6px;border-radius:5px;white-space:nowrap;z-index:3}
+.fonts{display:flex;gap:14px;color:var(--dim);font-size:13px}
+.fonts b{color:var(--fg);font-weight:500}
+.seg{display:flex;gap:2px;background:var(--panel-2);border-radius:999px;padding:2px;margin-left:auto}
+.seg button{font-size:12px;padding:5px 10px;border-radius:999px;color:var(--dim)}
+.seg button[aria-pressed=true]{background:var(--line-2);color:var(--fg)}
+.note{width:100%;min-height:38px;resize:vertical;background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:9px 12px;font-size:13px;line-height:1.4}
+.note:focus{outline:none;border-color:var(--line-2)}
+.credits{color:var(--faint);font-size:11px;line-height:1.5}
+.credits a{color:var(--faint)}
+
+/* ── Lab ─────────────────────────────────── */
+.lab{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,420px),1fr));gap:18px}
+.comp{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;transition:border-color .2s,opacity .3s}
+.comp.liked{border-color:var(--like);box-shadow:0 0 0 1px var(--like)}
+.comp.disliked{opacity:.45}
+.comp .stage{position:relative;aspect-ratio:16/10;background:#000}
+.comp iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.comp .stage .ph{position:absolute;inset:0;display:grid;place-items:center;color:var(--faint);font:12px var(--mono)}
+.comp .expand{position:absolute;top:10px;right:10px;width:32px;height:32px;border-radius:9px;background:rgba(10,10,11,.6);backdrop-filter:blur(8px);color:#fff;display:grid;place-items:center;opacity:0;transition:opacity .2s}
+.comp:hover .expand{opacity:1}
+.comp .foot small{font-family:var(--mono)}
+.comp p{margin:0;padding:0 14px 12px;color:var(--dim);font-size:13px}
+.tint{display:flex;align-items:center;gap:8px}
+.tint select{background:var(--panel);border:1px solid var(--line);border-radius:999px;height:30px;padding:0 10px}
+
+/* ── Brief ───────────────────────────────── */
+.brief{max-width:1100px;margin:0 auto}
+.brief h1{font:400 clamp(44px,7vw,92px)/.95 var(--serif);letter-spacing:-.02em;margin:10px 0 18px}
+.brief .lede{font-size:19px;color:var(--dim);max-width:720px;line-height:1.5}
+.bgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px;margin-top:36px}
+.bcard{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:20px}
+.bcard h4{margin:0 0 12px;font:500 12px var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--faint)}
+.bcard ul{margin:0;padding-left:18px;display:grid;gap:6px}
+.bpal{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px}
+.bpal div{border-radius:10px;height:74px;display:flex;align-items:flex-end;padding:8px;font:11px var(--mono);border:1px solid var(--line)}
+.bars{display:grid;gap:8px}
+.bars div{display:grid;grid-template-columns:120px 1fr 28px;gap:10px;align-items:center;font-size:13px;color:var(--dim)}
+.bars i{height:6px;border-radius:6px;background:var(--acc);display:block}
+.thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+.thumbs img{width:100%;aspect-ratio:4/3;object-fit:cover;object-position:top;border-radius:8px;border:1px solid var(--line)}
+pre.tokens{background:var(--panel-2);border-radius:10px;padding:14px;overflow:auto;font:12px/1.6 var(--mono);margin:0}
+
+/* ── Lightbox ────────────────────────────── */
+.lb{position:fixed;inset:0;z-index:80;background:rgba(6,6,7,.94);backdrop-filter:blur(8px);display:none;grid-template-columns:1fr 380px}
+.lb.open{display:grid}
+.lb .view{overflow:auto;padding:28px;display:flex;justify-content:center;align-items:flex-start}
+.lb .view img{max-width:min(100%,1440px);border-radius:10px;box-shadow:0 30px 80px rgba(0,0,0,.5)}
+.lb .view iframe{width:100%;height:100%;border:0;border-radius:10px;background:#fff}
+.lb .view.fill{padding:18px}
+.lb aside{border-left:1px solid var(--line);background:var(--panel);padding:22px;overflow:auto;display:flex;flex-direction:column;gap:18px}
+.lb aside h3{margin:0;font-size:20px;letter-spacing:-.02em;font-weight:600}
+.lb .meta{color:var(--dim);font-size:13px;display:grid;gap:4px}
+.lb .links{display:flex;gap:8px;flex-wrap:wrap}
+.lb .row{display:flex;gap:6px;flex-wrap:wrap}
+.lb .row span{font:12px var(--mono);padding:4px 8px;border-radius:7px;background:var(--panel-2);color:var(--dim)}
+.lb .pal{display:flex;gap:6px;flex-wrap:wrap}
+.lb .pal span{width:26px;height:26px;border-radius:7px;border:1px solid var(--line-2)}
+.lb h5{margin:0 0 8px;font:500 11px var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--faint)}
+.lb .x{position:fixed;top:16px;left:16px;z-index:2}
+.lb .nav{position:fixed;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;background:var(--panel);border:1px solid var(--line-2);display:grid;place-items:center;z-index:2}
+.lb .prev{left:16px}.lb .next{right:396px}
+.lb .keys{color:var(--faint);font-size:12px;display:flex;gap:10px;flex-wrap:wrap;margin-top:auto}
+.lb .shots{display:flex;gap:6px}
+
+/* ── Send dialog / toast / empty ─────────── */
+dialog{background:var(--panel);color:var(--fg);border:1px solid var(--line-2);border-radius:18px;padding:24px;width:min(520px,92vw);box-shadow:0 40px 100px rgba(0,0,0,.6)}
+dialog::backdrop{background:rgba(0,0,0,.6);backdrop-filter:blur(4px)}
+dialog h3{margin:0 0 6px;font:400 34px/1 var(--serif)}
+dialog p{margin:0 0 16px;color:var(--dim)}
+dialog .sum{display:flex;gap:18px;margin:0 0 16px;font:13px var(--mono);color:var(--dim)}
+dialog .sum b{color:var(--fg);font-size:22px;font-family:var(--font);display:block}
+dialog textarea{min-height:110px}
+dialog .actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+.toast{position:fixed;bottom:24px;left:50%;transform:translate(-50%,20px);opacity:0;background:var(--fg);color:var(--bg);padding:12px 18px;border-radius:999px;font-weight:500;transition:all .35s var(--ease);z-index:100;pointer-events:none}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.empty{max-width:560px;margin:14vh auto;text-align:center;color:var(--dim)}
+.empty h2{font:400 52px/1 var(--serif);color:var(--fg);margin:0 0 14px}
+.empty code{font-family:var(--mono);background:var(--panel);padding:2px 6px;border-radius:6px}
+
+@media (max-width:980px){
+  .bar{flex-wrap:wrap;gap:10px;padding:10px 16px}
+  .tabs{order:3;margin:0;width:100%;justify-content:space-between}
+  .progress .meter,.hint{display:none}
+  .sub,main{padding-left:16px;padding-right:16px}
+  .lb{grid-template-columns:1fr;grid-template-rows:1fr auto}
+  .lb aside{max-height:46vh;border-left:0;border-top:1px solid var(--line)}
+  .lb .next{right:16px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="bar">
+    <div class="logo"><i></i>inspo</div>
+    <div class="sess"><select id="sessionSel" aria-label="Session"></select><small id="idea"></small></div>
+    <nav class="tabs" role="tablist" id="tabs"></nav>
+    <div class="right">
+      <div class="progress"><span id="progTxt"></span><div class="meter"><b id="progBar"></b></div></div>
+      <span class="saved" id="saved"></span>
+      <button class="lang" id="lang" title="Language"></button>
+      <button class="btn primary" id="sendBtn"></button>
+    </div>
+  </div>
+  <div class="sub" id="sub"></div>
+</header>
+<main id="main"></main>
+
+<div class="lb" id="lb" role="dialog" aria-modal="true">
+  <div class="view" id="lbView"></div>
+  <aside id="lbSide"></aside>
+  <button class="btn x" id="lbClose"></button>
+  <button class="nav prev" id="lbPrev" aria-label="Previous"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></button>
+  <button class="nav next" id="lbNext" aria-label="Next"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></button>
+</div>
+
+<dialog id="sendDlg">
+  <h3 id="dlgTitle"></h3>
+  <p id="dlgText"></p>
+  <div class="sum" id="dlgSum"></div>
+  <textarea class="note" id="general"></textarea>
+  <div class="actions"><button class="btn ghost" id="dlgCancel"></button><button class="btn primary" id="dlgSend"></button></div>
+</dialog>
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+'use strict';
+// ── i18n ────────────────────────────────────────────────
+const T = {
+  en: {
+    styles:'Styles', references:'References', lab:'Lab', brief:'Brief', send:'Send to Claude', sent:'Sent — go back to Claude', saved:'saved', saving:'saving…',
+    rated:'rated', all:'All', liked:'Liked', disliked:'Disliked', unrated:'Unrated', round:'Round', allRounds:'All rounds',
+    like:'Like', dislike:'Not for me', star:'Favorite', note:'Why? Anything specific you like or hate…', open:'Open', close:'Close',
+    specimen:'Specimen', moodboard:'Moodboard', gallery:'Gallery page', live:'Live site', fullpage:'Full page', hero:'Hero',
+    fonts:'Fonts', colors:'Colors', tech:'Built with', reasons:'What works (or doesn’t)?',
+    r:{layout:'Layout',type:'Typography',color:'Color',imagery:'Imagery',motion:'Motion','3d':'3D',vibe:'Vibe',copy:'Copy',detail:'Details'},
+    tint:'Tint with', tintDefault:'Original colors', cats:{all:'All','3d':'3D','motion':'Motion','text':'Text','cursor':'Cursor','layout':'Layout'},
+    dlgTitle:'Send this round', dlgText:'Claude reads your votes, reasons and notes, then comes back with a sharper round (or the final direction).', general:'General notes for Claude (optional): what should the next round look like?',
+    cancel:'Keep voting', dlgSend:'Send to Claude', likedN:'liked', dislikedN:'passed', starredN:'favorites',
+    emptyTitle:'Nothing here yet', emptyText:'Ask Claude to research your idea. Sessions appear here as soon as they start.', noBrief:'Your taste so far', noBriefText:'Claude publishes the final direction here with inspo_brief. Meanwhile, this is what your votes say:',
+    noItems:'No items for this filter.', keys:'keys', principles:'Principles', palette:'Palette', type:'Type', outline:'Page outline', doL:'Do', dontL:'Don’t', comps:'Components', refs:'References', tokens:'Tokens',
+    topReasons:'Why you liked things', likedStyles:'Styles you liked', likedRefs:'References you liked', likedComps:'Components you liked', nothingYet:'Vote on a few things first.', newItems:'new', updated:'Board updated',
+  },
+  es: {
+    styles:'Estilos', references:'Referencias', lab:'Lab', brief:'Brief', send:'Enviar a Claude', sent:'Enviado — regresa con Claude', saved:'guardado', saving:'guardando…',
+    rated:'votados', all:'Todo', liked:'Me gustan', disliked:'No', unrated:'Sin votar', round:'Ronda', allRounds:'Todas las rondas',
+    like:'Me gusta', dislike:'No me late', star:'Favorito', note:'¿Por qué? Algo que te guste u odies en específico…', open:'Abrir', close:'Cerrar',
+    specimen:'Mockup', moodboard:'Moodboard', gallery:'Página en galería', live:'Sitio en vivo', fullpage:'Página completa', hero:'Hero',
+    fonts:'Fuentes', colors:'Colores', tech:'Hecho con', reasons:'¿Qué funciona (o no)?',
+    r:{layout:'Layout',type:'Tipografía',color:'Color',imagery:'Imágenes',motion:'Animación','3d':'3D',vibe:'Vibe',copy:'Copy',detail:'Detalles'},
+    tint:'Pintar con', tintDefault:'Colores originales', cats:{all:'Todo','3d':'3D','motion':'Motion','text':'Texto','cursor':'Cursor','layout':'Layout'},
+    dlgTitle:'Enviar esta ronda', dlgText:'Claude lee tus votos, razones y notas, y regresa con una ronda más afinada (o la dirección final).', general:'Notas generales para Claude (opcional): ¿cómo debería ser la siguiente ronda?',
+    cancel:'Seguir votando', dlgSend:'Enviar a Claude', likedN:'me gustan', dislikedN:'descartados', starredN:'favoritos',
+    emptyTitle:'Todavía no hay nada', emptyText:'Pídele a Claude que investigue tu idea. Las sesiones aparecen aquí en cuanto empiezan.', noBrief:'Tu gusto hasta ahora', noBriefText:'Claude publica aquí la dirección final con inspo_brief. Mientras, esto dicen tus votos:',
+    noItems:'Nada con este filtro.', keys:'teclas', principles:'Principios', palette:'Paleta', type:'Tipografía', outline:'Estructura de la página', doL:'Sí', dontL:'No', comps:'Componentes', refs:'Referencias', tokens:'Tokens',
+    topReasons:'Por qué te gustaron', likedStyles:'Estilos que te gustaron', likedRefs:'Referencias que te gustaron', likedComps:'Componentes que te gustaron', nothingYet:'Vota algunas cosas primero.', newItems:'nuevo', updated:'Tablero actualizado',
+  },
+};
+const store = { get(k,d){ try{ const v=localStorage.getItem('inspo:'+k); return v==null?d:JSON.parse(v);}catch{return d} }, set(k,v){ try{localStorage.setItem('inspo:'+k,JSON.stringify(v))}catch{} } };
+let lang = store.get('lang', (navigator.language||'en').toLowerCase().startsWith('es') ? 'es' : 'en');
+const t = (k) => k.split('.').reduce((o,p)=>o?.[p], T[lang]) ?? k;
+const REASONS = ['layout','type','color','imagery','motion','3d','vibe','copy'];
+
+// ── helpers ─────────────────────────────────────────────
+const $ = (s, el=document) => el.querySelector(s);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const safeUrl = (u) => { try { const x = new URL(u, location.href); return ['http:','https:'].includes(x.protocol) ? x.href : '#'; } catch { return '#'; } };
+const host = (u) => { try { return new URL(u).hostname.replace(/^www\./,''); } catch { return ''; } };
+const ICON = {
+  up:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10v11H3V10h4zm0 0l4-8a3 3 0 013 3v4h5.5a2 2 0 012 2.3l-1.4 8A2 2 0 0118.1 21H7"/></svg>',
+  down:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 14V3h4v11h-4zm0 0l-4 8a3 3 0 01-3-3v-4H4.5a2 2 0 01-2-2.3l1.4-8A2 2 0 015.9 3H17"/></svg>',
+  star:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9z"/></svg>',
+  expand:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>',
+  ext:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M8 7h9v9"/></svg>',
+  send:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
+};
+
+// ── state ───────────────────────────────────────────────
+const params = new URLSearchParams(location.search);
+let S = null;            // session
+let FB = { items:{}, general:'' };
+let LIB = [];
+let SESSIONS = [];
+let tab = params.get('tab') || store.get('tab','styles');
+let filter = 'all', source = 'all', round = 'all', cat = 'all';
+let tint = store.get('tint','');
+let lastUpdated = null;
+let seenIds = new Set();
+let lbList = [], lbIdx = 0, lbShot = 'hero';
+
+const fbOf = (id) => FB.items[id] || { vote:0, star:false, note:'', reasons:[] };
+const itemsOf = (kind) => (S?.items || []).filter((i) => i.kind === kind);
+const components = () => [...LIB.map((c) => ({ ...c, kind:'component', title:c.name, src:'/lib/'+c.file })), ...itemsOf('component').map((c) => ({ ...c, src:`/s/${S.id}/${c.file}` }))];
+const assetUrl = (rel) => rel ? (/^https?:/.test(rel) ? rel : `/s/${S.id}/${rel}`) : '';
+
+// ── persistence ─────────────────────────────────────────
+let pending = {}, saveTimer = null;
+function setFb(id, patch) {
+  FB.items[id] = { ...fbOf(id), ...patch };
+  pending[id] = FB.items[id];
+  $('#saved').textContent = t('saving'); $('#saved').classList.remove('on');
+  clearTimeout(saveTimer); saveTimer = setTimeout(flush, 450);
+  renderProgress();
+}
+async function flush(extra = {}) {
+  const body = { items: pending, ...extra }; pending = {};
+  const res = await fetch(`/api/feedback?session=${encodeURIComponent(S.id)}`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) }).catch(() => null);
+  const el = $('#saved');
+  if (res?.ok) { el.textContent = t('saved'); el.classList.add('on'); setTimeout(() => el.classList.remove('on'), 1200); }
+  else { el.textContent = '⚠︎'; Object.assign(pending, body.items); }
+  return res?.ok;
+}
+
+async function load(first) {
+  const id = params.get('session') || S?.id || '';
+  const res = await fetch('/api/state' + (id ? `?session=${encodeURIComponent(id)}` : ''));
+  const data = await res.json();
+  SESSIONS = data.sessions || []; LIB = data.library || [];
+  if (!data.session) { S = null; renderAll(); return; }
+  const changed = data.session.updatedAt !== lastUpdated;
+  S = data.session; lastUpdated = S.updatedAt;
+  if (first) { FB = data.feedback; seenIds = new Set(store.get('seen:'+S.id, [])); }
+  if (first || changed) { renderAll(); if (!first) toast(t('updated')); }
+}
+
+// ── rendering ───────────────────────────────────────────
+function renderAll() {
+  document.documentElement.lang = lang;
+  $('#lang').textContent = lang === 'es' ? 'EN' : 'ES';
+  $('#sendBtn').innerHTML = `${t('send')} ${ICON.send}`;
+  $('#lbClose').textContent = t('close') + ' · esc';
+  const sel = $('#sessionSel');
+  sel.innerHTML = SESSIONS.map((s) => `<option value="${esc(s.id)}" ${S && s.id === S.id ? 'selected' : ''}>${esc(s.title)}</option>`).join('');
+  $('#idea').textContent = S ? S.idea.replace(/\s+/g,' ').slice(0, 140) : '';
+  document.title = S ? `${S.title} — inspo` : 'inspo';
+  renderTabs(); renderSub(); renderMain(); renderProgress();
+}
+
+function renderTabs() {
+  const n = { styles: itemsOf('style').length, references: itemsOf('reference').length, lab: components().length, brief: S?.brief ? '✓' : '' };
+  $('#tabs').innerHTML = ['styles','references','lab','brief'].map((k) =>
+    `<button class="tab" role="tab" aria-selected="${tab===k}" data-tab="${k}">${t(k)}${n[k]!=='' ? ` <span class="n">${n[k]}</span>` : ''}</button>`).join('');
+}
+
+function renderProgress() {
+  if (!S) return;
+  const pool = [...S.items, ...(tab === 'lab' ? LIB : [])];
+  const all = S.items.length + LIB.length;
+  const done = [...S.items, ...LIB].filter((i) => { const f = fbOf(i.id); return f.vote || f.star; }).length;
+  $('#progTxt').textContent = `${done}/${all} ${t('rated')}`;
+  $('#progBar').style.width = (all ? (done / all) * 100 : 0) + '%';
+}
+
+function chip(label, pressed, attrs, n) { return `<button class="chip" aria-pressed="${pressed}" ${attrs}>${esc(label)}${n!=null?` <span class="n">${n}</span>`:''}</button>`; }
+
+function renderSub() {
+  if (!S || tab === 'brief') { $('#sub').innerHTML = ''; return; }
+  const list = tab === 'lab' ? components() : itemsOf(tab === 'styles' ? 'style' : 'reference');
+  const cnt = (fn) => list.filter(fn).length;
+  let h = ['all','liked','disliked','unrated'].map((f) => chip(t(f), filter===f, `data-filter="${f}"`, cnt(filterFn(f)))).join('');
+  if (tab === 'references') {
+    const srcs = [...new Set(list.map((i) => i.source))];
+    if (srcs.length > 1) h += '<span class="sep"></span>' + chip(t('all'), source==='all', 'data-source="all"') + srcs.map((s) => chip(s, source===s, `data-source="${esc(s)}"`, cnt((i)=>i.source===s))).join('');
+  }
+  if (tab === 'lab') {
+    const cats = ['all', ...new Set(list.map((c) => c.category))];
+    h += '<span class="sep"></span>' + cats.map((c) => chip(t('cats.'+c) || c, cat===c, `data-cat="${esc(c)}"`)).join('');
+    const liked = itemsOf('style').filter((s) => fbOf(s.id).vote === 1 || fbOf(s.id).star);
+    const opts = (liked.length ? liked : itemsOf('style')).map((s) => `<option value="${esc(s.id)}" ${tint===s.id?'selected':''}>${esc(s.title)}</option>`).join('');
+    if (opts) h += `<span class="grow"></span><label class="tint"><span class="hint">${t('tint')}</span><select id="tintSel"><option value="">${t('tintDefault')}</option>${opts}</select></label>`;
+  }
+  const rounds = [...new Set(list.map((i) => i.round).filter(Boolean))];
+  if (rounds.length > 1) h += '<span class="sep"></span>' + chip(t('allRounds'), round==='all', 'data-round="all"') + rounds.map((r) => chip(`${t('round')} ${r}`, round==r, `data-round="${r}"`)).join('');
+  if (tab === 'references') h += `<span class="grow"></span><span class="hint"><kbd>←</kbd> <kbd>→</kbd> <kbd>1</kbd> <kbd>2</kbd> <kbd>S</kbd> ${t('keys')}</span>`;
+  $('#sub').innerHTML = h;
+}
+
+const filterFn = (f) => (i) => {
+  const v = fbOf(i.id);
+  if (f === 'liked') return v.vote === 1 || v.star;
+  if (f === 'disliked') return v.vote === -1;
+  if (f === 'unrated') return !v.vote && !v.star;
+  return true;
+};
+const visible = (list) => list.filter(filterFn(filter)).filter((i) => source === 'all' || i.source === source).filter((i) => round === 'all' || i.round == round);
+
+function votesHtml(id) {
+  const f = fbOf(id);
+  return `<div class="votes" data-id="${esc(id)}">
+    <button class="v nope ${f.vote===-1?'on':''}" data-act="nope" title="${t('dislike')} (1)" aria-pressed="${f.vote===-1}">${ICON.down}</button>
+    <button class="v like ${f.vote===1?'on':''}" data-act="like" title="${t('like')} (2)" aria-pressed="${f.vote===1}">${ICON.up}</button>
+    <button class="v star ${f.star?'on':''}" data-act="star" title="${t('star')} (S)" aria-pressed="${f.star}">${ICON.star}</button>
+  </div>`;
+}
+function reasonsHtml(id) {
+  const f = fbOf(id);
+  return `<div class="reasons ${f.vote===-1?'nope-mode':''}" data-id="${esc(id)}">${REASONS.map((r) => `<button data-reason="${r}" aria-pressed="${f.reasons.includes(r)}">${t('r.'+r)}</button>`).join('')}</div>`;
+}
+const stateCls = (id) => { const f = fbOf(id); return [f.vote===1||f.star?'liked':'', f.vote===-1?'disliked':'', f.vote||f.star?'voted':''].join(' '); };
+const isNew = (i) => !seenIds.has(i.id) && i.round === S.round && (Date.now() - new Date(i.addedAt)) < 36e5 * 6;
+
+function renderMain() {
+  const m = $('#main');
+  if (!S) { m.innerHTML = `<div class="empty"><h2>${t('emptyTitle')}</h2><p>${t('emptyText')}</p><p><code>/inspo landing for my idea…</code></p></div>`; return; }
+  if (tab === 'styles') m.innerHTML = renderStyles();
+  else if (tab === 'references') m.innerHTML = renderRefs();
+  else if (tab === 'lab') { m.innerHTML = renderLab(); mountLab(); }
+  else m.innerHTML = renderBrief();
+  if (tab === 'styles') fitFrames();
+}
+
+function groupByRound(list, render) {
+  const rounds = [...new Set(list.map((i) => i.round || 1))].sort((a,b) => b - a);
+  if (rounds.length < 2) return render(list);
+  return rounds.map((r) => `<div class="round-h"><h2>${t('round')} ${r}</h2><span>${esc(S.rounds?.[r] || '')}</span></div>${render(list.filter((i) => (i.round||1) === r))}`).join('');
+}
+
+function renderStyles() {
+  const list = visible(itemsOf('style'));
+  if (!list.length) return `<p class="hint">${t('noItems')}</p>`;
+  return groupByRound(list, (l) => `<div class="styles">${l.map(styleCard).join('')}</div>`);
+}
+function styleCard(s) {
+  const f = fbOf(s.id), st = s.style || {}, pal = st.palette || {};
+  const sw = ['bg','surface','fg','muted','accent','accent2'].filter((k) => pal[k]).map((k) => `<span style="background:${esc(pal[k])}" title="${k} ${esc(pal[k])}"></span>`).join('');
+  const mood = (s.images || []).slice(0, 5).map((im) => `<img loading="lazy" src="${esc(assetUrl(im.src))}" alt="">`).join('');
+  const credits = (s.images || []).map((im) => im.link ? `<a href="${esc(safeUrl(im.link))}" target="_blank" rel="noopener">${esc(im.credit)}</a>` : esc(im.credit)).join(' · ');
+  return `<article class="style ${stateCls(s.id)}" data-id="${esc(s.id)}">
+    <div class="frame"><iframe loading="lazy" src="/s/${esc(S.id)}/${esc(s.file)}" title="${esc(s.title)}" tabindex="-1"></iframe>${mood ? `<div class="mood">${mood}</div>` : ''}<button class="open" data-open-style="${esc(s.id)}" aria-label="${t('open')}"></button>${isNew(s)?`<div class="badge"><span class="new">${t('newItems')}</span></div>`:''}</div>
+    <div class="sbody">
+      <div class="shead"><div><h3>${esc(s.title)}</h3><p>${esc(s.description || st.vibe || '')}</p></div>${votesHtml(s.id)}</div>
+      <div class="spec"><div class="swatches">${sw}</div><div class="fonts">${st.fonts?.display ? `<span><b>${esc(st.fonts.display)}</b></span>` : ''}${st.fonts?.body && st.fonts.body !== st.fonts.display ? `<span>${esc(st.fonts.body)}</span>` : ''}</div>
+        ${mood ? `<div class="seg" data-seg="${esc(s.id)}"><button aria-pressed="true" data-view="spec">${t('specimen')}</button><button aria-pressed="false" data-view="mood">${t('moodboard')}</button></div>` : ''}</div>
+      ${reasonsHtml(s.id)}
+      <textarea class="note" data-note="${esc(s.id)}" placeholder="${esc(t('note'))}" rows="1">${esc(f.note)}</textarea>
+      ${credits ? `<div class="credits">📷 ${credits}</div>` : ''}
+    </div></article>`;
+}
+function fitFrames() {
+  const ro = new ResizeObserver((es) => es.forEach((e) => e.target.style.setProperty('--s', e.contentRect.width / 1440)));
+  document.querySelectorAll('.frame').forEach((f) => ro.observe(f));
+}
+
+function renderRefs() {
+  const list = visible(itemsOf('reference'));
+  if (!list.length) return `<p class="hint">${t('noItems')}</p>`;
+  return groupByRound(list, (l) => `<div class="masonry">${l.map(refCard).join('')}</div>`);
+}
+function refCard(i) {
+  const f = fbOf(i.id);
+  const img = assetUrl(i.liveImage || i.image);
+  const sub = [i.author, host(i.liveUrl || i.url)].filter(Boolean).join(' · ');
+  return `<article class="card ${stateCls(i.id)}" data-id="${esc(i.id)}">
+    <button class="media ${i.tall && !i.liveImage ? 'tall' : ''}" data-lb="${esc(i.id)}" aria-label="${esc(i.title)}">
+      <img loading="lazy" src="${esc(img)}" alt="">
+      ${i.video ? `<video muted loop playsinline preload="none" data-src="${esc(safeUrl(i.video))}"></video>` : ''}
+    </button>
+    <div class="badge"><span>${esc(i.source)}</span>${i.analysis ? '<span>live</span>' : ''}${isNew(i)?`<span class="new">${t('newItems')}</span>`:''}</div>
+    ${f.note ? '<span class="note-dot"></span>' : ''}
+    <div class="foot"><div class="t"><b>${esc(i.title)}</b><small>${esc(sub)}</small></div>${votesHtml(i.id)}</div>
+    ${reasonsHtml(i.id)}
+  </article>`;
+}
+
+function tintQuery() {
+  const s = S && itemsOf('style').find((x) => x.id === tint);
+  if (!s) return '';
+  const p = s.style.palette || {}, f = s.style.fonts || {};
+  const q = new URLSearchParams();
+  ['bg','fg','muted','accent','accent2'].forEach((k) => p[k] && q.set(k, p[k]));
+  if (f.display) q.set('fontDisplay', f.display);
+  if (f.body) q.set('fontBody', f.body);
+  return '?' + q;
+}
+function renderLab() {
+  const list = visible(components()).filter((c) => cat === 'all' || c.category === cat);
+  if (!list.length) return `<p class="hint">${t('noItems')}</p>`;
+  return `<div class="lab">${list.map((c) => `<article class="comp ${stateCls(c.id)}" data-id="${esc(c.id)}">
+      <div class="stage" data-src="${esc(c.src + tintQuery())}"><div class="ph">${esc(c.name || c.title)}</div><button class="expand" data-expand="${esc(c.id)}" aria-label="${t('open')}">${ICON.expand}</button></div>
+      <div class="foot"><div class="t"><b>${esc(c.name || c.title)}</b><small>${esc(c.category)}${c.tags?.length ? ' · ' + esc(c.tags.slice(0,3).join(', ')) : ''}${c.library ? '' : ' · custom'}</small></div>${votesHtml(c.id)}</div>
+      <p>${esc(c.description)}</p>
+      ${reasonsHtml(c.id)}
+    </article>`).join('')}</div>`;
+}
+let labIO = null;
+function mountLab() {
+  labIO?.disconnect();
+  // Only keep iframes alive near the viewport: browsers cap live WebGL contexts (~16).
+  labIO = new IntersectionObserver((es) => es.forEach((e) => {
+    const stage = e.target; let fr = stage.querySelector('iframe');
+    if (e.isIntersecting && !fr) { fr = document.createElement('iframe'); fr.src = stage.dataset.src; fr.loading = 'lazy'; fr.title = 'component'; stage.prepend(fr); }
+    else if (!e.isIntersecting && fr) fr.remove();
+  }), { rootMargin: '200px 0px' });
+  document.querySelectorAll('.comp .stage').forEach((s) => labIO.observe(s));
+}
+
+function renderBrief() {
+  const b = S.brief;
+  if (b) {
+    const pal = b.palette ? `<div class="bcard"><h4>${t('palette')}</h4><div class="bpal">${Object.entries(b.palette).map(([k,v]) => `<div style="background:${esc(v)};color:${contrast(v)}">${esc(k)}<br>${esc(v)}</div>`).join('')}</div></div>` : '';
+    const fonts = b.fonts ? `<div class="bcard"><h4>${t('type')}</h4>${Object.entries(b.fonts).map(([k,v]) => `<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=${encodeURIComponent(v)}:wght@400;600&display=swap"><div style="font-family:'${esc(v)}';font-size:${k==='display'?'40px':'20px'};line-height:1.1;margin-bottom:10px">${esc(v)} <span style="font:12px var(--mono);color:var(--faint)">${esc(k)}</span></div>`).join('')}</div>` : '';
+    const list = (title, arr) => arr?.length ? `<div class="bcard"><h4>${title}</h4><ul>${arr.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></div>` : '';
+    const refItems = (b.references || []).map((id) => S.items.find((i) => i.id === id)).filter(Boolean);
+    const refs = refItems.length ? `<div class="bcard" style="grid-column:1/-1"><h4>${t('refs')}</h4><div class="thumbs">${refItems.map((i) => `<img src="${esc(assetUrl(i.liveImage || i.image || i.images?.[0]?.src))}" alt="${esc(i.title)}" title="${esc(i.title)}">`).join('')}</div></div>` : '';
+    const comps = (b.components || []).map((id) => components().find((c) => c.id === id)?.name || id);
+    return `<section class="brief"><h1>${esc(b.name)}</h1><p class="lede">${esc(b.summary)}</p><div class="bgrid">${pal}${fonts}${list(t('principles'), b.principles)}${list(t('outline'), b.sections)}${list(t('comps'), comps)}${list(t('doL'), b.do)}${list(t('dontL'), b.dont)}${refs}${b.tokensCss ? `<div class="bcard" style="grid-column:1/-1"><h4>${t('tokens')}</h4><pre class="tokens">${esc(b.tokensCss)}</pre></div>` : ''}</div></section>`;
+  }
+  // No brief yet: show what the votes say so far.
+  const all = [...S.items, ...components().filter((c) => c.library)];
+  const liked = all.filter((i) => fbOf(i.id).vote === 1 || fbOf(i.id).star);
+  const rc = {}; liked.forEach((i) => fbOf(i.id).reasons.forEach((r) => rc[r] = (rc[r]||0) + 1));
+  const max = Math.max(1, ...Object.values(rc));
+  const bars = Object.entries(rc).sort((a,b) => b[1]-a[1]).map(([r,n]) => `<div><span>${t('r.'+r)}</span><i style="width:${(n/max)*100}%"></i><span>${n}</span></div>`).join('');
+  const thumbs = (arr) => arr.length ? `<div class="thumbs">${arr.map((i) => `<img src="${esc(i.src || assetUrl(i.liveImage || i.image || i.images?.[0]?.src))}" alt="" title="${esc(i.title)}">`).join('')}</div>` : `<p class="hint">${t('nothingYet')}</p>`;
+  const likedStyles = liked.filter((i) => i.kind === 'style');
+  return `<section class="brief"><h1>${t('noBrief')}</h1><p class="lede">${t('noBriefText')}</p><div class="bgrid">
+    <div class="bcard"><h4>${t('topReasons')}</h4>${bars ? `<div class="bars">${bars}</div>` : `<p class="hint">${t('nothingYet')}</p>`}</div>
+    <div class="bcard"><h4>${t('likedStyles')}</h4>${likedStyles.length ? likedStyles.map((s) => `<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><div class="swatches">${Object.values(s.style.palette||{}).slice(0,6).map((c) => `<span style="background:${esc(c)}"></span>`).join('')}</div>${esc(s.title)}</div>`).join('') : `<p class="hint">${t('nothingYet')}</p>`}</div>
+    <div class="bcard" style="grid-column:1/-1"><h4>${t('likedRefs')}</h4>${thumbs(liked.filter((i) => i.kind === 'reference'))}</div>
+    <div class="bcard" style="grid-column:1/-1"><h4>${t('likedComps')}</h4>${liked.filter((i) => i.kind === 'component').map((c) => `<span class="chip" style="margin:0 6px 6px 0">${esc(c.name || c.title)}</span>`).join('') || `<p class="hint">${t('nothingYet')}</p>`}</div>
+  </div></section>`;
+}
+function contrast(hex) {
+  const m = /^#?([0-9a-f]{6})/i.exec(hex || ''); if (!m) return '#000';
+  const n = parseInt(m[1], 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255;
+  return (r * 299 + g * 587 + b * 114) / 1000 > 140 ? '#0b0b0c' : '#f2f1ec';
+}
+
+// ── lightbox ────────────────────────────────────────────
+function openLb(list, id, shot = 'hero') {
+  lbList = list; lbIdx = Math.max(0, list.findIndex((i) => i.id === id)); lbShot = shot;
+  $('#lb').classList.add('open'); document.body.style.overflow = 'hidden'; drawLb();
+}
+function closeLb() { $('#lb').classList.remove('open'); document.body.style.overflow = ''; $('#lbView').innerHTML = ''; renderMain(); renderSub(); }
+function drawLb() {
+  const i = lbList[lbIdx]; if (!i) return;
+  const f = fbOf(i.id); const view = $('#lbView');
+  seenIds.add(i.id); store.set('seen:'+S.id, [...seenIds]);
+  view.classList.toggle('fill', i.kind !== 'reference');
+  if (i.kind === 'style') view.innerHTML = `<iframe src="/s/${esc(S.id)}/${esc(i.file)}"></iframe>`;
+  else if (i.kind === 'component') view.innerHTML = `<iframe src="${esc(i.src + tintQuery())}"></iframe>`;
+  else {
+    const src = lbShot === 'full' && i.fullImage ? i.fullImage : lbShot === 'thumb' ? i.image : (i.liveImage || i.image);
+    view.innerHTML = `<img src="${esc(assetUrl(src))}" alt="${esc(i.title)}">`;
+    view.scrollTop = 0;
+  }
+  const a = i.analysis;
+  const shots = i.kind === 'reference' ? [['hero', i.liveImage || i.image], ['full', i.fullImage], ['thumb', i.liveImage ? i.image : null]].filter(([,v]) => v) : [];
+  $('#lbSide').innerHTML = `
+    <div><div class="meta"><span>${esc(i.source || i.category || '')}${i.query ? ' · “' + esc(i.query) + '”' : ''}</span></div><h3>${esc(i.title || i.name)}</h3>${i.description || i.note ? `<p class="meta">${esc(i.description || i.note)}</p>` : ''}</div>
+    ${votesHtml(i.id)}
+    <div><h5>${t('reasons')}</h5>${reasonsHtml(i.id)}</div>
+    <textarea class="note" data-note="${esc(i.id)}" rows="3" placeholder="${esc(t('note'))}">${esc(f.note)}</textarea>
+    ${shots.length > 1 ? `<div class="shots seg" style="margin:0">${shots.map(([k]) => `<button aria-pressed="${lbShot===k}" data-shot="${k}">${k==='hero'?t('hero'):k==='full'?t('fullpage'):t('gallery')}</button>`).join('')}</div>` : ''}
+    <div class="links">${i.liveUrl ? `<a class="btn" href="${esc(safeUrl(i.liveUrl))}" target="_blank" rel="noopener">${t('live')} ${ICON.ext}</a>` : ''}${i.url && i.url !== i.liveUrl ? `<a class="btn" href="${esc(safeUrl(i.url))}" target="_blank" rel="noopener">${esc(host(i.url) || t('gallery'))} ${ICON.ext}</a>` : ''}${i.kind==='style' ? `<a class="btn" href="/s/${esc(S.id)}/${esc(i.file)}" target="_blank" rel="noopener">${t('open')} ${ICON.ext}</a>` : ''}</div>
+    ${a?.fonts?.length ? `<div><h5>${t('fonts')}</h5><div class="row">${a.fonts.slice(0,4).map((x) => `<span>${esc(x.family)} · ${esc(x.role)}</span>`).join('')}</div></div>` : ''}
+    ${a?.colors ? `<div><h5>${t('colors')}</h5><div class="pal">${[...new Set([...(a.colors.background||[]), ...(a.colors.text||[])])].slice(0,10).map((c) => `<span style="background:${esc(c)}" title="${esc(c)}"></span>`).join('')}</div></div>` : ''}
+    ${a?.tech?.length ? `<div><h5>${t('tech')}</h5><div class="row">${a.tech.map((x) => `<span>${esc(x)}</span>`).join('')}</div></div>` : ''}
+    ${i.credit ? `<p class="credits">📷 ${esc(i.credit)}</p>` : ''}
+    <div class="keys"><span><kbd>←</kbd><kbd>→</kbd></span><span><kbd>1</kbd> ${t('dislike')}</span><span><kbd>2</kbd> ${t('like')}</span><span><kbd>S</kbd> ${t('star')}</span><span><kbd>N</kbd> note</span></div>`;
+}
+
+// ── actions ─────────────────────────────────────────────
+function vote(id, act, el) {
+  const f = fbOf(id);
+  if (act === 'like') setFb(id, { vote: f.vote === 1 ? 0 : 1 });
+  if (act === 'nope') setFb(id, { vote: f.vote === -1 ? 0 : -1, star: false });
+  if (act === 'star') setFb(id, { star: !f.star, vote: !f.star && f.vote === -1 ? 1 : f.vote });
+  seenIds.add(id); store.set('seen:'+S.id, [...seenIds]);
+  refreshItem(id);
+  const btn = el || document.querySelector(`.votes[data-id="${CSS.escape(id)}"] [data-act="${act}"]`);
+  btn?.classList.add('pop'); setTimeout(() => btn?.classList.remove('pop'), 350);
+}
+function refreshItem(id) {
+  document.querySelectorAll(`[data-id="${CSS.escape(id)}"]`).forEach((el) => {
+    if (el.classList.contains('votes')) el.outerHTML = votesHtml(id);
+    else if (el.classList.contains('reasons')) el.outerHTML = reasonsHtml(id);
+    else if (el.matches('.card,.style,.comp')) {
+      el.classList.remove('liked','disliked','voted');
+      stateCls(id).split(' ').filter(Boolean).forEach((c) => el.classList.add(c));
+    }
+  });
+}
+
+document.addEventListener('click', (e) => {
+  const tgt = e.target.closest('button, a'); if (!tgt) return;
+  const d = tgt.dataset;
+  if (d.tab) { tab = d.tab; store.set('tab', tab); filter = 'all'; source = 'all'; round = 'all'; history.replaceState(null, '', `?session=${S?.id||''}&tab=${tab}`); renderAll(); window.scrollTo(0,0); return; }
+  if (d.filter) { filter = d.filter; renderSub(); renderMain(); return; }
+  if (d.source) { source = d.source; renderSub(); renderMain(); return; }
+  if (d.round) { round = d.round; renderSub(); renderMain(); return; }
+  if (d.cat) { cat = d.cat; renderSub(); renderMain(); return; }
+  if (d.act) { vote(tgt.closest('.votes').dataset.id, d.act, tgt); return; }
+  if (d.reason) {
+    const id = tgt.closest('.reasons').dataset.id, f = fbOf(id);
+    const reasons = f.reasons.includes(d.reason) ? f.reasons.filter((r) => r !== d.reason) : [...f.reasons, d.reason];
+    setFb(id, { reasons, vote: f.vote || (f.star ? 0 : 1) }); refreshItem(id); return;
+  }
+  if (d.lb) { openLb(visible(itemsOf('reference')), d.lb); return; }
+  if (d.openStyle) { openLb(visible(itemsOf('style')), d.openStyle); return; }
+  if (d.expand) { openLb(visible(components()).filter((c) => cat === 'all' || c.category === cat), d.expand); return; }
+  if (d.shot) { lbShot = d.shot; drawLb(); return; }
+  if (d.view) { const card = tgt.closest('.style'); card.classList.toggle('show-mood', d.view === 'mood'); tgt.parentElement.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', b === tgt)); return; }
+});
+document.addEventListener('input', (e) => {
+  const id = e.target.dataset?.note; if (!id) return;
+  setFb(id, { note: e.target.value });
+  document.querySelectorAll(`textarea[data-note="${CSS.escape(id)}"]`).forEach((ta) => ta !== e.target && (ta.value = e.target.value));
+});
+document.addEventListener('change', (e) => {
+  if (e.target.id === 'tintSel') { tint = e.target.value; store.set('tint', tint); renderMain(); }
+  if (e.target.id === 'sessionSel') { location.search = `?session=${encodeURIComponent(e.target.value)}&tab=${tab}`; }
+});
+document.addEventListener('mouseover', (e) => { const v = e.target.closest?.('.media')?.querySelector('video[data-src]'); if (v && !v.src) { v.src = v.dataset.src; } v?.play?.().catch(()=>{}); });
+document.addEventListener('keydown', (e) => {
+  if (!$('#lb').classList.contains('open')) return;
+  if (e.target.matches('textarea,input')) { if (e.key === 'Escape') e.target.blur(); return; }
+  const i = lbList[lbIdx];
+  if (e.key === 'Escape') closeLb();
+  else if (e.key === 'ArrowRight') { lbIdx = (lbIdx + 1) % lbList.length; lbShot = 'hero'; drawLb(); }
+  else if (e.key === 'ArrowLeft') { lbIdx = (lbIdx - 1 + lbList.length) % lbList.length; lbShot = 'hero'; drawLb(); }
+  else if (e.key === '2' || e.key.toLowerCase() === 'l') { vote(i.id, 'like'); setTimeout(() => { lbIdx = Math.min(lbIdx + 1, lbList.length - 1); drawLb(); }, 220); }
+  else if (e.key === '1' || e.key.toLowerCase() === 'd') { vote(i.id, 'nope'); setTimeout(() => { lbIdx = Math.min(lbIdx + 1, lbList.length - 1); drawLb(); }, 220); }
+  else if (e.key.toLowerCase() === 's') vote(i.id, 'star');
+  else if (e.key.toLowerCase() === 'n') { e.preventDefault(); $('#lbSide textarea')?.focus(); }
+  else if (e.key.toLowerCase() === 'f' && i.fullImage) { lbShot = lbShot === 'full' ? 'hero' : 'full'; drawLb(); }
+});
+$('#lbClose').onclick = closeLb;
+$('#lbPrev').onclick = () => { lbIdx = (lbIdx - 1 + lbList.length) % lbList.length; lbShot = 'hero'; drawLb(); };
+$('#lbNext').onclick = () => { lbIdx = (lbIdx + 1) % lbList.length; lbShot = 'hero'; drawLb(); };
+$('#lang').onclick = () => { lang = lang === 'es' ? 'en' : 'es'; store.set('lang', lang); renderAll(); };
+
+const dlg = $('#sendDlg');
+$('#sendBtn').onclick = () => {
+  if (!S) return;
+  const all = [...S.items, ...LIB];
+  const n = (fn) => all.filter((i) => fn(fbOf(i.id))).length;
+  $('#dlgTitle').textContent = t('dlgTitle'); $('#dlgText').textContent = t('dlgText');
+  $('#dlgSum').innerHTML = `<span><b>${n((f) => f.vote === 1 || f.star)}</b>${t('likedN')}</span><span><b>${n((f) => f.vote === -1)}</b>${t('dislikedN')}</span><span><b>${n((f) => f.star)}</b>${t('starredN')}</span>`;
+  $('#general').placeholder = t('general'); $('#general').value = FB.general || '';
+  $('#dlgCancel').textContent = t('cancel'); $('#dlgSend').innerHTML = `${t('dlgSend')} ${ICON.send}`;
+  dlg.showModal();
+};
+$('#dlgCancel').onclick = () => dlg.close();
+$('#dlgSend').onclick = async () => {
+  FB.general = $('#general').value;
+  clearTimeout(saveTimer);
+  const ok = await flush({ general: FB.general, submit: true });
+  dlg.close();
+  toast(ok ? t('sent') : '⚠︎ ' + t('saving'));
+};
+function toast(msg) { const el = $('#toast'); el.textContent = msg; el.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('on'), 2600); }
+window.addEventListener('beforeunload', () => { if (Object.keys(pending).length) navigator.sendBeacon?.(`/api/feedback?session=${S.id}`, new Blob([JSON.stringify({ items: pending })], { type: 'application/json' })); });
+
+const busy = () => document.hidden || $('#lb').classList.contains('open') || dlg.open || document.activeElement?.matches?.('textarea,input,select');
+load(true).then(() => setInterval(() => { if (!busy()) load(false).catch(() => {}); }, 3000));
+})();
+</script>
+</body>
+</html>
