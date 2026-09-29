@@ -12,6 +12,7 @@ import { pathToFileURL } from 'node:url';
 import { chromium } from 'playwright';
 import { sessionDir } from './session.js';
 import { listLibrary } from './components.js';
+import { effectivePlan } from './feedback.js';
 
 const LAUNCH_ARGS = ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'];
 const FALLBACK_REFS_PER_SECTION = 4;
@@ -84,6 +85,28 @@ const LABELS = {
       photos: 'Commission or license real photography before launch; the specimens use CC placeholders.',
       share: 'Share this PDF with whoever decides, and collect their notes on the board.',
     },
+    plan: {
+      title: 'Page plan',
+      kicker: 'Plan',
+      lede: 'Section by section: the reference to build from and what to take from it.',
+      draft: 'Draft from your likes',
+      draftLede: 'Claude has not written the plan yet. This is where your likes point, section by section.',
+      approvedAll: 'Plan approved',
+      approved: 'Approved',
+      changed: 'Changed by you',
+      yourPick: 'Your pick',
+      pendingOk: 'To review',
+      style: 'Style',
+      styleFromBrief: 'From the brief',
+      styleChanged: 'Chosen by you',
+      noRef: 'No reference yet',
+      likes: (n) => `${n} liked`,
+      primary: 'Main reference',
+      alternates: 'Alternates',
+      extra: 'Added by you',
+      note: 'Your note',
+      take: 'What to take',
+    },
   },
   es: {
     research: 'Investigación de diseño',
@@ -148,6 +171,28 @@ const LABELS = {
       components: 'Llevar los componentes elegidos al stack (React/Next, GSAP, R3F) con la paleta del brief.',
       photos: 'Encargar o licenciar fotografía real antes de lanzar; los mockups usan fotos CC de relleno.',
       share: 'Compartir este PDF con quien decide y juntar sus notas en el tablero.',
+    },
+    plan: {
+      title: 'Plan de la página',
+      kicker: 'Plan',
+      lede: 'Sección por sección: la referencia de la que se construye y qué tomar de ella.',
+      draft: 'Borrador a partir de tus likes',
+      draftLede: 'Claude todavía no escribe el plan. Esto es a donde apuntan tus likes, sección por sección.',
+      approvedAll: 'Plan aprobado',
+      approved: 'Aprobada',
+      changed: 'Cambiada por ti',
+      yourPick: 'Elegida por ti',
+      pendingOk: 'Por revisar',
+      style: 'Estilo',
+      styleFromBrief: 'Del brief',
+      styleChanged: 'Elegido por ti',
+      noRef: 'Sin referencia todavía',
+      likes: (n) => `${n} ${n === 1 ? 'like' : 'likes'}`,
+      primary: 'Referencia principal',
+      alternates: 'Alternativas',
+      extra: 'Agregadas por ti',
+      note: 'Tu nota',
+      take: 'Qué tomar',
     },
   },
 };
@@ -748,6 +793,139 @@ function closingPage(ctx) {
   };
 }
 
+// ─── Plan ──────────────────────────────────────────────────────────────────
+
+const PLAN_ROWS = [['layout', 'layout'], ['typography', 'type'], ['color', 'color'], ['imagery', 'imagery'], ['motion', 'motion'], ['copy', 'copy']];
+const PLAN_ROWS_PER_PAGE = 7;
+
+function planImage(ctx, it) {
+  return it ? ctx.thumbs.get(it.id) || ctx.m.fileUrl(it.image) : null;
+}
+
+/** Style shown on the plan: the plan's own, else the brief's system. */
+function planStyle(ctx) {
+  const { plan, session } = ctx;
+  if (plan.style) return { ...plan.style, changed: plan.styleChangedByUser };
+  const b = session.brief;
+  if (b && (b.palette || b.fonts)) return { name: b.name || '', palette: b.palette, fonts: b.fonts, fromBrief: true };
+  return null;
+}
+
+function planMarks(L, sec, { drafted }) {
+  const P = L.plan;
+  const changed = sec.changedByUser.primary || sec.changedByUser.components || sec.changedByUser.extra;
+  const out = [];
+  if (sec.approved) out.push(`<span class="pm ok">✓ ${esc(P.approved)}</span>`);
+  if (changed) out.push(`<span class="pm you">${esc(P.changed)}</span>`);
+  if (!drafted && !sec.approved && !changed) out.push(`<span class="pm">${esc(P.pendingOk)}</span>`);
+  if (sec.likedCount) out.push(`<span class="pm">${esc(P.likes(sec.likedCount))}</span>`);
+  return out.join('');
+}
+
+function planOverviewPages(ctx) {
+  const { plan, m } = ctx;
+  const { L } = m;
+  const P = L.plan;
+  const style = planStyle(ctx);
+  const lede = plan.drafted ? P.draftLede : plan.summary || P.lede;
+  const flag = plan.drafted ? P.draft : plan.approved ? `✓ ${P.approvedAll}` : '';
+  const groups = chunk(plan.sections.map((sec, i) => ({ sec, idx: i + 1 })), PLAN_ROWS_PER_PAGE);
+  const styleBox = style
+    ? (() => {
+        const fonts = [['display', L.display, 'serif'], ['body', L.body, 'sans-serif']].filter(([k]) => style.fonts?.[k]);
+        const tag = style.fromBrief ? P.styleFromBrief : style.changed ? P.styleChanged : '';
+        return `<aside class="pl-style">
+          <div class="kicker">${esc(P.style)}${tag ? ` · ${esc(tag)}` : ''}</div>
+          ${style.name ? `<h3 style="${style.fonts?.display ? `font-family:${esc(cssFont(style.fonts.display))}` : ''}">${esc(style.name)}</h3>` : ''}
+          ${swatchRow(style.palette)}
+          ${fonts.length ? `<div class="st-fonts">${fonts.map(([k, label, fb]) => `<div><span>${esc(label)}</span><b style="font-family:${esc(cssFont(style.fonts[k], fb))}">${esc(safeFont(style.fonts[k]))}</b></div>`).join('')}</div>` : ''}
+        </aside>`;
+      })()
+    : '';
+  return groups.map((group, gi) => ({
+    kicker: groups.length > 1 ? `${P.title} · ${gi + 1}/${groups.length}` : P.title,
+    html: `
+    ${gi === 0
+      ? `<div class="pagehead pl-head"><div><h2 class="big-t">${esc(P.title)}</h2>${flag ? `<span class="pl-flag ${plan.drafted ? '' : 'ok'}">${esc(flag)}</span>` : ''}</div><p>${esc(String(lede).slice(0, 360))}</p></div>`
+      : `<div class="conthead"><h3>${esc(P.title)}</h3><span>${esc(L.cont)} · ${gi + 1}/${groups.length}</span></div>`}
+    <div class="pl-ov ${gi === 0 && styleBox ? 'with-style' : ''}">
+      <ol class="pl-rows" style="--n:${Math.max(group.length, 5)}">${group
+        .map(({ sec, idx }) => {
+          const img = planImage(ctx, sec.primary);
+          const line = sec.analysis?.summary || sec.primary?.title || P.noRef;
+          const meta = sec.primary ? [sourceName(sec.primary.source), host(sec.primary.url)].filter(Boolean).join(' · ') : '';
+          return `<li class="${sec.primary ? '' : 'empty'}">
+            <span class="no">${pad(idx)}</span>
+            <div class="shot">${img ? `<img src="${esc(img)}" alt="">` : `<div class="ph">${esc(sec.primary ? sourceName(sec.primary.source) : '—')}</div>`}</div>
+            <div class="pl-name"><h3>${esc(sec.name)}</h3>${meta ? `<span class="meta">${esc(meta)}</span>` : ''}</div>
+            <p class="${sec.analysis?.summary ? '' : 'muted'}">${esc(line)}</p>
+            <div class="pl-marks">${planMarks(L, sec, plan)}</div>
+          </li>`;
+        })
+        .join('')}</ol>
+      ${gi === 0 ? styleBox : ''}
+    </div>`,
+  }));
+}
+
+function planStripItem(ctx, it) {
+  const img = planImage(ctx, it);
+  return `<figure><div class="shot">${img ? `<img src="${esc(img)}" alt="">` : `<div class="ph">${esc(sourceName(it.source))}</div>`}</div><figcaption><span class="meta">${esc(it.title || host(it.url) || it.id)}</span></figcaption></figure>`;
+}
+
+function planSectionPages(ctx) {
+  const { plan, m } = ctx;
+  const { L, R } = m;
+  const P = L.plan;
+  if (plan.drafted) return [];
+  return plan.sections
+    .map((sec, i) => ({ sec, idx: i + 1 }))
+    .filter(({ sec }) => sec.primary || sec.analysis)
+    .map(({ sec, idx }) => {
+      const a = sec.analysis || {};
+      const p = sec.primary;
+      const img = planImage(ctx, p);
+      const alternates = sec.alternates.filter((x) => x.id !== p?.id);
+      const extra = sec.extra.filter((x) => x.id !== p?.id);
+      const alt = alternates.slice(0, Math.max(3, 7 - Math.min(extra.length, 4)));
+      const ext = extra.slice(0, 7 - alt.length);
+      const rows = PLAN_ROWS.filter(([k]) => String(a[k] || '').trim());
+      const chars = rows.reduce((n, [k]) => n + String(a[k]).length, 0) + String(sec.note || '').length * 1.4 + String(a.summary || '').length * 1.6;
+      const density = chars > 900 ? 'dense' : chars > 620 ? 'mid' : chars < 440 ? 'sparse' : '';
+      const meta = p ? [sourceName(p.source), host(p.url)].filter(Boolean).join(' · ') : '';
+      const stats = [p ? P.primary : P.noRef, sec.likedCount ? P.likes(sec.likedCount) : ''].filter(Boolean);
+      const changed = sec.changedByUser.primary || sec.changedByUser.components || sec.changedByUser.extra;
+      return {
+        kicker: `${P.kicker} — ${sec.name}`,
+        html: `
+        <div class="sechead pl-sechead">
+          <div class="secname"><span class="no">${pad(idx)}</span><h2>${esc(sec.name)}</h2></div>
+          <div class="secside">
+            <div class="secstats">${stats.map((s) => `<span>${esc(s)}</span>`).join('')}${sec.approved ? `<span class="pm ok">✓ ${esc(P.approved)}</span>` : ''}${changed ? `<span class="pm you">${esc(P.changed)}</span>` : ''}</div>
+          </div>
+        </div>
+        <div class="pl-body">
+          <figure class="pl-main">
+            <div class="shot">${img ? `<img src="${esc(img)}" alt="">` : `<div class="ph">${esc(p ? sourceName(p.source) : P.noRef)}</div>`}${sec.changedByUser.primary ? `<span class="fav">★ ${esc(P.yourPick)}</span>` : ''}</div>
+            ${p ? `<figcaption><b>${esc(p.title || host(p.url) || p.id)}</b><span class="meta">${esc(meta)}</span></figcaption>` : ''}
+          </figure>
+          <div class="pl-info ${density}">
+            <div class="pl-top">
+            ${a.summary ? `<p class="pl-sum">${esc(a.summary)}</p>` : ''}
+            ${sec.note ? `<blockquote class="pl-note"><span class="kicker">${esc(P.note)}</span><q><span>${esc(sec.note)}</span></q></blockquote>` : ''}
+            ${sec.components.length ? `<div class="pl-comps"><span class="kicker">${esc(L.components)}</span>${sec.components.map((c) => `<span class="chip">${esc(c.title || c.id)}</span>`).join('')}</div>` : ''}
+            </div>
+            ${rows.length ? `<dl class="pl-an">${rows.map(([k, r]) => `<div><dt>${esc(R[r])}</dt><dd>${esc(a[k])}</dd></div>`).join('')}</dl>` : ''}
+          </div>
+        </div>
+        ${alt.length || ext.length ? `<div class="pl-strip">
+          ${alt.length ? `<div class="grp" style="--k:${alt.length}"><div class="kicker">${esc(P.alternates)}</div><div class="row">${alt.map((x) => planStripItem(ctx, x)).join('')}</div></div>` : ''}
+          ${ext.length ? `<div class="grp you" style="--k:${ext.length}"><div class="kicker">${esc(P.extra)}</div><div class="row">${ext.map((x) => planStripItem(ctx, x)).join('')}</div></div>` : ''}
+        </div>` : ''}`,
+      };
+    });
+}
+
 // ─── Document ──────────────────────────────────────────────────────────────
 
 const CSS = `
@@ -954,6 +1132,70 @@ figcaption q{font:italic 400 13px/1.2 var(--serif);color:var(--ink);display:-web
 .credits ul{columns:3;column-gap:28px;font:400 8px/1.5 var(--mono);color:var(--faint)}
 .credits li{break-inside:avoid}
 .colophon{display:flex;align-items:center;justify-content:space-between;gap:20px;border-top:1px solid var(--rule);padding-top:16px;font:500 8.5px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--night-dim);flex:none}
+/* plan */
+.pm{display:inline-block;font:500 7.5px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--faint);white-space:nowrap}
+.pm.ok{color:var(--ink)}
+.pm.you{background:var(--acc);color:var(--night);padding:4px 7px 3px;border-radius:99px}
+.pl-head>div{display:flex;flex-direction:column;align-items:flex-start;gap:14px}
+.pl-flag{font:500 8px/1 var(--mono);letter-spacing:.09em;text-transform:uppercase;color:var(--dim);border:1px solid var(--rule);padding:5px 8px 4px;border-radius:99px}
+.pl-flag.ok{background:var(--night);color:var(--acc);border-color:var(--night)}
+.pl-ov{flex:1;min-height:0;display:grid;grid-template-columns:1fr;gap:40px}
+.pl-ov.with-style{grid-template-columns:1fr 250px}
+.pl-rows{min-height:0;display:grid;grid-template-rows:repeat(var(--n),minmax(0,1fr));align-content:start;height:100%;max-height:100%}
+.pl-rows li{display:grid;grid-template-columns:30px 128px 170px 1fr 116px;gap:18px;align-items:center;border-top:1px solid var(--rule);padding:8px 0;min-height:0}
+.pl-rows li:last-child{border-bottom:1px solid var(--rule)}
+.pl-rows .no{font:500 8.5px/1 var(--mono);letter-spacing:.06em;color:var(--faint);align-self:start;padding-top:8px}
+.pl-rows .shot{height:100%;max-height:84px;flex:none}
+.pl-name{min-width:0;display:flex;flex-direction:column;gap:5px}
+.pl-name h3{font:400 24px/1 var(--serif);letter-spacing:-.015em;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;padding-bottom:.06em}
+.pl-name .meta{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pl-rows p{font-size:12px;line-height:1.4;color:var(--ink);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.pl-rows p.muted{color:var(--faint)}
+.pl-marks{display:flex;flex-direction:column;align-items:flex-start;gap:6px}
+.pl-style{border-left:1px solid var(--rule);padding-left:26px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.pl-style .kicker{margin-bottom:0}
+.pl-style h3{font:400 30px/1 var(--serif);letter-spacing:-.015em}
+.pl-style .sw div{height:64px}
+.pl-style .st-fonts{flex-direction:column;gap:12px;margin-top:4px}
+.pl-style .st-fonts b{font-size:20px;white-space:normal}
+.pl-sechead{margin-bottom:18px;padding-bottom:16px;grid-template-columns:1fr auto}
+.pl-sechead h2{font-size:60px}
+.pl-sechead .secstats{align-items:center;justify-content:flex-end;gap:6px 14px}
+.pl-body{flex:1;min-height:0;display:grid;grid-template-columns:55fr 45fr;grid-template-rows:minmax(0,1fr);gap:34px}
+.pl-main{display:grid;grid-template-rows:minmax(0,1fr) auto;min-height:0;min-width:0}
+.pl-main figcaption{height:36px}
+.pl-main .fav{font-size:8px;padding:6px 9px 5px}
+.pl-info{min-height:0;max-height:100%;min-width:0;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;gap:14px}
+.pl-top{display:flex;flex-direction:column;gap:14px}
+.pl-sum{font:400 22px/1.18 var(--serif);letter-spacing:-.01em;text-wrap:pretty}
+.pl-note{background:var(--night);color:var(--night-fg);border-radius:3px;padding:12px 14px 13px}
+.pl-note .kicker{color:var(--acc);margin-bottom:7px}
+.pl-note q{font:italic 400 16px/1.25 var(--serif);display:block}
+.pl-comps{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.pl-comps .kicker{margin:0 6px 0 0}
+.chip{font:500 10.5px/1 var(--sans);border:1px solid var(--rule);border-radius:99px;padding:5px 9px 5px;background:rgba(255,255,255,.35)}
+.pl-an{border-top:1px solid var(--ink)}
+.pl-an div{display:grid;grid-template-columns:84px 1fr;gap:12px;padding:7px 0;border-bottom:1px solid var(--rule)}
+.pl-an dt{font:500 8px/1.7 var(--mono);letter-spacing:.09em;text-transform:uppercase;color:var(--faint)}
+.pl-an dd{font-size:11.5px;line-height:1.42;color:var(--ink);display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+.pl-info.sparse .pl-sum{font-size:30px;line-height:1.08;letter-spacing:-.015em}
+.pl-info.sparse .pl-an dd{font-size:12px}
+.pl-info.mid .pl-sum{font-size:19px}
+.pl-info.mid .pl-an dd{font-size:11px;-webkit-line-clamp:3}
+.pl-info.dense,.pl-info.dense .pl-top{gap:10px}
+.pl-info.dense .pl-sum{font-size:17px}
+.pl-info.dense .pl-note q{font-size:14px}
+.pl-info.dense .pl-an div{padding:5px 0}
+.pl-info.dense .pl-an dd{font-size:10.5px;line-height:1.36;-webkit-line-clamp:2}
+.pl-strip{flex:none;display:flex;gap:26px;margin-top:18px;padding-top:12px;border-top:1px solid var(--rule)}
+.pl-strip .grp{flex:var(--k) 1 0;min-width:0}
+.pl-strip .grp.you{border-left:1px solid var(--rule);padding-left:26px}
+.pl-strip .kicker{margin-bottom:8px}
+.pl-strip .row{display:grid;grid-template-columns:repeat(var(--k),minmax(0,1fr));gap:12px;max-width:calc(var(--k) * 168px)}
+.pl-strip figure{min-width:0}
+.pl-strip .shot{height:80px;flex:none}
+.pl-strip figcaption{padding-top:5px}
+.pl-strip figcaption .meta{font-size:7px}
 `;
 
 function renderDocument(ctx, pages) {
@@ -1045,8 +1287,17 @@ export async function exportReport({ session, feedback, library, boardUrl, outFi
     }
     const results = await mapLimit(jobs, 3, (job) => shoot(browser, job));
     jobs.forEach((job, i) => results[i] && shots.set(job.key, pathToFileURL(results[i]).href));
-    const thumbJobs = m.sections
-      .flatMap((sec) => sec.picked)
+    let plan = null;
+    try {
+      plan = effectivePlan({ ...session, items: Array.isArray(session.items) ? session.items : [] }, feedback || {}, library || []);
+    } catch {
+      plan = null;
+    }
+    if (!plan?.sections?.length || (plan.drafted && !plan.sections.some((x) => x.primary))) plan = null;
+    const planItems = plan ? plan.sections.flatMap((sec) => [sec.primary, ...sec.alternates, ...sec.extra]).filter(Boolean) : [];
+    const seen = new Set();
+    const thumbJobs = [...m.sections.flatMap((sec) => sec.picked), ...planItems]
+      .filter((r) => !seen.has(r.id) && seen.add(r.id))
       .map((r) => {
         const rel = [r.image, r.liveImage].find((x) => x && m.fileUrl(x));
         return rel && { id: r.id, src: path.resolve(dir, rel), file: path.join(shotsDir, 'thumbs', `${path.basename(rel).replace(/\.[a-z0-9]+$/i, '')}.jpg`) };
@@ -1058,13 +1309,15 @@ export async function exportReport({ session, feedback, library, boardUrl, outFi
     const fonts = new Set();
     for (const k of ['display', 'body', 'mono']) if (session.brief?.fonts?.[k]) fonts.add(session.brief.fonts[k]);
     for (const s of m.likedStyles) for (const k of ['display', 'body']) if (s.style?.fonts?.[k]) fonts.add(s.style.fonts[k]);
+    for (const k of ['display', 'body']) if (plan?.style?.fonts?.[k]) fonts.add(plan.style.fonts[k]);
     for (const f of ['Geist', 'Geist Mono', 'Instrument Serif']) fonts.delete(f);
     const date = new Date().toLocaleDateString(m.lang === 'es' ? 'es-MX' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' });
-    const ctx = { session, feedback: feedback || {}, m, shots, thumbs, fonts: [...fonts].slice(0, 16), date };
+    const ctx = { session, feedback: feedback || {}, m, shots, thumbs, plan, fonts: [...fonts].slice(0, 16), date };
 
     const pages = [cover(ctx)];
     if (session.brief) pages.push(...briefPages(ctx));
     else if (!m.fallback) pages.push(tastePage(ctx));
+    if (plan) pages.push(...planOverviewPages(ctx), ...planSectionPages(ctx));
     const pending = [];
     m.sections.forEach((sec, i) => (sec.picked.length ? pages.push(...sectionPages(ctx, sec, i + 1)) : pending.push({ sec, idx: i + 1 })));
     pages.push(...pendingPage(ctx, pending));
@@ -1083,6 +1336,21 @@ export async function exportReport({ session, feedback, library, boardUrl, outFi
       await page.goto(pathToFileURL(htmlFile).href, { waitUntil: 'networkidle', timeout: 45000 }).catch(() => {});
       await page.evaluate(() => document.fonts.ready).catch(() => {});
       await page.evaluate(() => Promise.all([...document.images].map((i) => (i.complete ? null : new Promise((r) => { i.onload = i.onerror = r; }))))).catch(() => {});
+      // Plan pages: tighten the analysis column until it fits, then drop trailing rows as a last resort.
+      await page.evaluate(() => {
+        const ladder = ['sparse', '', 'mid', 'dense'];
+        for (const el of document.querySelectorAll('.pl-info')) {
+          const over = () => el.scrollHeight > el.clientHeight + 1;
+          let i = ladder.findIndex((c) => c && el.classList.contains(c));
+          if (i < 0) i = 1;
+          while (over() && ++i < ladder.length) {
+            el.classList.remove('sparse', 'mid', 'dense');
+            if (ladder[i]) el.classList.add(ladder[i]);
+          }
+          const rows = [...el.querySelectorAll('.pl-an > div')];
+          while (over() && rows.length > 1) rows.pop().remove();
+        }
+      }).catch(() => {});
       await fs.mkdir(path.dirname(pdf), { recursive: true });
       await page.pdf({ path: pdf, format: 'A4', landscape: true, printBackground: true, margin: { top: 0, right: 0, bottom: 0, left: 0 }, preferCSSPageSize: true });
     } finally {
