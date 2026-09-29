@@ -45,6 +45,7 @@ const start = await call('inspo_start', {
     stats: [{ value: '38', label: 'fincas aliadas' }, { value: '48 h', label: 'del tostador a tu casa' }, { value: '4.9', label: 'de 2,300 reseñas' }],
     quote: { text: 'Por fin un café que sabe a la tierra de donde viene.', author: 'Mariana R., suscriptora desde 2024' },
   },
+  sections: [{ id: 'navbar' }, { id: 'hero', why: 'Primera impresión' }, { id: 'catalog' }, { id: 'footer' }],
 });
 const session = start.json.session;
 
@@ -54,6 +55,14 @@ await call('inspo_add_styles', {
 });
 
 if (!stylesOnly) {
+  await call('inspo_sections', {});
+  await call('inspo_harvest', { session, query: 'coffee', target: 8, maxSites: 4, sites: ['https://bluebottlecoffee.com'] });
+  for (let i = 0; i < 60; i++) {
+    await new Promise((r) => setTimeout(r, 5000));
+    const st = await client.callTool({ name: 'inspo_status', arguments: { session } });
+    const j = JSON.parse(st.content[0].text);
+    if (j.job?.status !== 'running') { console.log('harvest', j.job?.status, JSON.stringify(j.countsBySection)); break; }
+  }
   await Promise.all([
     call('inspo_search', { session, query: 'coffee', sources: ['awwwards', 'siteinspire', 'onepagelove'], limit: 6, captureLive: 2 }),
     call('inspo_search', { session, query: 'coffee branding', sources: ['dribbble', 'landbook', 'lapa'], limit: 6 }),
@@ -65,6 +74,8 @@ if (!stylesOnly) {
 const open = await call('inspo_open', { session, open: false });
 console.log('\nBOARD', open.json?.url);
 await call('inspo_feedback', { session });
+await call('inspo_add_build', { session, html: '<!doctype html><html><body><header data-inspo="navbar">Tueste</header><section data-inspo="hero"><h1>Café</h1></section><footer data-inspo="footer">©</footer></body></html>', label: 'v1 smoke test' });
+if (!stylesOnly) await call('inspo_export_pdf', { session, open: false });
 await call('inspo_brief', {
   session,
   name: 'Tostado Suizo',

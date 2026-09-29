@@ -10,20 +10,27 @@ import {
   sessionDir, assetsDir, slugify, shortId,
 } from './session.js';
 import { SOURCES, SOURCE_IDS, searchSources, loginFlow } from './sources/index.js';
-import { captureSite, analyzeUrl, downloadAsset, fetchImages, searchImages, downloadImages } from './capture.js';
+import { captureSite, analyzeUrl, downloadAsset, fetchImages, searchImages, downloadImages, jpegCopy } from './capture.js';
 import { listLibrary } from './components.js';
 import { summarizeFeedback } from './feedback.js';
 import { startBoard, boardUrl, openInBrowser } from './board/server.js';
 import { closeBrowser } from './browser.js';
 import { STYLE_PRESETS, resolveStyle } from './styles/presets.js';
 import { renderSpecimen } from './styles/specimen.js';
+import { SECTION_TYPES, SECTION_IDS, RECOMMENDED, sectionName } from './sections.js';
+import { startHarvest, cancelJob, getJob } from './harvest.js';
 
-const VERSION = '0.1.0';
+const VERSION = '0.2.0';
 const server = new McpServer({ name: 'inspo', version: VERSION });
 
 const text = (t) => ({ content: [{ type: 'text', text: typeof t === 'string' ? t : JSON.stringify(t, null, 2) }] });
 const fail = (err) => ({ isError: true, content: [{ type: 'text', text: `Error: ${err?.message || err}` }] });
 const sessionArg = z.string().optional().describe('Session id. Defaults to the most recent session in this project.');
+const sectionEnum = z.enum(SECTION_IDS);
+const sectionsInput = z
+  .array(z.object({ id: sectionEnum, why: z.string().optional().describe('Why this page needs it (user\'s language).'), notes: z.string().optional() }))
+  .describe('Page sections to research, in page order. Agree on them with the user first (see inspo_sections).');
+const sectionMeta = (list, lang) => list.map((x) => ({ ...x, name: sectionName(x.id, lang) }));
 
 async function withSession(id) {
   return loadSession(id);
@@ -78,11 +85,12 @@ server.registerTool(
         })
         .optional()
         .describe('Real draft copy for the product (in the user\'s language). Used to render every style specimen.'),
+      sections: sectionsInput.optional(),
     },
   },
-  async ({ idea, title, context, copy }) => {
+  async ({ idea, title, context, copy, sections }) => {
     try {
-      const s = await createSession({ idea, title, context: context || {}, copy: copy || null });
+      const s = await createSession({ idea, title, context: context || {}, copy: copy || null, sections: sectionMeta(sections || [], context?.language) });
       const board = await startBoard();
       return text({
         session: s.id,
@@ -90,7 +98,10 @@ server.registerTool(
         board: boardUrl(board.url, s.id),
         sources: Object.fromEntries(SOURCE_IDS.map((k) => [k, SOURCES[k].about])),
         stylePresets: STYLE_PRESETS.map((p) => `${p.id} — ${p.name}: ${p.vibe}`),
-        next: 'Research: inspo_search (galleries) + inspo_capture (specific live sites you know are great). Then inspo_add_styles (4-6 directions) and pick components. Then inspo_open.',
+        sections: s.sections,
+        next: s.sections.length
+          ? 'inspo_harvest (≈50 refs per section, runs in background) → inspo_open right away so the user watches it fill → inspo_add_styles + components meanwhile.'
+          : 'Agree on sections first (inspo_sections), then inspo_harvest.',
       });
     } catch (err) {
       return fail(err);
@@ -121,6 +132,90 @@ server.registerTool(
   },
 );
 
+server.registerTool(
+  'inspo_sections',
+  {
+    title: 'Page sections: recommend or set',
+    description:
+      'Without `sections`: returns every section type inspo can research plus recommended sets per page type (landing, ecommerce, restaurant, studio, saas, portfolio, services), to help you recommend sections to the user. With `sections`: sets the session\'s section plan (page order), replacing the previous one.',
+    inputSchema: { session: sessionArg, sections: sectionsInput.optional() },
+  },
+  async ({ session, sections }) => {
+    try {
+      if (!sections) {
+        return text({
+          types: Object.fromEntries(SECTION_IDS.map((id) => [id, { en: SECTION_TYPES[id].name.en, es: SECTION_TYPES[id].name.es, ownPage: !!SECTION_TYPES[id].link }])),
+          recommended: RECOMMENDED,
+          tip: 'Recommend a set for this idea with a one-line why each, mark optional ones, and let the user add/remove before setting them.',
+        });
+      }
+      const s = await withSession(session);
+      const out = await updateSession(s.id, (ss) => {
+        ss.sections = sectionMeta(sections, ss.context?.language);
+        return ss.sections;
+      });
+      return text({ sections: out });
+    } catch (err) {
+      return fail(err);
+    }
+  },
+);
+
+server.registerTool(
+  'inspo_harvest',
+  {
+    title: 'Harvest ~50 references per section (background)',
+    description:
+      'Fill every section with N references (default 50) from dedicated galleries (footer.design, navbar.gallery), Dribbble, and — the richest source — real award-winning sites (Awwwards, Siteinspire, plus `sites` you pick) automatically cut into sections: navbar, hero, about, catalog, footer… following links to /about, /shop, /pricing when a section lives on its own page. Runs in the background (several minutes) and streams into the board; returns immediately. Check with inspo_status.',
+    inputSchema: {
+      session: sessionArg,
+      query: z.string().optional().describe('Industry keywords in English, 1-2 words (e.g. "coffee", "fintech", "architecture"). Used on Awwwards, Siteinspire and Dribbble.'),
+      target: z.number().int().min(5).max(150).optional().describe('References per section. Default 50.'),
+      sections: z.array(sectionEnum).optional().describe('Subset of the session sections. Default: all.'),
+      sites: z.array(z.string().url()).optional().describe('Live sites you know are excellent for this niche/vibe. Crawled first.'),
+      awwwardsCategory: z.string().optional().describe('Awwwards category slug, e.g. "food-drink", "fashion", "architecture", "e-commerce", "technology", "real-estate".'),
+      maxSites: z.number().int().min(2).max(200).optional().describe('Cap on live sites crawled. Default max(40, 1.5 × target).'),
+    },
+  },
+  async ({ session, query, target = 50, sections, sites, awwwardsCategory, maxSites }) => {
+    try {
+      const s = await withSession(session);
+      const job = await startHarvest(s.id, { query, target, sections, sites, awwwardsCategory, maxSites, language: s.context?.language });
+      const b = await startBoard();
+      return text({
+        job: job.id,
+        sections: job.sections,
+        target,
+        board: boardUrl(b.url, s.id, 'references'),
+        note: 'Running in the background. Open the board now so the user watches it fill; call inspo_status for progress. Meanwhile, add styles and components.',
+      });
+    } catch (err) {
+      return fail(err);
+    }
+  },
+);
+
+server.registerTool(
+  'inspo_status',
+  {
+    title: 'Harvest progress',
+    description: 'Progress of harvest jobs: references per section vs target, sites crawled, phase, recent log. Pass cancel:true to stop the running job.',
+    inputSchema: { session: sessionArg, cancel: z.boolean().optional() },
+  },
+  async ({ session, cancel }) => {
+    try {
+      const s = await withSession(session);
+      const jobs = Object.values(s.jobs || {}).sort((a, b) => (b.startedAt || '').localeCompare(a.startedAt || ''));
+      const live = jobs[0] && getJob(jobs[0].id);
+      if (cancel && live) cancelJob(live.id);
+      const counts = Object.fromEntries((s.sections || []).map((x) => [x.id, s.items.filter((i) => i.section === x.id).length]));
+      return text({ job: live ? { ...live, cancelled: undefined, log: live.log.slice(-8) } : jobs[0] || null, countsBySection: counts, totalItems: s.items.length });
+    } catch (err) {
+      return fail(err);
+    }
+  },
+);
+
 // ─── Research ───────────────────────────────────────────────────────────────
 
 server.registerTool(
@@ -133,12 +228,13 @@ server.registerTool(
       session: sessionArg,
       query: z.string().describe('Short search query in English. Galleries match on titles/tags, so 1-3 words work best.'),
       sources: z.array(z.enum(SOURCE_IDS)).optional().describe('Default: awwwards, dribbble, landbook, siteinspire, onepagelove.'),
-      limit: z.number().int().min(1).max(30).optional().describe('Max results per source (default 8).'),
+      limit: z.number().int().min(1).max(80).optional().describe('Max results per source (default 8).'),
       platform: z.enum(['web', 'ios', 'android']).optional().describe('Mobbin only. Default web.'),
       captureLive: z.number().int().min(0).max(10).optional().describe('Also screenshot + analyze the live site of the first N results that link to one (default 0; each takes ~10s).'),
+      section: sectionEnum.optional().describe('Tag results as references for this page section.'),
     },
   },
-  async ({ session, query, sources, limit = 8, platform, captureLive = 0 }) => {
+  async ({ session, query, sources, limit = 8, platform, captureLive = 0, section }) => {
     try {
       const s = await withSession(session);
       const results = await searchSources({ query, sources: sources || ['awwwards', 'dribbble', 'landbook', 'siteinspire', 'onepagelove'], limit, platform });
@@ -154,7 +250,7 @@ server.registerTool(
           if (!file) return null;
           return {
             kind: 'reference', source: r.source, title: c.title?.trim() || SOURCES[r.source].name, url: c.url, liveUrl: c.liveUrl,
-            image: file, video: c.video, author: c.author, tall: !!c.tall, query,
+            image: file, video: c.video, author: c.author, tall: !!c.tall, query, section,
           };
         });
         const ok = saved.filter((x) => x && !x.error);
@@ -199,13 +295,14 @@ server.registerTool(
       urls: z.array(z.string().url()).min(1).max(12),
       why: z.string().optional().describe('Why these were picked; shown on the cards.'),
       mobile: z.boolean().optional().describe('Capture at iPhone size instead of desktop.'),
+      section: sectionEnum.optional().describe('Tag the captures as references for this section.'),
     },
   },
-  async ({ session, urls, why, mobile }) => {
+  async ({ session, urls, why, mobile, section }) => {
     try {
       const s = await withSession(session);
       const caps = await mapLimit(urls, 3, (u) => captureSite(s.id, u, { mobile }));
-      const ok = caps.filter((c) => c && !c.error).map((c) => ({ ...c, note: why }));
+      const ok = caps.filter((c) => c && !c.error).map((c) => ({ ...c, note: why, section }));
       await addItems(s.id, ok);
       return text({
         captured: ok.length,
@@ -424,10 +521,10 @@ server.registerTool(
   {
     title: 'Open the voting board',
     description:
-      'Start (if needed) and open the local board in the user\'s browser. Tabs: Styles, References, Lab (live 3D/motion components), Brief. The user likes/dislikes, stars, tags reasons and writes notes; everything autosaves, and "Send to Claude" marks the round as submitted.',
+      'Start (if needed) and open the local board in the user\'s browser. Tabs: References (by section), Styles, Lab (live 3D/motion components), Page (the built page, with per-section feedback), Brief. The user likes/dislikes, stars, tags reasons and writes notes; everything autosaves, and "Send to Claude" marks the round as submitted.',
     inputSchema: {
       session: sessionArg,
-      tab: z.enum(['styles', 'references', 'lab', 'brief']).optional(),
+      tab: z.enum(['styles', 'references', 'lab', 'page', 'brief']).optional(),
       open: z.boolean().optional().describe('Open the browser (default true).'),
     },
   },
@@ -450,15 +547,16 @@ server.registerTool(
   {
     title: 'Read the user\'s votes',
     description:
-      'Read likes, dislikes, stars, reason tags and notes from the board, plus patterns (fonts, colors, tech, layouts shared by what they liked). With wait:true, blocks until the user presses "Send to Claude" (or timeout). Returns thumbnails of the favorites so you can see them.',
+      'Read likes, dislikes, stars, reason tags and notes from the board: per section (bySection), styles, components, patterns (fonts, colors, tech, layouts shared by the likes) and feedback on the built page (build: per-section votes + click-comments). With wait:true, blocks until the user presses "Send to Claude" (or timeout). Attaches thumbnails of favorites (spread across sections) so you can see them; pass `section` to focus on one.',
     inputSchema: {
       session: sessionArg,
       wait: z.boolean().optional(),
       timeoutSec: z.number().int().min(5).max(900).optional().describe('Default 240.'),
-      images: z.number().int().min(0).max(8).optional().describe('How many liked thumbnails to attach (default 4).'),
+      images: z.number().int().min(0).max(12).optional().describe('How many liked thumbnails to attach (default 6).'),
+      section: sectionEnum.optional().describe('Only this section\'s references (and its thumbnails).'),
     },
   },
-  async ({ session, wait, timeoutSec = 240, images = 4 }) => {
+  async ({ session, wait, timeoutSec = 240, images = 6, section }) => {
     try {
       let s = await withSession(session);
       let fb = await loadFeedback(s.id);
@@ -474,27 +572,104 @@ server.registerTool(
       }
       const summary = summarizeFeedback(s, fb, await listLibrary());
       if (wait && !summary.submittedAt) summary.note = 'Timed out waiting for "Send to Claude"; returning votes so far.';
+      // Section references are reported under bySection; keep the flat lists for everything else.
+      summary.liked = summary.liked.filter((l) => !s.items.find((i) => i.id === l.id)?.section);
+      summary.disliked = summary.disliked.filter((l) => !s.items.find((i) => i.id === l.id)?.section);
+      if (section) summary.bySection = { [section]: summary.bySection[section] };
       const content = [{ type: 'text', text: JSON.stringify(summary, null, 2) }];
-      const favs = summary.liked
-        .map((l) => s.items.find((i) => i.id === l.id))
-        .filter((i) => i && (i.image || i.images?.[0]))
-        .sort((a, b) => (fb.items[b.id]?.star ? 1 : 0) - (fb.items[a.id]?.star ? 1 : 0))
-        .slice(0, images);
-      for (const it of favs) {
-        const rel = it.image || it.images[0].src;
-        const ext = path.extname(rel).slice(1).toLowerCase();
+
+      // Favorites to look at: round-robin across sections (starred first), then styles/components.
+      const lists = Object.values(summary.bySection).map((b) => (b?.liked || []).map((l) => l.id));
+      if (!section) lists.push(summary.liked.map((l) => l.id));
+      const picks = [];
+      for (let i = 0; picks.length < images && lists.some((l) => l.length > i); i++) for (const l of lists) if (l[i] && picks.length < images) picks.push(l[i]);
+      for (const id of picks) {
+        const it = s.items.find((i) => i.id === id);
+        const rel = it?.image || it?.images?.[0]?.src;
+        if (!rel) continue;
+        let abs = path.join(sessionDir(s.id), rel);
+        let ext = path.extname(rel).slice(1).toLowerCase();
+        if (ext === 'avif') {
+          abs = await jpegCopy(abs).catch(() => null);
+          ext = 'jpg';
+          if (!abs) continue;
+        }
         const mime = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', gif: 'image/gif' }[ext];
         if (!mime) continue;
         try {
-          const buf = await fs.readFile(path.join(sessionDir(s.id), rel));
+          const buf = await fs.readFile(abs);
           if (buf.length > 1_500_000) continue;
-          content.push({ type: 'text', text: `↓ liked: ${it.title} (${it.id})` });
+          content.push({ type: 'text', text: `↓ liked${it.section ? ` [${it.section}]` : ''}: ${it.title} (${it.id})` });
           content.push({ type: 'image', data: buf.toString('base64'), mimeType: mime });
         } catch {
           /* missing file */
         }
       }
       return { content };
+    } catch (err) {
+      return fail(err);
+    }
+  },
+);
+
+server.registerTool(
+  'inspo_add_build',
+  {
+    title: 'Show a built page on the board',
+    description:
+      'Publish a version of the page you built (v1, v2…) to the board\'s Page tab, where the user votes and comments section by section and can click anywhere to leave a note. Pass `html` (a standalone document) or `file` (absolute path to an .html file; its folder is served so relative assets work) or `url` (e.g. a running dev server; no click-comments then). Mark every section root with data-inspo="<section id>" (e.g. <header data-inspo="navbar">) so feedback maps to sections.',
+    inputSchema: {
+      session: sessionArg,
+      html: z.string().optional(),
+      file: z.string().optional(),
+      url: z.string().url().optional(),
+      label: z.string().optional().describe('What changed in this version, one line.'),
+      notes: z.string().optional(),
+    },
+  },
+  async ({ session, html, file, url, label, notes }) => {
+    try {
+      if ([html, file, url].filter(Boolean).length !== 1) throw new Error('Pass exactly one of html, file or url.');
+      const s = await withSession(session);
+      const v = (s.builds?.at(-1)?.v || 0) + 1;
+      const build = { v, label: label || `v${v}`, notes, at: new Date().toISOString() };
+      if (html) {
+        await fs.mkdir(path.join(sessionDir(s.id), 'builds'), { recursive: true });
+        await fs.writeFile(path.join(sessionDir(s.id), 'builds', `v${v}.html`), html);
+        Object.assign(build, { kind: 'html', src: `builds/v${v}.html` });
+      } else if (file) {
+        const abs = path.resolve(file);
+        await fs.access(abs);
+        Object.assign(build, { kind: 'file', path: abs });
+      } else Object.assign(build, { kind: 'url', url });
+      await updateSession(s.id, (ss) => {
+        ss.builds = [...(ss.builds || []), build];
+      });
+      const b = await startBoard();
+      return text({ version: v, board: boardUrl(b.url, s.id, 'page'), tip: 'Open the Page tab (inspo_open tab:"page") and ask the user for feedback, then inspo_feedback → build.' });
+    } catch (err) {
+      return fail(err);
+    }
+  },
+);
+
+server.registerTool(
+  'inspo_export_pdf',
+  {
+    title: 'Export the research report (PDF)',
+    description:
+      'Render a studio-style PDF report of the research: cover, direction/brief (or taste profile), the winning references of every section with the user\'s notes, liked styles and components, and the current page version. Saved to .inspo/<session>/inspo-report.pdf and opened.',
+    inputSchema: { session: sessionArg, open: z.boolean().optional().describe('Open the PDF (default true).') },
+  },
+  async ({ session, open = true }) => {
+    try {
+      const s = await withSession(session);
+      const { exportReport } = await import('./report.js');
+      const b = await startBoard();
+      const outFile = path.join(sessionDir(s.id), 'inspo-report.pdf');
+      const res = await exportReport({ session: s, feedback: await loadFeedback(s.id), library: await listLibrary(), boardUrl: b.url, outFile });
+      if (open) openInBrowser(outFile);
+      return text({ pdf: outFile, pages: res.pages });
     } catch (err) {
       return fail(err);
     }

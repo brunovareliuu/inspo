@@ -42,7 +42,7 @@ export async function downloadAsset(sessionId, url, { referer, name } = {}) {
 }
 
 /** Runs in the page: pull fonts, colors, radii and the tech behind the site. */
-function analyzeInPage() {
+export function analyzeInPage() {
   const toHex = (c) => {
     const m = c && c.match(/rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)(?:,\s*([\d.]+))?/);
     if (!m || (m[4] !== undefined && +m[4] < 0.5)) return null;
@@ -237,5 +237,27 @@ export async function fetchImages(sessionId, query, { count = 4, orientation, mu
     return await downloadImages(sessionId, await searchImages(query, { count, orientation, mustMatch }), count);
   } catch {
     return [];
+  }
+}
+
+/** AVIF (footer.design, navbar.gallery) can't be sent over MCP: render it once to a JPEG next to it. */
+export async function jpegCopy(absPath) {
+  const out = absPath.replace(/\.[a-z0-9]+$/i, '') + '.mcp.jpg';
+  try {
+    await fs.access(out);
+    return out;
+  } catch {
+    /* not converted yet */
+  }
+  const context = await getContext();
+  const page = await context.newPage();
+  try {
+    const data = (await fs.readFile(absPath)).toString('base64');
+    await page.setContent(`<body style="margin:0"><img id="i" style="display:block;max-width:1440px" src="data:image/avif;base64,${data}"></body>`);
+    await page.waitForFunction(() => document.getElementById('i').complete, null, { timeout: 8000 });
+    await page.locator('#i').screenshot({ path: out, type: 'jpeg', quality: 78 });
+    return out;
+  } finally {
+    await page.close().catch(() => {});
   }
 }

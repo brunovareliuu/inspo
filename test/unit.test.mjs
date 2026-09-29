@@ -91,3 +91,44 @@ test('component library has valid metadata', async () => {
 test('slugify handles accents', () => {
   assert.equal(slugify('Café Ñandú & Co.'), 'cafe-nandu-co');
 });
+
+test('section taxonomy: every regex compiles and recommended sets are valid', async () => {
+  const { SECTION_TYPES, RECOMMENDED, SECTION_IDS } = await import('../src/sections.js');
+  for (const [id, t] of Object.entries(SECTION_TYPES)) {
+    if (t.rx) assert.doesNotThrow(() => new RegExp(`\\b(${t.rx})`, 'i'), id);
+    if (t.link) assert.doesNotThrow(() => new RegExp(`(^|[/\\s-])(${t.link})([/\\s-]|$)`, 'i'), id);
+    assert.ok(t.dribbble?.length, `${id} has gallery queries`);
+    assert.ok(t.name.en && t.name.es, `${id} names`);
+  }
+  for (const [kind, ids] of Object.entries(RECOMMENDED)) for (const id of ids) assert.ok(SECTION_IDS.includes(id), `${kind}: ${id}`);
+});
+
+test('section crops of one site are kept apart; feedback groups by section and build', async () => {
+  const s = await createSession({ idea: 'x', title: 'sections', sections: [{ id: 'hero', name: 'Hero' }, { id: 'footer', name: 'Footer' }] });
+  const added = await addItems(s.id, [
+    { kind: 'reference', source: 'live', section: 'hero', url: 'https://a.com', image: 'assets/h.jpg' },
+    { kind: 'reference', source: 'live', section: 'footer', url: 'https://a.com', image: 'assets/f.jpg' },
+    { kind: 'reference', source: 'live', section: 'footer', url: 'https://a.com', image: 'assets/f2.jpg' },
+  ]);
+  assert.equal(added.length, 2, 'same site, different sections kept; same section deduped');
+  const [hero, footer] = added;
+  const { updateSession } = await import('../src/session.js');
+  await updateSession(s.id, (ss) => { ss.builds = [{ v: 1, label: 'first', kind: 'html', src: 'builds/v1.html' }]; });
+  await saveFeedback(s.id, {
+    items: {
+      [hero.id]: { vote: 1, star: true, note: 'big type' },
+      [footer.id]: { vote: -1, note: 'too busy' },
+      'b1:hero': { vote: -1, note: 'headline too small' },
+      'p1:abc': { note: 'make this red', meta: { version: 1, section: 'hero', selector: 'h1', text: 'Hello', evil: '<x>' } },
+    },
+  });
+  const sum = summarizeFeedback(await loadSession(s.id), await loadFeedback(s.id), []);
+  assert.equal(sum.bySection.hero.liked.length, 1);
+  assert.equal(sum.bySection.footer.dislikedCount, 1);
+  assert.equal(sum.bySection.footer.dislikedNotes[0].note, 'too busy');
+  assert.deepEqual(sum.build.sections, [{ section: 'hero', vote: -1, note: 'headline too small', reasons: [] }]);
+  assert.equal(sum.build.comments[0].selector, 'h1');
+  assert.equal((await loadFeedback(s.id)).items['p1:abc'].meta.evil, undefined, 'meta is whitelisted');
+  await saveFeedback(s.id, { items: { 'p1:abc': { deleted: true } } });
+  assert.equal((await loadFeedback(s.id)).items['p1:abc'], undefined, 'comments can be deleted');
+});

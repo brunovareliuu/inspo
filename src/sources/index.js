@@ -10,7 +10,12 @@ export const SOURCES = {
     name: 'Awwwards',
     home: 'https://www.awwwards.com',
     about: 'Award-winning websites. Best for bold, crafted, motion-heavy marketing sites.',
-    url: (q) => (q ? `https://www.awwwards.com/websites/?text=${encodeURIComponent(q)}` : 'https://www.awwwards.com/websites/sites_of_the_day/'),
+    url: (q, { page = 1, category } = {}) => {
+      const pg = page > 1 ? `page=${page}` : '';
+      if (category) return `https://www.awwwards.com/websites/${encodeURIComponent(category)}/${pg ? `?${pg}` : ''}`;
+      if (q) return `https://www.awwwards.com/websites/?text=${encodeURIComponent(q)}${pg ? `&${pg}` : ''}`;
+      return `https://www.awwwards.com/websites/sites_of_the_day/${pg ? `?${pg}` : ''}`;
+    },
     extract: () =>
       [...document.querySelectorAll('.figure-rollover, figure')]
         .map((card) => {
@@ -81,7 +86,8 @@ export const SOURCES = {
     name: 'Siteinspire',
     home: 'https://www.siteinspire.com',
     about: 'Refined, typographic, studio and portfolio sites. Best for restraint and editorial taste.',
-    url: (q) => (q ? `https://www.siteinspire.com/search?query=${encodeURIComponent(q)}` : 'https://www.siteinspire.com/websites'),
+    url: (q, { page = 1 } = {}) =>
+      q ? `https://www.siteinspire.com/search?query=${encodeURIComponent(q)}${page > 1 ? `&page=${page}` : ''}` : `https://www.siteinspire.com/websites${page > 1 ? `?page=${page}` : ''}`,
     extract: () =>
       [...document.querySelectorAll('.WebsiteCard, [class*="WebsiteCard"]')]
         .map((card) => {
@@ -107,6 +113,39 @@ export const SOURCES = {
         })
         .filter((c) => c && c.image),
   },
+  footerdesign: {
+    name: 'footer.design',
+    home: 'https://www.footer.design',
+    about: 'A gallery of nothing but website footers. Section: footer.',
+    section: 'footer',
+    url: () => 'https://www.footer.design/',
+    extract: () =>
+      [...document.querySelectorAll('a[href*="/sites/"] img, img[alt]')]
+        .map((img) => {
+          const a = img.closest('a[href*="/sites/"]');
+          if (!a || img.getBoundingClientRect().width < 150) return null;
+          const scope = a.parentElement?.parentElement || a.parentElement;
+          const live = [...(scope?.querySelectorAll('a[href^="http"]') || [])].map((x) => x.href).find((h) => !/(^|\.)footer\.design$/.test(new URL(h).hostname));
+          return { title: img.alt, url: a.href, liveUrl: live, image: img.currentSrc || img.src };
+        })
+        .filter(Boolean),
+  },
+  navbargallery: {
+    name: 'Navbar Gallery',
+    home: 'https://www.navbar.gallery',
+    about: 'A gallery of website navigation bars. Section: navbar.',
+    section: 'navbar',
+    url: () => 'https://www.navbar.gallery/',
+    extract: () =>
+      [...document.querySelectorAll('img[alt]')]
+        .map((img) => {
+          if (img.getBoundingClientRect().width < 150 || /sponsor|mobbin/i.test(img.alt)) return null;
+          const scope = img.closest('a, li, article, div')?.parentElement;
+          const live = [...(scope?.querySelectorAll('a[href^="http"]') || [])].map((x) => x.href).find((h) => !/(^|\.)(navbar\.gallery|dub\.sh)$/.test(new URL(h).hostname));
+          return { title: img.alt, url: live || location.href, liveUrl: live?.replace(/[?&]ref=navbar\.gallery/, ''), image: img.currentSrc || img.src };
+        })
+        .filter((c) => c && c.liveUrl),
+  },
   mobbin: {
     name: 'Mobbin',
     home: 'https://mobbin.com',
@@ -131,10 +170,10 @@ export const SOURCES = {
 
 export const SOURCE_IDS = Object.keys(SOURCES);
 
-async function scrapeWith(context, sourceId, query, { limit = 12, platform } = {}) {
+export async function scrapeWith(context, sourceId, query, { limit = 12, platform, page: pageNo = 1, category } = {}) {
   const src = SOURCES[sourceId];
   const page = await context.newPage();
-  const url = src.url(query, { platform });
+  const url = src.url(query, { platform, page: pageNo, category });
   try {
     try {
       await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
@@ -148,10 +187,11 @@ async function scrapeWith(context, sourceId, query, { limit = 12, platform } = {
     if (src.needsLogin && /\/login|\/signup|sign in/i.test(page.url() + (await page.title()))) {
       throw new Error(`${src.name} needs a login. Run the inspo_login tool with source "${sourceId}" once.`);
     }
-    // Scroll a bit to trigger lazy loading, then extract.
-    for (let i = 0; i < 3; i++) {
-      await page.mouse.wheel(0, 1600);
-      await page.waitForTimeout(500);
+    // Scroll to trigger lazy loading / infinite scroll; deeper when more results are wanted.
+    const scrolls = Math.min(16, Math.max(3, Math.ceil(limit / 8)));
+    for (let i = 0; i < scrolls; i++) {
+      await page.mouse.wheel(0, 1800);
+      await page.waitForTimeout(i < 3 ? 500 : 800);
     }
     let cards = await page.evaluate(src.extract);
     if (!cards.length) {
@@ -173,7 +213,7 @@ async function scrapeWith(context, sourceId, query, { limit = 12, platform } = {
 }
 
 /** Search several sources in parallel. Never throws; per-source errors are returned. */
-export async function searchSources({ query, sources = ['awwwards', 'dribbble', 'landbook', 'siteinspire'], limit = 12, platform }) {
+export async function searchSources({ query, sources = ['awwwards', 'dribbble', 'landbook', 'siteinspire'], limit = 12, platform, page, category }) {
   const results = [];
   const walled = sources.filter((s) => SOURCES[s]?.needsLogin);
   const open = sources.filter((s) => SOURCES[s] && !SOURCES[s].needsLogin);
@@ -182,7 +222,7 @@ export async function searchSources({ query, sources = ['awwwards', 'dribbble', 
 
   if (open.length) {
     const context = await getContext();
-    const settled = await Promise.allSettled(open.map((s) => scrapeWith(context, s, query, { limit, platform })));
+    const settled = await Promise.allSettled(open.map((s) => scrapeWith(context, s, query, { limit, platform, page, category })));
     settled.forEach((r, i) => results.push(r.status === 'fulfilled' ? r.value : { source: open[i], error: r.reason?.message, cards: [] }));
   }
   for (const s of walled) {

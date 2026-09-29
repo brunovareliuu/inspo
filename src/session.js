@@ -47,12 +47,12 @@ async function writeJSON(file, data) {
   await fs.rename(tmp, file);
 }
 
-export async function createSession({ title, idea, context = {}, copy = null }) {
+export async function createSession({ title, idea, context = {}, copy = null, sections = [] }) {
   let id = slugify(title || idea, 40);
   if (existsSync(sessionDir(id))) id = `${id}-${shortId(4)}`;
   await fs.mkdir(assetsDir(id), { recursive: true });
   const now = new Date().toISOString();
-  const session = { id, title: title || idea.slice(0, 60), idea, context, copy, round: 1, createdAt: now, updatedAt: now, items: [], brief: null };
+  const session = { id, title: title || idea.slice(0, 60), idea, context, copy, sections, round: 1, createdAt: now, updatedAt: now, items: [], brief: null, builds: [], jobs: {} };
   await writeJSON(path.join(sessionDir(id), 'session.json'), session);
   await writeJSON(path.join(sessionDir(id), 'feedback.json'), emptyFeedback());
   await ensureGitignore();
@@ -86,15 +86,16 @@ export function updateSession(id, mutate) {
   });
 }
 
-/** Append items, skipping ones whose url/image we already have. Returns the items actually added. */
+/** Append items, skipping references we already have (same page for the same section). */
 export function addItems(id, items) {
   return updateSession(id, (s) => {
-    const seen = new Set(s.items.flatMap((i) => [i.url, i.liveUrl, i.image && !i.image.startsWith('assets/') ? i.image : null].filter(Boolean)));
+    const keyOf = (i) => (i.kind === 'reference' ? `${i.section || ''}::${i.url || i.liveUrl || i.image}` : null);
+    const seen = new Set(s.items.map(keyOf).filter(Boolean));
     const added = [];
     for (const item of items) {
-      const keys = [item.url, item.liveUrl].filter(Boolean);
-      if (item.kind === 'reference' && keys.some((k) => seen.has(k))) continue;
-      keys.forEach((k) => seen.add(k));
+      const key = keyOf(item);
+      if (key && seen.has(key)) continue;
+      if (key) seen.add(key);
       const full = { id: item.id || `${item.kind[0]}-${shortId()}`, round: s.round, addedAt: new Date().toISOString(), tags: [], ...item };
       s.items.push(full);
       added.push(full);
@@ -123,6 +124,10 @@ export function saveFeedback(id, incoming) {
     if (incoming.items && typeof incoming.items === 'object') {
       for (const [itemId, v] of Object.entries(incoming.items)) {
         if (!v || typeof v !== 'object') continue;
+        if (v.deleted) {
+          delete fb.items[itemId];
+          continue;
+        }
         fb.items[itemId] = {
           vote: [1, 0, -1].includes(v.vote) ? v.vote : 0,
           star: Boolean(v.star),
@@ -130,6 +135,15 @@ export function saveFeedback(id, incoming) {
           reasons: Array.isArray(v.reasons) ? v.reasons.map(String).slice(0, 12) : [],
           at: new Date().toISOString(),
         };
+        // Page-build comments carry where they were made.
+        if (v.meta && typeof v.meta === 'object') {
+          fb.items[itemId].meta = {
+            version: Number(v.meta.version) || 0,
+            section: String(v.meta.section || '').slice(0, 60),
+            selector: String(v.meta.selector || '').slice(0, 300),
+            text: String(v.meta.text || '').slice(0, 200),
+          };
+        }
       }
     }
     if (typeof incoming.general === 'string') fb.general = incoming.general.slice(0, 5000);

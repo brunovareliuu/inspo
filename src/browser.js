@@ -74,8 +74,35 @@ export async function withProfile(fn, { headless = true } = {}) {
 }
 
 export async function closeBrowser() {
-  if (shared) await shared.browser.close().catch(() => {});
+  if (shared) await Promise.race([shared.browser.close().catch(() => {}), new Promise((r) => setTimeout(r, 5000))]);
   shared = null;
+}
+
+/**
+ * Remove newsletter/discount popups, chat widgets and their backdrops: anything fixed that
+ * covers the middle of the screen and isn't the site header.
+ */
+export async function killPopups(page) {
+  await page.keyboard.press('Escape').catch(() => {});
+  await page
+    .evaluate(() => {
+      const vw = innerWidth, vh = innerHeight;
+      for (const el of document.querySelectorAll('body *')) {
+        const cs = getComputedStyle(el);
+        if (cs.position !== 'fixed' && cs.position !== 'sticky' && !el.matches('[role="dialog"], [aria-modal="true"], dialog[open]')) continue;
+        const r = el.getBoundingClientRect();
+        const isBar = r.top <= 2 && r.height < 200 && r.width > vw * 0.5; // header / announcement bar: keep
+        const modalish = el.matches('[role="dialog"], [aria-modal="true"], dialog[open], [class*="modal" i], [class*="popup" i], [class*="klaviyo" i], [id*="popup" i], [class*="newsletter" i], [id*="attentive" i], [class*="overlay" i], [class*="backdrop" i], iframe[id*="chat" i]');
+        const covers = r.width * r.height > vw * vh * 0.18 && r.left < vw / 2 && r.right > vw / 2 && r.top < vh / 2 && r.bottom > vh / 2;
+        const corner = r.width < 420 && r.height < 620 && r.bottom > vh - 40 && (r.right > vw - 40 || r.left < 40) && cs.position === 'fixed'; // chat bubbles, promo toasts
+        if (!isBar && (modalish || covers || corner)) el.remove();
+      }
+      for (const el of [document.documentElement, document.body]) {
+        el.style.setProperty('overflow', 'auto', 'important');
+        el.style.setProperty('position', 'static', 'important');
+      }
+    })
+    .catch(() => {});
 }
 
 /** Dismiss the usual cookie banners so they don't end up in screenshots. */

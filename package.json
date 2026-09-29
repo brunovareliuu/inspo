@@ -1,6 +1,6 @@
 {
   "name": "inspo-mcp",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Design research agent for Claude Code: scrapes Awwwards, Dribbble, Mobbin & co, screenshots live sites, and gives you a board to vote on references, styles and 3D components.",
   "main": "src/server.js",
   "scripts": {

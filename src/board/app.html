@@ -90,6 +90,8 @@ main{padding:22px 24px 120px}
 
 /* ── Reference grid ──────────────────────── */
 .masonry{columns:var(--cols,4) 280px;column-gap:16px}
+.media.strip{height:118px}
+.media.strip img{height:100%;object-fit:cover;object-position:left center}
 .card{break-inside:avoid;margin:0 0 16px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;position:relative;transition:border-color .2s,transform .3s var(--ease),opacity .3s}
 .card:hover{border-color:var(--line-2)}
 .card.liked{border-color:color-mix(in oklab,var(--like) 70%,transparent);box-shadow:0 0 0 1px color-mix(in oklab,var(--like) 40%,transparent)}
@@ -178,6 +180,37 @@ main{padding:22px 24px 120px}
 .thumbs img{width:100%;aspect-ratio:4/3;object-fit:cover;object-position:top;border-radius:8px;border:1px solid var(--line)}
 pre.tokens{background:var(--panel-2);border-radius:10px;padding:14px;overflow:auto;font:12px/1.6 var(--mono);margin:0}
 
+/* ── Sections / harvest ──────────────────── */
+.secrow{display:flex;flex-wrap:wrap;gap:6px;width:100%;padding-bottom:8px;margin-bottom:2px;border-bottom:1px solid var(--line)}
+.chip.sec[aria-pressed=true]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.chip.sec[aria-pressed=true] .n{color:var(--bg);opacity:.7}
+.sec-h{margin-top:26px}.sec-h .btn{margin-left:auto}
+.small-btn{height:28px;padding:0 12px;font-size:12px}
+.btn.quick{height:30px;font-size:13px;border-color:var(--acc);color:var(--acc)}
+.jobbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;width:100%;margin-top:6px;padding:8px 12px;border-radius:12px;background:var(--panel);border:1px solid var(--line);font-size:12px;color:var(--dim)}
+.jobbar .jc{display:inline-flex;align-items:center;gap:6px}
+.jobbar .jc b{font-weight:500;color:var(--fg)}
+.jobbar .jc i{width:54px;height:4px;border-radius:4px;background:var(--line);overflow:hidden;display:block}
+.jobbar .jc u{display:block;height:100%;background:var(--acc);text-decoration:none}
+.jobbar em{font:11px var(--mono);font-style:normal}
+.spin{width:12px;height:12px;border-radius:50%;border:2px solid var(--line-2);border-top-color:var(--acc);animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── Page tab ────────────────────────────── */
+.pagegrid{display:grid;grid-template-columns:1fr 340px;gap:18px;height:calc(100vh - 190px)}
+.stage-wrap{position:relative;overflow:hidden;border-radius:var(--r);border:1px solid var(--line);background:#fff}
+.stage-wrap iframe{position:absolute;top:0;left:50%;border:0;transform-origin:top center;translate:-50% 0;background:#fff}
+.pside{overflow:auto;display:flex;flex-direction:column;gap:10px;padding-right:4px}
+.pside h5{margin:8px 0 0;font:500 11px var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--faint)}
+.psec{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 10px 10px 14px;display:grid;gap:8px}
+.psec.liked{border-color:var(--like)}.psec.disliked{border-color:var(--nope)}
+.psec-h{display:flex;align-items:center;gap:8px}.psec-h b{flex:1;font-weight:500}
+.pin{display:flex;gap:10px;align-items:flex-start;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px}
+.pin.editing{border-color:var(--acc)}
+.pin small{color:var(--faint);font-size:12px}.pin p{margin:4px 0 0}
+.pin-n{flex:none;width:22px;height:22px;border-radius:50%;background:var(--acc);color:var(--acc-ink);font:700 11px/22px var(--font);text-align:center}
+.pin .note{margin-top:6px}
+
 /* ── Lightbox ────────────────────────────── */
 .lb{position:fixed;inset:0;z-index:80;background:rgba(6,6,7,.94);backdrop-filter:blur(8px);display:none;grid-template-columns:1fr 380px}
 .lb.open{display:grid}
@@ -216,6 +249,7 @@ dialog .actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
 .empty code{font-family:var(--mono);background:var(--panel);padding:2px 6px;border-radius:6px}
 
 @media (max-width:980px){
+  .pagegrid{grid-template-columns:1fr;height:auto}.stage-wrap{height:70vh}
   .bar{flex-wrap:wrap;gap:10px;padding:10px 16px}
   .tabs{order:3;margin:0;width:100%;justify-content:space-between}
   .progress .meter,.hint{display:none}
@@ -278,6 +312,9 @@ const T = {
     cancel:'Keep voting', dlgSend:'Send to Claude', likedN:'liked', dislikedN:'passed', starredN:'favorites',
     emptyTitle:'Nothing here yet', emptyText:'Ask Claude to research your idea. Sessions appear here as soon as they start.', noBrief:'Your taste so far', noBriefText:'Claude publishes the final direction here with inspo_brief. Meanwhile, this is what your votes say:',
     noItems:'No items for this filter.', keys:'keys', principles:'Principles', palette:'Palette', type:'Type', outline:'Page outline', doL:'Do', dontL:'Don’t', comps:'Components', refs:'References', tokens:'Tokens',
+    page:'Page', general:'General', quick:'Quick vote', harvesting:'Collecting references', sitesL:'sites', showNew:'Show new', version:'Version', desktop:'Desktop', tablet:'Tablet', mobile:'Mobile',
+    comment:'Comment', commentHint:'Comment mode: click anything on the page', sectionsL:'Sections', commentsL:'Comments', noBuild:'No page yet', noBuildText:'When you have picked your favorites, Claude builds the page and it shows up here. Vote section by section, or switch on Comment and click anything.',
+    commentOn:'Comment on', save:'Save', del:'Delete', noSecFound:'No sections found in this page.', target:'goal', crossOrigin:'This version runs on another server, so click-comments are off. Use the section notes.', done:'Done',
     topReasons:'Why you liked things', likedStyles:'Styles you liked', likedRefs:'References you liked', likedComps:'Components you liked', nothingYet:'Vote on a few things first.', newItems:'new', updated:'Board updated',
   },
   es: {
@@ -292,6 +329,9 @@ const T = {
     cancel:'Seguir votando', dlgSend:'Enviar a Claude', likedN:'me gustan', dislikedN:'descartados', starredN:'favoritos',
     emptyTitle:'Todavía no hay nada', emptyText:'Pídele a Claude que investigue tu idea. Las sesiones aparecen aquí en cuanto empiezan.', noBrief:'Tu gusto hasta ahora', noBriefText:'Claude publica aquí la dirección final con inspo_brief. Mientras, esto dicen tus votos:',
     noItems:'Nada con este filtro.', keys:'teclas', principles:'Principios', palette:'Paleta', type:'Tipografía', outline:'Estructura de la página', doL:'Sí', dontL:'No', comps:'Componentes', refs:'Referencias', tokens:'Tokens',
+    page:'Página', general:'General', quick:'Votar rápido', harvesting:'Buscando referencias', sitesL:'sitios', showNew:'Mostrar nuevos', version:'Versión', desktop:'Escritorio', tablet:'Tablet', mobile:'Móvil',
+    comment:'Comentar', commentHint:'Modo comentario: da clic en cualquier parte de la página', sectionsL:'Secciones', commentsL:'Comentarios', noBuild:'Todavía no hay página', noBuildText:'Cuando elijas tus favoritos, Claude construye la página y aparece aquí. Vota sección por sección, o activa Comentar y da clic en lo que quieras.',
+    commentOn:'Comentario sobre', save:'Guardar', del:'Borrar', noSecFound:'No encontré secciones en esta página.', target:'meta', crossOrigin:'Esta versión corre en otro servidor, así que los comentarios con clic no están disponibles. Usa las notas por sección.', done:'Listo',
     topReasons:'Por qué te gustaron', likedStyles:'Estilos que te gustaron', likedRefs:'Referencias que te gustaron', likedComps:'Componentes que te gustaron', nothingYet:'Vota algunas cosas primero.', newItems:'nuevo', updated:'Tablero actualizado',
   },
 };
@@ -320,8 +360,9 @@ let S = null;            // session
 let FB = { items:{}, general:'' };
 let LIB = [];
 let SESSIONS = [];
-let tab = params.get('tab') || store.get('tab','styles');
-let filter = 'all', source = 'all', round = 'all', cat = 'all';
+let tab = params.get('tab') || store.get('tab','references');
+let filter = 'all', source = 'all', round = 'all', cat = 'all', sec = params.get('sec') || 'all';
+let pendingNew = 0, pageV = null, device = store.get('device', 1440), commentMode = false;
 let tint = store.get('tint','');
 let lastUpdated = null;
 let seenIds = new Set();
@@ -359,7 +400,12 @@ async function load(first) {
   const changed = data.session.updatedAt !== lastUpdated;
   S = data.session; lastUpdated = S.updatedAt;
   if (first) { FB = data.feedback; seenIds = new Set(store.get('seen:'+S.id, [])); }
-  if (first || changed) { renderAll(); if (!first) toast(t('updated')); }
+  if (first) { renderAll(); return; }
+  if (!changed) return;
+  const scrolled = (document.scrollingElement?.scrollTop || 0) > 300;
+  if (tab === 'references' && scrolled && jobRunning()) { pendingNew++; renderTabs(); renderSub(); renderProgress(); return; }
+  if (tab === 'page') { renderTabs(); renderSub(); if (!$('#pageFrame') || pageV !== latestBuild()?.v) renderMain(); return; }
+  renderAll(); if (!jobRunning()) toast(t('updated'));
 }
 
 // ── rendering ───────────────────────────────────────────
@@ -376,8 +422,8 @@ function renderAll() {
 }
 
 function renderTabs() {
-  const n = { styles: itemsOf('style').length, references: itemsOf('reference').length, lab: components().length, brief: S?.brief ? '✓' : '' };
-  $('#tabs').innerHTML = ['styles','references','lab','brief'].map((k) =>
+  const n = { styles: itemsOf('style').length, references: itemsOf('reference').length, lab: components().length, page: S?.builds?.length ? 'v' + S.builds.at(-1).v : '', brief: S?.brief ? '✓' : '' };
+  $('#tabs').innerHTML = ['references','styles','lab','page','brief'].map((k) =>
     `<button class="tab" role="tab" aria-selected="${tab===k}" data-tab="${k}">${t(k)}${n[k]!=='' ? ` <span class="n">${n[k]}</span>` : ''}</button>`).join('');
 }
 
@@ -392,11 +438,41 @@ function renderProgress() {
 
 function chip(label, pressed, attrs, n) { return `<button class="chip" aria-pressed="${pressed}" ${attrs}>${esc(label)}${n!=null?` <span class="n">${n}</span>`:''}</button>`; }
 
+const jobRunning = () => Object.values(S?.jobs || {}).some((j) => j.status === 'running');
+const secName = (id) => id === 'general' ? t('general') : (S.sections || []).find((x) => x.id === id)?.name || id;
+const secIds = () => {
+  const refs = itemsOf('reference');
+  const ids = [...(S.sections || []).map((x) => x.id), ...new Set(refs.map((i) => i.section).filter(Boolean))];
+  const uniq = [...new Set(ids)];
+  if (refs.some((i) => !i.section)) uniq.push('general');
+  return uniq;
+};
+function jobBar() {
+  const job = Object.values(S?.jobs || {}).sort((a, b) => (b.startedAt || '').localeCompare(a.startedAt || ''))[0];
+  if (!job || job.status !== 'running') return pendingNew ? `<div class="jobbar"><button class="btn small-btn" data-shownew="1">${t('showNew')}</button></div>` : '';
+  const cells = job.sections.map((id) => { const c = job.counts?.[id] || 0; return `<span class="jc"><b>${esc(secName(id))}</b><i><u style="width:${Math.min(100, (c / job.target) * 100)}%"></u></i><em>${c}/${job.target}</em></span>`; }).join('');
+  return `<div class="jobbar"><span class="spin"></span><span>${t('harvesting')}${job.sites?.total ? ` · ${job.sites.done}/${job.sites.total} ${t('sitesL')}` : ''}</span>${cells}${pendingNew ? `<button class="btn small-btn" data-shownew="1">${t('showNew')}</button>` : ''}</div>`;
+}
+
 function renderSub() {
   if (!S || tab === 'brief') { $('#sub').innerHTML = ''; return; }
-  const list = tab === 'lab' ? components() : itemsOf(tab === 'styles' ? 'style' : 'reference');
+  if (tab === 'page') { $('#sub').innerHTML = pageBar(); return; }
+  let list = tab === 'lab' ? components() : itemsOf(tab === 'styles' ? 'style' : 'reference');
+  let h = '';
+  if (tab === 'references') {
+    const ids = secIds();
+    if (ids.length) {
+      const target = Object.values(S.jobs || {})[0]?.target;
+      h += `<div class="secrow">${chip(t('all'), sec === 'all', 'data-sec="all"', list.length)}${ids.map((id) => {
+        const inSec = list.filter((i) => (i.section || 'general') === id);
+        const liked = inSec.filter((i) => fbOf(i.id).vote === 1 || fbOf(i.id).star).length;
+        return `<button class="chip sec" aria-pressed="${sec === id}" data-sec="${esc(id)}">${esc(secName(id))} <span class="n">${inSec.length}${liked ? ` · ♥${liked}` : ''}</span></button>`;
+      }).join('')}</div>`;
+      if (sec !== 'all') list = list.filter((i) => (i.section || 'general') === sec);
+    }
+  }
   const cnt = (fn) => list.filter(fn).length;
-  let h = ['all','liked','disliked','unrated'].map((f) => chip(t(f), filter===f, `data-filter="${f}"`, cnt(filterFn(f)))).join('');
+  h += ['all','liked','disliked','unrated'].map((f) => chip(t(f), filter===f, `data-filter="${f}"`, cnt(filterFn(f)))).join('');
   if (tab === 'references') {
     const srcs = [...new Set(list.map((i) => i.source))];
     if (srcs.length > 1) h += '<span class="sep"></span>' + chip(t('all'), source==='all', 'data-source="all"') + srcs.map((s) => chip(s, source===s, `data-source="${esc(s)}"`, cnt((i)=>i.source===s))).join('');
@@ -410,8 +486,8 @@ function renderSub() {
   }
   const rounds = [...new Set(list.map((i) => i.round).filter(Boolean))];
   if (rounds.length > 1) h += '<span class="sep"></span>' + chip(t('allRounds'), round==='all', 'data-round="all"') + rounds.map((r) => chip(`${t('round')} ${r}`, round==r, `data-round="${r}"`)).join('');
-  if (tab === 'references') h += `<span class="grow"></span><span class="hint"><kbd>←</kbd> <kbd>→</kbd> <kbd>1</kbd> <kbd>2</kbd> <kbd>S</kbd> ${t('keys')}</span>`;
-  $('#sub').innerHTML = h;
+  if (tab === 'references') h += `<span class="grow"></span><button class="btn quick" data-quick="1">⚡ ${t('quick')}</button><span class="hint"><kbd>1</kbd> <kbd>2</kbd> <kbd>S</kbd></span>`;
+  $('#sub').innerHTML = h + (tab === 'references' ? jobBar() : '');
 }
 
 const filterFn = (f) => (i) => {
@@ -421,7 +497,7 @@ const filterFn = (f) => (i) => {
   if (f === 'unrated') return !v.vote && !v.star;
   return true;
 };
-const visible = (list) => list.filter(filterFn(filter)).filter((i) => source === 'all' || i.source === source).filter((i) => round === 'all' || i.round == round);
+const visible = (list) => list.filter(filterFn(filter)).filter((i) => source === 'all' || i.source === source).filter((i) => round === 'all' || i.round == round).filter((i) => tab !== 'references' || i.kind !== 'reference' || sec === 'all' || (i.section || 'general') === sec);
 
 function votesHtml(id) {
   const f = fbOf(id);
@@ -444,6 +520,7 @@ function renderMain() {
   if (tab === 'styles') m.innerHTML = renderStyles();
   else if (tab === 'references') m.innerHTML = renderRefs();
   else if (tab === 'lab') { m.innerHTML = renderLab(); mountLab(); }
+  else if (tab === 'page') { m.innerHTML = renderPage(); mountPage(); }
   else m.innerHTML = renderBrief();
   if (tab === 'styles') fitFrames();
 }
@@ -483,6 +560,15 @@ function fitFrames() {
 function renderRefs() {
   const list = visible(itemsOf('reference'));
   if (!list.length) return `<p class="hint">${t('noItems')}</p>`;
+  const ids = secIds();
+  if (sec === 'all' && ids.length > 1) {
+    return ids.map((id) => {
+      const l = list.filter((i) => (i.section || 'general') === id);
+      if (!l.length) return '';
+      const why = (S.sections || []).find((x) => x.id === id)?.why;
+      return `<div class="round-h sec-h"><h2>${esc(secName(id))}</h2><span>${l.length}${why ? ' · ' + esc(why) : ''}</span><button class="btn small-btn" data-sec="${esc(id)}">${t('open')} →</button></div><div class="masonry">${l.slice(0, 12).map(refCard).join('')}</div>`;
+    }).join('');
+  }
   return groupByRound(list, (l) => `<div class="masonry">${l.map(refCard).join('')}</div>`);
 }
 function refCard(i) {
@@ -490,11 +576,11 @@ function refCard(i) {
   const img = assetUrl(i.liveImage || i.image);
   const sub = [i.author, host(i.liveUrl || i.url)].filter(Boolean).join(' · ');
   return `<article class="card ${stateCls(i.id)}" data-id="${esc(i.id)}">
-    <button class="media ${i.tall && !i.liveImage ? 'tall' : ''}" data-lb="${esc(i.id)}" aria-label="${esc(i.title)}">
+    <button class="media ${i.tall && !i.liveImage ? 'tall' : ''}${i.crop && i.section === 'navbar' ? ' strip' : ''}" data-lb="${esc(i.id)}" aria-label="${esc(i.title)}">
       <img loading="lazy" src="${esc(img)}" alt="">
       ${i.video ? `<video muted loop playsinline preload="none" data-src="${esc(safeUrl(i.video))}"></video>` : ''}
     </button>
-    <div class="badge"><span>${esc(i.source)}</span>${i.analysis ? '<span>live</span>' : ''}${isNew(i)?`<span class="new">${t('newItems')}</span>`:''}</div>
+    <div class="badge"><span>${esc(i.source)}</span>${i.analysis && i.source !== 'live' ? '<span>live</span>' : ''}${isNew(i)?`<span class="new">${t('newItems')}</span>`:''}</div>
     ${f.note ? '<span class="note-dot"></span>' : ''}
     <div class="foot"><div class="t"><b>${esc(i.title)}</b><small>${esc(sub)}</small></div>${votesHtml(i.id)}</div>
     ${reasonsHtml(i.id)}
@@ -565,6 +651,136 @@ function contrast(hex) {
   return (r * 299 + g * 587 + b * 114) / 1000 > 140 ? '#0b0b0c' : '#f2f1ec';
 }
 
+
+// ── page (built versions + section feedback) ───────────
+const latestBuild = () => S?.builds?.at(-1);
+const buildOf = (v) => (S?.builds || []).find((b) => b.v === v) || latestBuild();
+const buildSrc = (b) => b.kind === 'html' ? `/s/${S.id}/${b.src}` : b.kind === 'file' ? `/b/${S.id}/${b.v}/${encodeURIComponent(b.path.split('/').pop())}` : b.url;
+function pageBar() {
+  const b = buildOf(pageV);
+  if (!b) return '';
+  const vs = S.builds.map((x) => `<option value="${x.v}" ${x.v === b.v ? 'selected' : ''}>v${x.v} — ${esc(x.label || '')}</option>`).join('');
+  const dev = [[1440, t('desktop')], [834, t('tablet')], [390, t('mobile')]].map(([w, l]) => `<button aria-pressed="${device === w}" data-device="${w}">${l}</button>`).join('');
+  return `<label class="tint"><span class="hint">${t('version')}</span><select id="pvSel">${vs}</select></label><div class="seg" style="margin:0">${dev}</div>
+    ${b.kind !== 'url' ? `<button class="chip" aria-pressed="${commentMode}" data-comment="1">✎ ${t('comment')}</button>` : ''}
+    <span class="grow"></span>${commentMode ? `<span class="hint">${t('commentHint')}</span>` : ''}<a class="btn" href="${esc(buildSrc(b))}" target="_blank" rel="noopener">${t('open')} ${ICON.ext}</a>`;
+}
+function renderPage() {
+  const b = buildOf(pageV);
+  if (!b) return `<div class="empty"><h2>${t('noBuild')}</h2><p>${t('noBuildText')}</p></div>`;
+  pageV = b.v;
+  return `<div class="pagegrid"><div class="stage-wrap" id="stageWrap"><iframe id="pageFrame" src="${esc(buildSrc(b))}" title="page v${b.v}"></iframe></div>
+    <aside class="pside" id="pside">${b.notes ? `<p class="hint">${esc(b.notes)}</p>` : ''}<h5>${t('sectionsL')}</h5><div id="psecs"><p class="hint">…</p></div><h5>${t('commentsL')}</h5><div id="ppins"></div>${b.kind === 'url' ? `<p class="hint">${t('crossOrigin')}</p>` : ''}</aside></div>`;
+}
+function fitPage() {
+  const wrap = $('#stageWrap'), fr = $('#pageFrame');
+  if (!wrap || !fr) return;
+  const sc = Math.min(1, wrap.clientWidth / device);
+  fr.style.width = device + 'px';
+  fr.style.height = (wrap.clientHeight / sc) + 'px';
+  fr.style.transform = `scale(${sc})`;
+}
+let pageSections = [];
+function mountPage() {
+  const fr = $('#pageFrame');
+  if (!fr) return;
+  fitPage();
+  new ResizeObserver(fitPage).observe($('#stageWrap'));
+  fr.addEventListener('load', () => {
+    let doc = null;
+    try { doc = fr.contentDocument; } catch {}
+    const b = buildOf(pageV);
+    if (!doc || !doc.body) {
+      pageSections = (S.sections || []).map((x) => ({ key: x.id, name: x.name, el: null }));
+    } else {
+      const st = doc.createElement('style');
+      st.textContent = '.__inspo-hl{outline:3px solid #d6ff3d!important;outline-offset:-3px!important}.__inspo-hover{outline:2px dashed #d6ff3d!important;outline-offset:-2px!important;cursor:crosshair!important}.__inspo-pin{position:absolute;z-index:2147483647;width:26px;height:26px;border-radius:50%;background:#d6ff3d;color:#0b0b0c;font:700 12px/26px system-ui;text-align:center;box-shadow:0 4px 14px rgba(0,0,0,.35);pointer-events:none}';
+      doc.head.appendChild(st);
+      let els = [...doc.querySelectorAll('[data-inspo]')];
+      if (!els.length) els = [...doc.querySelectorAll('body > header, body > nav, body > section, body > footer, body > main > *, body > div > section, body > div > header, body > div > footer')].filter((e) => e.getBoundingClientRect().height > 40);
+      pageSections = els.map((el, i) => {
+        const key = el.dataset.inspo || `${el.tagName.toLowerCase()}-${i + 1}`;
+        return { key, name: el.dataset.inspo ? secName(el.dataset.inspo) : `${el.tagName.toLowerCase()} ${i + 1}`, el };
+      });
+      wireComments(doc, b);
+      drawPins(doc, b);
+    }
+    renderPageSide();
+  });
+}
+function renderPageSide() {
+  const b = buildOf(pageV);
+  const box = $('#psecs');
+  if (!box) return;
+  box.innerHTML = pageSections.length ? pageSections.map((x) => {
+    const id = `b${b.v}:${x.key}`;
+    return `<div class="psec ${stateCls(id)}" data-id="${esc(id)}" data-pkey="${esc(x.key)}"><div class="psec-h"><b>${esc(x.name)}</b>${votesHtml(id)}</div><textarea class="note" rows="1" data-note="${esc(id)}" placeholder="${esc(t('note'))}">${esc(fbOf(id).note)}</textarea></div>`;
+  }).join('') : `<p class="hint">${t('noSecFound')}</p>`;
+  const pins = Object.entries(FB.items).filter(([k]) => k.startsWith(`p${b.v}:`));
+  $('#ppins').innerHTML = pins.map(([k, f], i) => `<div class="pin"><span class="pin-n">${i + 1}</span><div><small>${esc(f.meta?.section ? secName(f.meta.section) : '')}${f.meta?.text ? ' · “' + esc(f.meta.text.slice(0, 60)) + '”' : ''}</small><p>${esc(f.note)}</p></div><button class="lang" data-delpin="${esc(k)}" title="${t('del')}">✕</button></div>`).join('') || `<p class="hint">${b.kind === 'url' ? '' : t('commentHint')}</p>`;
+}
+function cssPath(el) {
+  const parts = [];
+  while (el && el.nodeType === 1 && parts.length < 5 && el.tagName !== 'BODY') {
+    if (el.id) { parts.unshift('#' + CSS.escape(el.id)); break; }
+    const sib = [...(el.parentElement?.children || [])].filter((x) => x.tagName === el.tagName);
+    parts.unshift(el.tagName.toLowerCase() + (sib.length > 1 ? `:nth-of-type(${sib.indexOf(el) + 1})` : ''));
+    el = el.parentElement;
+  }
+  return parts.join(' > ');
+}
+function wireComments(doc, b) {
+  let last = null;
+  doc.addEventListener('mouseover', (e) => { if (!commentMode) return; last?.classList.remove('__inspo-hover'); last = e.target; last.classList.add('__inspo-hover'); }, true);
+  doc.addEventListener('mouseout', () => last?.classList.remove('__inspo-hover'), true);
+  doc.addEventListener('click', (e) => {
+    if (!commentMode) return;
+    e.preventDefault(); e.stopPropagation();
+    const el = e.target;
+    el.classList.remove('__inspo-hover');
+    const secEl = el.closest('[data-inspo]') || pageSections.find((x) => x.el?.contains(el))?.el;
+    const section = secEl?.dataset?.inspo || pageSections.find((x) => x.el === secEl)?.key || '';
+    const text = (el.innerText || el.alt || el.getAttribute('aria-label') || el.tagName).trim().replace(/\s+/g, ' ').slice(0, 140);
+    openPinEditor({ section, selector: cssPath(el), text, version: b.v });
+  }, true);
+}
+function openPinEditor(meta) {
+  const box = $('#ppins');
+  const ed = document.createElement('div');
+  ed.className = 'pin editing';
+  ed.innerHTML = `<div style="flex:1"><small>${t('commentOn')} ${esc(meta.section ? secName(meta.section) : '')} · “${esc(meta.text.slice(0, 60))}”</small><textarea class="note" rows="3" autofocus></textarea><div style="display:flex;gap:6px;margin-top:6px;justify-content:flex-end"><button class="btn ghost" data-pincancel="1">✕</button><button class="btn primary" data-pinsave="1">${t('save')}</button></div></div>`;
+  box.prepend(ed);
+  const ta = ed.querySelector('textarea'); ta.focus();
+  ed.querySelector('[data-pinsave]').onclick = () => {
+    if (!ta.value.trim()) return ed.remove();
+    const id = `p${meta.version}:${Math.random().toString(36).slice(2, 8)}`;
+    setFb(id, { note: ta.value.trim(), vote: 0, meta });
+    renderPageSide();
+    try { drawPins($('#pageFrame').contentDocument, buildOf(pageV)); } catch {}
+  };
+  ed.querySelector('[data-pincancel]').onclick = () => ed.remove();
+}
+function drawPins(doc, b) {
+  if (!doc) return;
+  doc.querySelectorAll('.__inspo-pin').forEach((x) => x.remove());
+  Object.entries(FB.items).filter(([k]) => k.startsWith(`p${b.v}:`)).forEach(([, f], i) => {
+    let el = null; try { el = f.meta?.selector && doc.querySelector(f.meta.selector); } catch {}
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const pin = doc.createElement('div');
+    pin.className = '__inspo-pin'; pin.textContent = i + 1;
+    pin.style.left = (r.left + doc.defaultView.scrollX + 6) + 'px'; pin.style.top = (r.top + doc.defaultView.scrollY + 6) + 'px';
+    doc.body.appendChild(pin);
+  });
+}
+function highlightSection(key, scroll) {
+  const x = pageSections.find((p) => p.key === key);
+  pageSections.forEach((p) => p.el?.classList.remove('__inspo-hl'));
+  if (!x?.el) return;
+  x.el.classList.add('__inspo-hl');
+  if (scroll) x.el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 // ── lightbox ────────────────────────────────────────────
 function openLb(list, id, shot = 'hero') {
   lbList = list; lbIdx = Math.max(0, list.findIndex((i) => i.id === id)); lbShot = shot;
@@ -586,7 +802,7 @@ function drawLb() {
   const a = i.analysis;
   const shots = i.kind === 'reference' ? [['hero', i.liveImage || i.image], ['full', i.fullImage], ['thumb', i.liveImage ? i.image : null]].filter(([,v]) => v) : [];
   $('#lbSide').innerHTML = `
-    <div><div class="meta"><span>${esc(i.source || i.category || '')}${i.query ? ' · “' + esc(i.query) + '”' : ''}</span></div><h3>${esc(i.title || i.name)}</h3>${i.description || i.note ? `<p class="meta">${esc(i.description || i.note)}</p>` : ''}</div>
+    <div><div class="meta"><span>${i.section ? esc(secName(i.section)) + ' · ' : ''}${esc(i.source || i.category || '')}${i.query ? ' · “' + esc(i.query) + '”' : ''}</span></div><h3>${esc(i.title || i.name)}</h3>${i.description || i.note ? `<p class="meta">${esc(i.description || i.note)}</p>` : ''}</div>
     ${votesHtml(i.id)}
     <div><h5>${t('reasons')}</h5>${reasonsHtml(i.id)}</div>
     <textarea class="note" data-note="${esc(i.id)}" rows="3" placeholder="${esc(t('note'))}">${esc(f.note)}</textarea>
@@ -624,8 +840,14 @@ function refreshItem(id) {
 document.addEventListener('click', (e) => {
   const tgt = e.target.closest('button, a'); if (!tgt) return;
   const d = tgt.dataset;
-  if (d.tab) { tab = d.tab; store.set('tab', tab); filter = 'all'; source = 'all'; round = 'all'; history.replaceState(null, '', `?session=${S?.id||''}&tab=${tab}`); renderAll(); window.scrollTo(0,0); return; }
+  if (d.tab) { tab = d.tab; store.set('tab', tab); filter = 'all'; source = 'all'; round = 'all'; commentMode = false; pendingNew = 0; history.replaceState(null, '', `?session=${S?.id||''}&tab=${tab}`); renderAll(); window.scrollTo(0,0); return; }
   if (d.filter) { filter = d.filter; renderSub(); renderMain(); return; }
+  if (d.sec) { sec = d.sec; filter = 'all'; source = 'all'; history.replaceState(null, '', `?session=${S.id}&tab=references&sec=${sec}`); renderSub(); renderMain(); window.scrollTo(0, 0); return; }
+  if (d.shownew) { pendingNew = 0; renderSub(); renderMain(); return; }
+  if (d.quick) { const l = visible(itemsOf('reference')).filter(filterFn('unrated')); if (l.length) openLb(l, l[0].id); return; }
+  if (d.device) { device = Number(d.device); store.set('device', device); renderSub(); fitPage(); return; }
+  if (d.comment) { commentMode = !commentMode; renderSub(); return; }
+  if (d.delpin) { delete FB.items[d.delpin]; pending[d.delpin] = { deleted: true }; clearTimeout(saveTimer); saveTimer = setTimeout(flush, 200); renderPageSide(); try { drawPins($('#pageFrame').contentDocument, buildOf(pageV)); } catch {} return; }
   if (d.source) { source = d.source; renderSub(); renderMain(); return; }
   if (d.round) { round = d.round; renderSub(); renderMain(); return; }
   if (d.cat) { cat = d.cat; renderSub(); renderMain(); return; }
@@ -641,6 +863,8 @@ document.addEventListener('click', (e) => {
   if (d.shot) { lbShot = d.shot; drawLb(); return; }
   if (d.view) { const card = tgt.closest('.style'); card.classList.toggle('show-mood', d.view === 'mood'); tgt.parentElement.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', b === tgt)); return; }
 });
+document.addEventListener('mouseover', (e) => { const k = e.target.closest?.('.psec')?.dataset.pkey; if (k) highlightSection(k, false); });
+document.addEventListener('focusin', (e) => { const k = e.target.closest?.('.psec')?.dataset.pkey; if (k) highlightSection(k, true); });
 document.addEventListener('input', (e) => {
   const id = e.target.dataset?.note; if (!id) return;
   setFb(id, { note: e.target.value });
@@ -648,6 +872,7 @@ document.addEventListener('input', (e) => {
 });
 document.addEventListener('change', (e) => {
   if (e.target.id === 'tintSel') { tint = e.target.value; store.set('tint', tint); renderMain(); }
+  if (e.target.id === 'pvSel') { pageV = Number(e.target.value); renderSub(); renderMain(); }
   if (e.target.id === 'sessionSel') { location.search = `?session=${encodeURIComponent(e.target.value)}&tab=${tab}`; }
 });
 document.addEventListener('mouseover', (e) => { const v = e.target.closest?.('.media')?.querySelector('video[data-src]'); if (v && !v.src) { v.src = v.dataset.src; } v?.play?.().catch(()=>{}); });

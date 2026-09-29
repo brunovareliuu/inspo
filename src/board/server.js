@@ -10,7 +10,7 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const MIME = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json',
   '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp', '.gif': 'image/gif',
-  '.avif': 'image/avif', '.svg': 'image/svg+xml', '.mp4': 'video/mp4',
+  '.avif': 'image/avif', '.svg': 'image/svg+xml', '.mp4': 'video/mp4', '.pdf': 'application/pdf', '.woff2': 'font/woff2', '.woff': 'font/woff', '.ico': 'image/x-icon', '.mjs': 'text/javascript',
 };
 
 let running = null;
@@ -80,8 +80,19 @@ async function handle(req, res) {
     }
   }
 
-  // Session files: /s/<session>/<assets|styles|components>/<file>
-  const m = p.match(/^\/s\/([a-z0-9-]+)\/((?:assets|styles|components)\/.+)$/);
+  // Built page served from the user's project folder: /b/<session>/<version>/<file>
+  const bm = p.match(/^\/b\/([a-z0-9-]+)\/(\d+)\/(.*)$/);
+  if (bm) {
+    const s = await loadSession(bm[1]).catch(() => null);
+    const build = s?.builds?.find((x) => x.v === Number(bm[2]) && x.kind === 'file');
+    if (!build) return send(res, 404, { error: 'no such build' });
+    const root = path.dirname(build.path);
+    const file = inside(root, bm[3] || path.basename(build.path));
+    return file ? sendFile(res, file) : send(res, 403, { error: 'forbidden' });
+  }
+
+  // Session files: /s/<session>/<assets|styles|components|builds>/<file>
+  const m = p.match(/^\/s\/([a-z0-9-]+)\/((?:assets|styles|components|builds)\/.+)$/);
   if (m) {
     const file = inside(path.join(SESSIONS_DIR, m[1]), m[2]);
     return file ? sendFile(res, file) : send(res, 403, { error: 'forbidden' });

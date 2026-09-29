@@ -41,8 +41,47 @@ export function summarizeFeedback(session, feedback, library = []) {
   const unrated = session.items.filter((i) => !rated.has(i.id));
   const componentVotes = entries.filter((e) => e.item.kind === 'component').length;
 
+  // Per-section view of the references (the main thing the user votes on).
+  const sectionIds = [...new Set([...(session.sections || []).map((x) => x.id), ...session.items.filter((i) => i.section).map((i) => i.section)])];
+  const bySection = Object.fromEntries(
+    sectionIds.map((sid) => {
+      const inSec = session.items.filter((i) => i.section === sid);
+      const l = liked.filter((e) => e.item.section === sid);
+      const d = disliked.filter((e) => e.item.section === sid);
+      return [sid, {
+        total: inSec.length,
+        rated: inSec.filter((i) => rated.has(i.id)).length,
+        liked: l.sort((a, b) => (b.f.star ? 1 : 0) - (a.f.star ? 1 : 0)).map(describe),
+        dislikedCount: d.length,
+        dislikedNotes: d.filter((e) => e.f.note || e.f.reasons?.length).map((e) => ({ title: e.item.title, note: e.f.note, reasons: e.f.reasons })),
+        likedReasons: count(l, (e) => e.f.reasons),
+        likedSites: count(l, (e) => [e.item.site || e.item.source]),
+      }];
+    }),
+  );
+
+  // Feedback on built pages: section votes (b<v>:<section>) and click-comments (p<v>:<id>).
+  const builds = session.builds || [];
+  const latest = builds.at(-1);
+  const build = latest
+    ? {
+        version: latest.v,
+        label: latest.label,
+        sections: Object.entries(feedback.items || {})
+          .filter(([k]) => k.startsWith(`b${latest.v}:`))
+          .map(([k, f]) => ({ section: k.split(':').slice(1).join(':'), vote: f.vote, note: f.note, reasons: f.reasons }))
+          .filter((x) => x.vote || x.note || x.reasons?.length),
+        comments: Object.entries(feedback.items || {})
+          .filter(([k]) => k.startsWith(`p${latest.v}:`))
+          .map(([, f]) => ({ note: f.note, section: f.meta?.section, selector: f.meta?.selector, text: f.meta?.text })),
+        olderVersionsWithFeedback: [...new Set(Object.keys(feedback.items || {}).filter((k) => /^[bp]\d+:/.test(k)).map((k) => Number(k.slice(1).split(':')[0])))].filter((v) => v !== latest.v),
+      }
+    : null;
+
   return {
     session: session.id,
+    bySection,
+    build,
     round: session.round,
     submittedAt: feedback.submittedAt,
     general: feedback.general || '',

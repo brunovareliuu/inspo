@@ -1,6 +1,6 @@
 # inspo
 
-**Design research for Claude Code.** Give it an idea. It studies your app, pulls references from Awwwards, Dribbble, Mobbin, Land-book and more, screenshots live sites, renders your landing page in a range of visual styles with real photos, and opens a board where you vote on all of it, 3D components included. Then it learns your taste and converges on a design direction you actually like.
+**Design research and page building for Claude Code.** Tell it your idea and agree on the page sections. It gathers about **50 references per section** (navbar, hero, about, catalog, footer…) from Awwwards, Dribbble, Siteinspire, footer.design, navbar.gallery, and real award-winning sites that it cuts into sections automatically. It renders your page in several visual styles with real photos, and opens a board where you vote on all of it, live 3D components included. Then it hands you a PDF report, builds the page from what you picked, and iterates on your feedback section by section.
 
 [Español](README.es.md)
 
@@ -12,18 +12,28 @@
 
 ## What you get
 
-- **References.** Awwwards, Dribbble, Land-book, Siteinspire, One Page Love, Lapa Ninja and Mobbin, scraped with a real browser. Live sites are screenshotted (hero and full page) and analyzed: fonts, color palette, radii, type scale, and what they're built with (three.js, GSAP, Lenis, Webflow, Framer, Spline…).
+- **50+ references per section.** A background harvest fills every section you need (19 types: navbar, hero, logos, features, services, catalog, work, about, process, stats, team, testimonials, pricing, FAQ, blog, CTA, newsletter, contact, footer). Its sources:
+  - **Dedicated galleries:** footer.design, navbar.gallery.
+  - **Dribbble.**
+  - **Real sites cut into sections.** It visits hundreds of Awwwards and Siteinspire winners, removes cookie banners and discount popups, finds each section, follows links to /about, /shop and /pricing when a section has its own page, and screenshots just that part.
+
+  Around 250 references across 5 sections takes about 6 minutes, and the board fills live while it runs.
+- **Galleries on demand.** Awwwards, Dribbble, Land-book, Siteinspire, One Page Love, Lapa Ninja and Mobbin. Live sites are analyzed for fonts, palette, radii, type scale and tech (three.js, GSAP, Lenis, Webflow, Framer, Spline…).
 - **Styles.** Your own landing page, with your copy, rendered in 4–6 distinct directions. Each one gets its own palette, Google Fonts, layout, texture and image treatment, and real CC0 photos. 16 presets included, and Claude can tune them or invent new ones.
 - **Lab.** 18 live, production-grade components (WebGL shaders, a dot globe, a glass knot, particle galaxies, sticky stacks, magnetic buttons…), plus custom ones Claude writes for your idea. You can re-tint all of them with a style you liked.
-- **The board.** A local page where you 👍 / 👎 / ★, tag *why* (layout, type, color, motion, 3D…), write notes, and hit **Send to Claude**. It has keyboard shortcuts, autosaves, and runs in English or Spanish.
+- **The board.** A local page where you 👍 / 👎 / ★ section by section, tag *why* (layout, type, color, motion, 3D…), write notes, and hit **Send to Claude**. **⚡ Quick vote** goes one by one with `1` / `2` / `S`. It autosaves and runs in English or Spanish.
+- **PDF report.** A studio-style deliverable: cover, direction, the winners of every section with your notes, styles, components, and the current page.
+- **The page.** Claude builds it from your votes. The **Page** tab shows every version in desktop, tablet and mobile. You vote and note each section, or switch on **Comment** and click anything to pin a note. Claude reads the comments, with the exact element, rebuilds, and publishes v2, v3…
 - **Rounds.** Claude reads your votes, including the thumbnails you liked, and runs a sharper second round.
 - **Brief.** The final direction: concept, principles, palette, type, page outline, components, do/don't, and CSS tokens. It shows on the board and is written to `DESIGN.md`.
 
-| Styles | References |
+| References by section | The page, with section feedback and pinned comments |
 |---|---|
-| ![](docs/board-styles.jpg) | ![](docs/board-references.jpg) |
-| **Lab** | **Brief** |
-| ![](docs/board-lab.jpg) | ![](docs/board-brief.jpg) |
+| ![](docs/board-references.jpg) | ![](docs/board-page.jpg) |
+| **Styles** | **Lab** |
+| ![](docs/board-styles.jpg) | ![](docs/board-lab.jpg) |
+
+![The PDF report](docs/report.jpg)
 
 ## Install
 
@@ -66,13 +76,14 @@ Just describe what you're making. The skill triggers on its own, or you can call
 /inspo landing for my AI note-taking app, I love linear.app and stripe.com
 ```
 
-The loop:
+The conversation:
 
-1. **Understand.** Claude reads the idea, and your codebase if there is one (Tailwind config, CSS variables, layouts), or looks at your running app.
-2. **Research.** Gallery searches, live captures of best-in-class sites, 4–6 style directions, and components.
-3. **Vote.** The board opens in your browser. Vote, tag reasons, write notes, then hit **Send to Claude**.
-4. **Converge.** Claude tells you what it learned about your taste and runs a narrower round 2.
-5. **Direction.** Claude publishes the brief and `DESIGN.md`, then offers to build it in your stack.
+1. **The idea.** Claude reflects back what it understood and asks only what's missing: audience, the feeling, sites you love, brand assets. If there's a repo or running app, it looks at it.
+2. **Sections.** It asks which sections the page needs.
+3. **Recommendation.** It proposes a section list for your kind of page, one line of *why* each, and you adjust it.
+4. **Research and votes.** A harvest of about 50 references per section, 4–6 style directions and live components, all on the board. You vote and hit **Send to Claude**. Claude summarizes what you picked per section, publishes the brief, and exports the **PDF**.
+5. **The page.** Claude builds it from your votes (style, per-section references, components, your copy) and publishes it to the **Page** tab.
+6. **Feedback loop.** You vote and comment section by section, and Claude rebuilds. Repeat until it's right, then integrate it into your stack.
 
 Everything for a project lives in `<project>/.inspo/<session>/`, which is git-ignored automatically.
 
@@ -80,15 +91,20 @@ Everything for a project lives in `<project>/.inspo/<session>/`, which is git-ig
 
 | Tool | What it does |
 |---|---|
-| `inspo_start` | New session: idea, context, and real draft copy |
-| `inspo_search` | Search galleries, save thumbnails, optionally capture the live sites |
+| `inspo_start` | New session: idea, context, real draft copy, and sections |
+| `inspo_sections` | Section catalog and recommended sets per page type, or set the plan |
+| `inspo_harvest` | Background harvest of N references per section (default 50) |
+| `inspo_status` | Harvest progress per section (or cancel) |
+| `inspo_search` | Search galleries (optionally for one section), save thumbnails, optionally capture the live sites |
 | `inspo_capture` | Screenshot and analyze specific URLs (fonts, colors, tech) |
 | `inspo_analyze` | Look at any URL, including `localhost`, and return a screenshot plus its design DNA |
 | `inspo_add_styles` | Render your page in style directions with real photos |
 | `inspo_add_component` | Add a custom live component to the Lab |
 | `inspo_add_images` | Add a moodboard image set (Openverse, CC-licensed) |
 | `inspo_open` | Open the board |
-| `inspo_feedback` | Read votes, reasons, notes and patterns; can wait for **Send to Claude** |
+| `inspo_feedback` | Votes per section, styles, components, and page feedback (section votes and pinned comments), with thumbnails; can wait for **Send to Claude** |
+| `inspo_add_build` | Publish a page version (html, a file, or a URL) to the Page tab |
+| `inspo_export_pdf` | Export the research report as a PDF |
 | `inspo_next_round` | Start round N |
 | `inspo_brief` | Publish the final direction, written to `DESIGN.md` |
 | `inspo_remove` | Drop off-brief items |
@@ -106,6 +122,9 @@ Everything for a project lives in `<project>/.inspo/<session>/`, which is git-ig
 | One Page Love | One-pagers, launches | |
 | Lapa Ninja | SaaS / startup landings | |
 | Mobbin | Real app screens and flows | Needs a Mobbin account: `inspo_login` |
+| footer.design | Footers only | Harvest source for `footer` |
+| Navbar Gallery | Navigation bars only | Harvest source for `navbar` |
+| Live sites | Every section, cut from real sites | Awwwards categories and search, Siteinspire, Sites of the Day, plus sites Claude picks |
 | Openverse | Photos for styles and moodboards | CC-licensed, credited, no API key. Prefers StockSnap's CC0 stock |
 
 Galleries change their markup. If one breaks, `node bin/inspo.js doctor` tells you which, and a PR to `src/sources/index.js` is usually a two-line fix.
