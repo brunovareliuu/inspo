@@ -20,7 +20,7 @@ import { renderSpecimen } from './styles/specimen.js';
 import { SECTION_TYPES, SECTION_IDS, RECOMMENDED, sectionName } from './sections.js';
 import { startHarvest, cancelJob, getJob } from './harvest.js';
 
-const VERSION = '0.2.0';
+const VERSION = '0.2.1';
 const server = new McpServer({ name: 'inspo', version: VERSION });
 
 const text = (t) => ({ content: [{ type: 'text', text: typeof t === 'string' ? t : JSON.stringify(t, null, 2) }] });
