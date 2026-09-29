@@ -146,6 +146,22 @@ export const SOURCES = {
         })
         .filter((c) => c && c.liveUrl),
   },
+  saasinterface: {
+    name: 'SaaS Interface',
+    home: 'https://saasinterface.com',
+    about: 'Real SaaS product screens by type (dashboard, tables, settings, onboarding, billing…). Web apps.',
+    url: (q, { category = 'dashboard', page = 1 } = {}) => `https://saasinterface.com/pages/${encodeURIComponent(category)}/${page > 1 ? `page/${page}/` : ''}`,
+    extract: () =>
+      [...document.querySelectorAll('img')]
+        .filter((img) => img.getBoundingClientRect().width > 200 && /wp-content\/uploads/.test(img.currentSrc || img.src))
+        .map((img) => {
+          const card = img.closest('article, li, .elementor-post, div');
+          const title = (card?.parentElement?.innerText || img.alt || '').split('\n').map((x) => x.trim()).filter(Boolean)[0] || img.alt;
+          const src = img.currentSrc || img.src;
+          const link = card?.parentElement?.querySelector('a[href*="saasinterface.com/"]')?.href;
+          return { title: `${title} — ${location.pathname.split('/').filter(Boolean).pop()}`, url: link || `${location.href}#${encodeURIComponent(title)}`, image: src.replace(/-\d+x\d+(\.\w+)$/, '$1'), fallbackImage: src };
+        }),
+  },
   mobbin: {
     name: 'Mobbin',
     home: 'https://mobbin.com',

@@ -7,6 +7,7 @@
 
 <p align="center">
   <b>De la idea a la página construida, dentro de Claude Code.</b><br>
+  Para páginas web, sistemas web y apps móviles.<br>
   Referencias para cada sección, estilos con fotos reales, componentes 3D en vivo,<br>un tablero para votar, un reporte en PDF y la página misma, ajustada sección por sección.
 </p>
 
@@ -54,6 +55,18 @@
 | ![](docs/board-styles.jpg) | ![](docs/board-lab.jpg) |
 
 ![El reporte en PDF](docs/report.jpg)
+
+## Páginas web, sistemas web y apps
+
+inspo se adapta a lo que estás haciendo:
+
+| Estás haciendo | Investiga | Los estilos se ven como | Claude construye |
+|---|---|---|---|
+| **Página web** (landing, tienda, portafolio) | Secciones: navbar, hero, nosotros, catálogo, precios, testimonios, footer… | Tu landing | Una página responsive |
+| **Sistema web** (SaaS, dashboard, admin, herramienta interna) | Pantallas: login, onboarding, dashboard, menú lateral, tablas, detalle, formularios, configuración, pagos, estados vacíos… | Un dashboard con tus datos | Un prototipo navegable |
+| **App móvil** (iOS / Android) | Pantallas: onboarding, login, inicio, tab bar, feed, detalle, búsqueda, perfil, checkout… | Tres pantallas de teléfono | Pantallas tamaño teléfono |
+
+Las pantallas de apps salen de SaaS Interface (productos reales como Grafana, Ahrefs, Mixpanel, Qonto), de Dribbble filtrado por plataforma (nada de pantallas móviles en un sistema web, ni al revés) y de Mobbin si inicias sesión una vez.
 
 ## Instalación
 
@@ -144,6 +157,7 @@ Todo lo de un proyecto vive en `<proyecto>/.inspo/<sesión>/`, que se ignora en 
 | One Page Love | One-pagers y lanzamientos | |
 | Lapa Ninja | Landings de SaaS y startups | |
 | Mobbin | Pantallas y flujos reales de apps | Necesita cuenta de Mobbin: `inspo_login` |
+| SaaS Interface | Pantallas reales de SaaS por tipo (dashboard, tablas, configuración, login…) | Fuente de la cosecha para pantallas de sistemas web |
 | footer.design | Solo footers | Fuente de la cosecha para `footer` |
 | Navbar Gallery | Solo navbars | Fuente de la cosecha para `navbar` |
 | Sitios en vivo | Todas las secciones, recortadas de sitios reales | Categorías y búsqueda de Awwwards, Siteinspire, Sites of the Day y los sitios que elige Claude |

@@ -1,10 +1,10 @@
 // Background "harvest": fill every requested section with N references from
 // dedicated galleries, Dribbble and section crops of real, award-winning sites.
 import { SOURCES, searchSources, scrapeWith } from './sources/index.js';
-import { getContext } from './browser.js';
+import { getContext, withProfile } from './browser.js';
 import { downloadAsset } from './capture.js';
 import { crawlSite } from './crawl.js';
-import { SECTION_TYPES, cardMatchesSection } from './sections.js';
+import { SECTION_TYPES, cardMatchesSection, sectionQueries } from './sections.js';
 import { addItems, loadSession, updateSession, shortId } from './session.js';
 
 const jobs = new Map();
@@ -122,8 +122,37 @@ async function run(sessionId, job, opts) {
   persist(sessionId, job, true);
   const context = await getContext();
 
-  // 1) Dedicated galleries (footer.design, navbar.gallery): a lot of exactly-right material, fast.
+  const platform = opts.platform || 'web';
+  // 1) Dedicated galleries (footer.design, navbar.gallery, saasinterface for app screens): exactly-right material, fast.
   job.phase = 'galleries';
+  if (platform === 'web') {
+    for (const id of hungry(job)) {
+      for (const category of SECTION_TYPES[id].si || []) {
+        for (let pageNo = 1; pageNo <= 8 && need(job, id) > 0 && !job.cancelled; pageNo++) {
+          const r = await scrapeWith(context, 'saasinterface', '', { category, page: pageNo, limit: 40 }).catch(() => null);
+          if (!r?.cards?.length) break;
+          await add(sessionId, job, await saveCards(sessionId, 'saasinterface', r.cards.slice(0, need(job, id)), { section: id, query: `saasinterface/${category}` }));
+        }
+        log(`SaaS Interface ${category}: ${job.counts[id]} ${id}`);
+      }
+    }
+  }
+  // Mobbin (real app screens) when the user has logged in once with inspo_login.
+  if (opts.mobbin !== false && job.sections.some((id) => SECTION_TYPES[id].screen)) {
+    try {
+      await withProfile(async (ctx) => {
+        for (const id of hungry(job).filter((x) => SECTION_TYPES[x].screen)) {
+          if (job.cancelled) break;
+          const term = (platform === 'mobile' && SECTION_TYPES[id].mobileTerms?.[0]) || SECTION_TYPES[id].terms[0];
+          const r = await scrapeWith(ctx, 'mobbin', term, { limit: Math.min(need(job, id), 30), platform: platform === 'mobile' ? 'ios' : 'web' });
+          await add(sessionId, job, await saveCards(sessionId, 'mobbin', r.cards, { section: id, query: `mobbin ${term}` }));
+          log(`Mobbin “${term}”: ${job.counts[id]} ${id}`);
+        }
+      });
+    } catch (err) {
+      log(`Mobbin skipped (${String(err.message).split('\n')[0].slice(0, 70)})`);
+    }
+  }
   for (const id of hungry(job)) {
     for (const g of SECTION_TYPES[id].galleries || []) {
       if (job.cancelled) break;
@@ -141,72 +170,77 @@ async function run(sessionId, job, opts) {
   job.phase = 'dribbble';
   await mapLimit(hungry(job), 3, async (id) => {
     if (job.cancelled) return;
-    const q = [SECTION_TYPES[id].generic ? '' : query, SECTION_TYPES[id].dribbble[0]].filter(Boolean).join(' ');
+    const q = sectionQueries(id, { platform, industry: query })[0];
     const want = Math.min(need(job, id), Math.ceil(job.target * 0.4));
     if (!want) return;
     const r = await scrapeWith(context, 'dribbble', q, { limit: want * 3 + 12 }).catch(() => null);
-    const cards = (r?.cards || []).filter((c) => cardMatchesSection(id, c));
+    const cards = (r?.cards || []).filter((c) => cardMatchesSection(id, c, platform));
     if (cards.length) await add(sessionId, job, await saveCards(sessionId, 'dribbble', cards.slice(0, want), { section: id, query: q }));
     log(`Dribbble “${q}”: ${job.counts[id]} ${id}`);
   });
 
   // 3) Real sites, cut into sections. The richest source: every site yields several sections.
+  // (Page sections only: app screens live behind logins.)
   job.phase = 'sites';
-  const pool = [];
-  // Sites already crawled in earlier harvests only give back duplicates: skip them.
-  const seenHosts = new Set((await loadSession(sessionId)).crawled || []);
-  const push = (u, why) => {
-    const h = host(u);
-    if (!h || seenHosts.has(h) || /awwwards|siteinspire|dribbble|footer\.design|navbar\.gallery|webflow\.io$|framer\.(website|app)$/.test(h)) return;
-    seenHosts.add(h);
-    pool.push({ url: u, why });
-  };
-  (opts.sites || []).forEach((u) => push(u, 'picked by Claude'));
-  const poolQueries = [];
-  if (query) {
-    poolQueries.push(['awwwards', query, { page: 1 }], ['awwwards', query, { page: 2 }], ['siteinspire', query, {}]);
-  }
-  if (opts.awwwardsCategory) poolQueries.push(['awwwards', '', { category: opts.awwwardsCategory }], ['awwwards', '', { category: opts.awwwardsCategory, page: 2 }]);
-  poolQueries.push(['awwwards', '', { page: 1 }], ['awwwards', '', { page: 2 }]); // Sites of the Day: generic but excellent
-  // Gather in parallel, then add in priority order (niche first, generic Sites of the Day last).
-  const found = new Array(poolQueries.length);
-  await mapLimit(poolQueries, 4, async ([src, q, o], idx) => {
-    if (job.cancelled) return;
-    found[idx] = (await scrapeWith(context, src, q, { limit: 70, ...o }).catch(() => null))?.cards || [];
-  });
-  poolQueries.forEach(([src, q], idx) => (found[idx] || []).forEach((c) => c.liveUrl && push(c.liveUrl, `${SOURCES[src].name}${q ? ` “${q}”` : ''}`)));
-  const s = await loadSession(sessionId);
-  s.items.filter((i) => i.liveUrl && i.source !== 'live').forEach((i) => push(i.liveUrl, i.source));
-
-  const maxSites = opts.maxSites || Math.max(40, Math.round(job.target * 1.5));
-  const queue = pool.slice(0, maxSites);
-  job.sites.total = queue.length;
-  log(`${pool.length} live sites found, crawling up to ${queue.length}`);
-  await mapLimit(queue, opts.concurrency || 4, async (site) => {
-    if (job.cancelled || !hungry(job).length) return;
-    const wanted = hungry(job);
-    try {
-      const items = await withTimeout(crawlSite(sessionId, site.url, { sections: wanted, lang, why: site.why }), 90_000);
-      // Never overshoot a section by much: keep what's still needed.
-      const keep = items.filter((it) => need(job, it.section) > 0);
-      await add(sessionId, job, keep);
-    } catch (err) {
-      log(`${host(site.url)} skipped (${err.message.split('\n')[0].slice(0, 60)})`);
+  if (job.sections.some((id) => !SECTION_TYPES[id].screen)) {
+    const pool = [];
+    // Sites already crawled in earlier harvests only give back duplicates: skip them.
+    const seenHosts = new Set((await loadSession(sessionId)).crawled || []);
+    const push = (u, why) => {
+      const h = host(u);
+      if (!h || seenHosts.has(h) || /awwwards|siteinspire|dribbble|footer\.design|navbar\.gallery|webflow\.io$|framer\.(website|app)$/.test(h)) return;
+      seenHosts.add(h);
+      pool.push({ url: u, why });
+    };
+    (opts.sites || []).forEach((u) => push(u, 'picked by Claude'));
+    const poolQueries = [];
+    if (query) {
+      poolQueries.push(['awwwards', query, { page: 1 }], ['awwwards', query, { page: 2 }], ['siteinspire', query, {}]);
     }
-    job.sites.done++;
-    await updateSession(sessionId, (ss) => {
-      ss.crawled = [...new Set([...(ss.crawled || []), host(site.url)])];
-    }).catch(() => {});
-    persist(sessionId, job);
-  });
+    if (opts.awwwardsCategory) poolQueries.push(['awwwards', '', { category: opts.awwwardsCategory }], ['awwwards', '', { category: opts.awwwardsCategory, page: 2 }]);
+    poolQueries.push(['awwwards', '', { page: 1 }], ['awwwards', '', { page: 2 }]); // Sites of the Day: generic but excellent
+    // Gather in parallel, then add in priority order (niche first, generic Sites of the Day last).
+    const found = new Array(poolQueries.length);
+    await mapLimit(poolQueries, 4, async ([src, q, o], idx) => {
+      if (job.cancelled) return;
+      found[idx] = (await scrapeWith(context, src, q, { limit: 70, ...o }).catch(() => null))?.cards || [];
+    });
+    poolQueries.forEach(([src, q], idx) => (found[idx] || []).forEach((c) => c.liveUrl && push(c.liveUrl, `${SOURCES[src].name}${q ? ` “${q}”` : ''}`)));
+    const s = await loadSession(sessionId);
+    s.items.filter((i) => i.liveUrl && i.source !== 'live').forEach((i) => push(i.liveUrl, i.source));
+
+    const maxSites = opts.maxSites || Math.max(40, Math.round(job.target * 1.5));
+    const queue = pool.slice(0, maxSites);
+    job.sites.total = queue.length;
+    log(`${pool.length} live sites found, crawling up to ${queue.length}`);
+    const pageHungry = () => hungry(job).filter((id) => !SECTION_TYPES[id].screen);
+    await mapLimit(pageHungry().length ? queue : [], opts.concurrency || 4, async (site) => {
+      if (job.cancelled || !pageHungry().length) return;
+      const wanted = pageHungry();
+      try {
+        const items = await withTimeout(crawlSite(sessionId, site.url, { sections: wanted, lang, why: site.why }), 90_000);
+        // Never overshoot a section by much: keep what's still needed.
+        const keep = items.filter((it) => need(job, it.section) > 0);
+        await add(sessionId, job, keep);
+      } catch (err) {
+        log(`${host(site.url)} skipped (${err.message.split('\n')[0].slice(0, 60)})`);
+      }
+      job.sites.done++;
+      await updateSession(sessionId, (ss) => {
+        ss.crawled = [...new Set([...(ss.crawled || []), host(site.url)])];
+      }).catch(() => {});
+      persist(sessionId, job);
+    });
+
+  }
 
   // 4) Top up anything still short with more Dribbble queries.
   job.phase = 'top-up';
   for (const id of hungry(job)) {
-    for (const q of [...SECTION_TYPES[id].dribbble.slice(1), `${SECTION_TYPES[id].dribbble[0]} design`, `${SECTION_TYPES[id].dribbble[0]} web`]) {
+    for (const q of sectionQueries(id, { platform, industry: query }).slice(1)) {
       if (job.cancelled || !need(job, id)) break;
       const r = await scrapeWith(context, 'dribbble', q, { limit: Math.min(90, need(job, id) * 3 + 12) }).catch(() => null);
-      const cards = (r?.cards || []).filter((c) => cardMatchesSection(id, c));
+      const cards = (r?.cards || []).filter((c) => cardMatchesSection(id, c, platform));
       if (cards.length) await add(sessionId, job, await saveCards(sessionId, 'dribbble', cards.slice(0, need(job, id)), { section: id, query: q }));
     }
     log(`top-up ${id}: ${job.counts[id]}`);

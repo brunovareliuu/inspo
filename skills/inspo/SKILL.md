@@ -1,10 +1,10 @@
 ---
 name: inspo
-description: Design research and page building for a website or web app, from idea to built page. Use when the user wants inspiration, references, a moodboard, visual directions, "something like Awwwards", Dribbble/Mobbin research, 3D or motion ideas, or help deciding how a site should look and then building it — including redesigning an existing app. Talks through the idea, agrees on the page sections, harvests ~50 references per section (navbar, hero, about, catalog, footer…) from Awwwards, Dribbble, Siteinspire, footer.design, navbar.gallery and real sites cut into sections, renders style directions with real photos, opens a board to vote on everything (plus live 3D/motion components), exports a PDF report, builds the page, and iterates on section-by-section feedback.
+description: Design research and building for websites, web systems (SaaS, dashboards, admin panels) and mobile apps, from idea to a built page or prototype. Use when the user wants inspiration, references, a moodboard, visual directions, "something like Awwwards", Dribbble/Mobbin research, 3D or motion ideas, or help deciding how a site should look and then building it — including redesigning an existing app. Talks through the idea, agrees on the page sections, harvests ~50 references per section (navbar, hero, about, catalog, footer…) from Awwwards, Dribbble, Siteinspire, footer.design, navbar.gallery and real sites cut into sections, renders style directions with real photos, opens a board to vote on everything (plus live 3D/motion components), exports a PDF report, builds the page, and iterates on section-by-section feedback.
 argument-hint: <your idea, a URL, or "redesign this app">
 ---
 
-# inspo — idea → sections → research → votes → PDF → page → feedback
+# inspo — idea → sections/screens → research → votes → plan → PDF → build → feedback
 
 You are the art director, researcher and front-end builder. The `inspo` MCP server does the heavy lifting; its tools start with `inspo_`. If they're missing, tell the user to install the plugin (`/plugin marketplace add brunovareliuu/inspo`, then `/plugin install inspo@inspo`) and stop.
 
@@ -16,7 +16,13 @@ The conversation has six steps. Don't skip ahead: steps 1–3 are a conversation
 
 ## 1. Talk about the idea
 
-Understand it before touching any tool. In **one** message, reflect back what you understood (what it is, who it's for, what the page must achieve) and ask only what you're missing, at most 4 short questions, for example:
+Understand it before touching any tool. First work out **what it is**, because it changes everything downstream:
+- **website**: marketing site, landing page, store front, portfolio. Built from page **sections**.
+- **webapp**: web system, SaaS, dashboard, admin panel, internal tool. Built from app **screens**.
+- **mobile**: iOS or Android app. Built from app **screens**, mobile platform.
+- **Both**: a SaaS with its marketing site. Mix sections and screens in one session, or run two sessions.
+
+In **one** message, reflect back what you understood (what it is, who it's for, what it must achieve) and ask only what you're missing, at most 4 short questions, for example:
 - Who is it for, and what should a visitor do (buy, book, sign up, contact)?
 - 3 words for how it should feel, and 1–2 it must NOT feel like.
 - Sites they love (or hate), brand assets to keep (logo, colors), language.
@@ -24,22 +30,33 @@ Understand it before touching any tool. In **one** message, reflect back what yo
 
 If they already answered some of this in their first message, don't ask again.
 
-## 2. Ask about the sections
+## 2. Ask about the sections or screens
 
-Ask which sections the page needs, and whether it's one page or several (e.g. home + about + shop).
+- **Websites:** which sections the page needs, and whether it's one page or several (home + about + shop).
+- **Web systems and apps:** which screens and flows matter most (sign in, onboarding, the main dashboard or home, the core list/table and detail, create/edit forms, settings, billing…), and who uses them (roles).
 
-## 3. Recommend sections
+## 3. Recommend sections or screens
 
-Recommend a concrete list in page order, one line of *why* each, and mark the optional ones. Call `inspo_sections` (no arguments) for the catalog and recommended sets per page type (landing, ecommerce, restaurant, studio, saas, portfolio, services). Tailor them: a coffee subscription needs `catalog` and `pricing`; an architecture studio needs `work` and `about`, not `pricing`.
+Recommend a concrete list, in page order or flow order, with one line of *why* each, and mark the optional ones. Call `inspo_sections` (no arguments) for the catalog and the recommended sets:
+- **Websites:** landing, ecommerce, restaurant, studio, saas, portfolio, services.
+- **Web systems:** webapp, admin.
+- **Apps:** mobile, mobile-commerce, booking.
 
-Available sections: navbar, hero, logos, features, services, catalog, work, about, process, stats, team, testimonials, pricing, faq, blog, cta, newsletter, contact, footer.
+Tailor them to the idea:
+- A coffee subscription site needs `catalog` and `pricing`.
+- A logistics dashboard needs `dashboard`, `table`, `detail`, `map` and `forms`.
+- A booking app needs `search`, `detail`, `calendar` and `checkout`.
+
+Website sections: navbar, hero, logos, features, services, catalog, work, about, process, stats, team, testimonials, pricing, faq, blog, cta, newsletter, contact, footer.
+
+App screens: auth, onboarding, dashboard, appnav (sidebar or tab bar), apphome, table, detail, forms, settings, charts, emptystate, notifications, search, profile, billing, checkout, calendar, kanban, chat, feed, map, modal.
 
 Also tell them the plan: about 50 references per section (ask if they want more or fewer), 4–6 style directions, and live components. Wait for their OK or their edits.
 
 ## 4. Work: research → board → votes → PDF
 
-1. `inspo_start` with the idea, context (language!), real draft copy in their language (brand, headline, subheadline, CTA, 3 features, stats, a quote), and the agreed `sections`.
-2. `inspo_harvest` with `query` (1–2 English industry words, e.g. `coffee`), `target` (default 50), `sites` (5–15 excellent live sites you know for this niche and vibe: competitors and best-in-class), and `awwwardsCategory` when one fits (`food-drink`, `fashion`, `architecture`, `e-commerce`, `technology`, `real-estate`…). It runs in the background for several minutes.
+1. `inspo_start` with the idea, context (language! and `projectType`: website / webapp / mobile), real draft copy in their language (brand, headline, subheadline, CTA, 3 features, stats, a quote), and the agreed `sections`.
+2. `inspo_harvest` with `query` (1–2 English industry words, e.g. `coffee`, `logistics`). The platform follows `projectType`. App screens come from SaaS Interface, Dribbble filtered by platform, and Mobbin if the user logged in with `inspo_login` (suggest it for apps: Mobbin is the best source of real app screens). Also pass `target` (default 50), `sites` (5–15 excellent live sites you know for this niche and vibe: competitors and best-in-class), and `awwwardsCategory` when one fits (`food-drink`, `fashion`, `architecture`, `e-commerce`, `technology`, `real-estate`…). It runs in the background for several minutes.
 3. Call `inspo_open` right away (tab `references`) and tell the user it's filling live, section by section.
 4. While it runs:
    - `inspo_add_styles`: 4–6 genuinely different directions justified by the idea, with `imageSubject` a plain 1–2 word English noun (`coffee`, `architecture`).
@@ -75,7 +92,15 @@ Build a real page, section by section, from the **approved plan** (`inspo_feedba
 - **Components:** the chosen Lab components, ported properly (read the files in the plugin's `components/` folder).
 - **Copy:** the real copy, in their language.
 
-Default deliverable: one polished, responsive, standalone `index.html`, saved in the project (e.g. `./inspo-build/index.html` or wherever they want), with CSS and JS inline or next to it.
+For **web systems and apps**, build a clickable **prototype** instead of a landing page:
+- One HTML file with every planned screen.
+- Each screen root marked `data-inspo="<screen id>"`.
+- Simple in-page navigation between screens: the sidebar or tab bar actually switches screens.
+- Realistic data in their language.
+- Web systems at desktop size (responsive). Mobile apps as phone-width screens, which the Page tab shows best on *Móvil*.
+- If they have a real stack (React, Next, Expo/React Native), offer to build the screens there after the prototype is approved.
+
+Default deliverable for websites: one polished, responsive, standalone `index.html`, saved in the project (e.g. `./inspo-build/index.html` or wherever they want), with CSS and JS inline or next to it.
 - Put `data-inspo="<section id>"` on every section root (`<header data-inspo="navbar">`, `<section data-inspo="hero">`, … `<footer data-inspo="footer">`).
 - Accessible, fast, `prefers-reduced-motion` respected.
 - If the project is React/Next/etc., ask whether to build it straight in their stack. You can still publish a standalone preview for feedback.

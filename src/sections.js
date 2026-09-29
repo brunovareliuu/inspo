@@ -130,6 +130,36 @@ export const SECTION_TYPES = {
   },
 };
 
+
+// ── App screens (web systems and mobile apps) ─────────────────────────────
+// `terms` are platform-neutral; the harvest prefixes them ("saas …", "mobile app …").
+// `si` is the saasinterface.com category (web only). No live crawl: app UIs sit behind logins.
+const SCREEN_TYPES = {
+  auth: { name: { en: 'Login / sign up', es: 'Login / registro' }, kw: 'login|log in|sign ?in|sign ?up|register|registration|auth|password|otp', terms: ['login screen', 'sign up screen'], si: ['sign-in', 'sign-up'] },
+  onboarding: { name: { en: 'Onboarding', es: 'Onboarding' }, kw: 'onboarding|welcome|walkthrough|get started|setup|intro', terms: ['onboarding', 'welcome screen'], si: ['onboarding'] },
+  dashboard: { name: { en: 'Dashboard', es: 'Dashboard' }, kw: 'dashboard|overview|analytics|admin|home', terms: ['dashboard', 'dashboard overview'], si: ['dashboard'] },
+  appnav: { name: { en: 'App navigation', es: 'Navegación de la app' }, kw: 'sidebar|side ?bar|navigation|nav|menu|tab ?bar|bottom nav', terms: ['sidebar navigation', 'navigation menu'], mobileTerms: ['tab bar', 'bottom navigation'] },
+  apphome: { name: { en: 'App home', es: 'Inicio de la app' }, kw: 'home|dashboard|main screen|feed|overview|app ui|app design|mobile app|ios app', terms: ['home screen', 'app home'] },
+  table: { name: { en: 'Tables & lists', es: 'Tablas y listas' }, kw: 'table|list|data ?grid|crm|records|orders|inventory|directory', terms: ['data table', 'list view'], si: ['lists-tables', 'directory'] },
+  detail: { name: { en: 'Detail view', es: 'Vista de detalle' }, kw: 'detail|details|product page|record|item|order', terms: ['detail page', 'details screen'], si: ['item-details'] },
+  forms: { name: { en: 'Forms', es: 'Formularios' }, kw: 'form|input|create|edit|wizard|stepper|new', terms: ['form design', 'create form'], si: ['forms'] },
+  settings: { name: { en: 'Settings', es: 'Configuración' }, kw: 'settings|preferences|account|configuration', terms: ['settings page', 'account settings'], si: ['settings'] },
+  charts: { name: { en: 'Charts & reports', es: 'Gráficas y reportes' }, kw: 'chart|graph|analytics|report|statistics|stats|metrics', terms: ['analytics charts', 'report page'] },
+  emptystate: { name: { en: 'Empty states', es: 'Estados vacíos' }, kw: 'empty ?state|no data|nothing here|empty', terms: ['empty state'], si: ['empty-state'] },
+  notifications: { name: { en: 'Notifications & activity', es: 'Notificaciones y actividad' }, kw: 'notification|inbox|alerts?|activity|updates', terms: ['notifications', 'activity feed'], si: ['activity-feed'] },
+  search: { name: { en: 'Search & filters', es: 'Búsqueda y filtros' }, kw: 'search|command|filters?|spotlight', terms: ['search screen', 'filters'] },
+  profile: { name: { en: 'Profile', es: 'Perfil' }, kw: 'profile|account|user|me', terms: ['user profile', 'profile screen'], si: ['profile-user'] },
+  billing: { name: { en: 'Billing & plans', es: 'Pagos y planes' }, kw: 'billing|plans?|subscription|invoice|payment|pricing', terms: ['billing page', 'subscription plans'], si: ['billing-plan'] },
+  checkout: { name: { en: 'Cart & checkout', es: 'Carrito y checkout' }, kw: 'checkout|cart|payment|order summary', terms: ['checkout', 'shopping cart'], si: ['checkout'] },
+  calendar: { name: { en: 'Calendar & booking', es: 'Calendario y reservas' }, kw: 'calendar|schedule|booking|appointment|agenda', terms: ['calendar', 'booking'], si: ['calendar'] },
+  kanban: { name: { en: 'Boards & tasks', es: 'Tableros y tareas' }, kw: 'kanban|board|tasks?|project management|to-?do', terms: ['kanban board', 'task management'], si: ['boards'] },
+  chat: { name: { en: 'Chat & messages', es: 'Chat y mensajes' }, kw: 'chat|messag|inbox|conversation|dm', terms: ['chat', 'messaging'], si: ['messaging-chat'] },
+  feed: { name: { en: 'Feed', es: 'Feed' }, kw: 'feed|timeline|posts|social|stories', terms: ['feed', 'social feed'] },
+  map: { name: { en: 'Map & tracking', es: 'Mapa y rastreo' }, kw: 'map|location|tracking|delivery|route|gps', terms: ['map screen', 'delivery tracking'], si: ['maps'] },
+  modal: { name: { en: 'Modals & dialogs', es: 'Modales y diálogos' }, kw: 'modal|dialog|pop-?up|drawer|sheet', terms: ['modal dialog', 'bottom sheet'] },
+};
+for (const [id, t] of Object.entries(SCREEN_TYPES)) SECTION_TYPES[id] = { ...t, screen: true, dribbble: t.terms };
+
 export const SECTION_IDS = Object.keys(SECTION_TYPES);
 
 export function sectionName(id, lang = 'en') {
@@ -147,7 +177,16 @@ export const RECOMMENDED = {
   saas: ['navbar', 'hero', 'logos', 'features', 'stats', 'testimonials', 'pricing', 'faq', 'cta', 'footer'],
   portfolio: ['navbar', 'hero', 'work', 'about', 'contact', 'footer'],
   services: ['navbar', 'hero', 'services', 'process', 'about', 'testimonials', 'faq', 'contact', 'footer'],
+  // Web systems and apps: screens instead of page sections.
+  webapp: ['auth', 'onboarding', 'dashboard', 'appnav', 'table', 'detail', 'forms', 'settings', 'emptystate'],
+  admin: ['auth', 'dashboard', 'appnav', 'table', 'detail', 'forms', 'charts', 'settings', 'notifications'],
+  mobile: ['onboarding', 'auth', 'apphome', 'appnav', 'feed', 'detail', 'search', 'profile', 'notifications', 'settings'],
+  'mobile-commerce': ['onboarding', 'auth', 'apphome', 'appnav', 'search', 'detail', 'checkout', 'profile'],
+  booking: ['auth', 'apphome', 'search', 'detail', 'calendar', 'checkout', 'notifications', 'profile'],
 };
+
+/** Words that make a gallery query target the right platform. */
+export const PLATFORM_PREFIX = { web: ['saas', 'web app', 'dashboard'], mobile: ['mobile app', 'ios app', 'app'] };
 
 /**
  * Runs inside the page. Finds the region of each wanted section on the current page.
@@ -250,13 +289,28 @@ export function findSectionLinksInPage(specs) {
   return out;
 }
 
-/** Does a gallery card (title + tags) actually show this section? Filters out whole pages and app screens. */
-export function cardMatchesSection(sectionId, card) {
+/**
+ * Does a gallery card (title + tags) actually show this section, on the right platform?
+ * Filters out whole landing pages under "footer", app screens under website sections,
+ * and web dashboards when the project is a mobile app.
+ */
+export function cardMatchesSection(sectionId, card, platform = 'web') {
   const t = SECTION_TYPES[sectionId];
-  if (!t?.kw) return true;
   const text = `${card.title || ''} ${card.tags || ''}`.toLowerCase();
-  if (!new RegExp(`\\b(${t.kw})\\b`, 'i').test(text)) return false;
-  // Mobile app shots are noise for website sections unless they say "web".
-  if (/\b(mobile app|ios app|android|app design|app ui|tab ?bar|bottom nav)\b/.test(text) && !/\b(web|website|landing)\b/.test(text)) return false;
-  return true;
+  if (t?.kw && !new RegExp(`\\b(${t.kw})`, 'i').test(text)) return false;
+  const mobile = /\b(mobile|ios|android|iphone|app design|app ui|tab ?bar|bottom nav|mobile app)\b/.test(text);
+  const web = /\b(web|website|landing|saas|dashboard|desktop|web app|admin)\b/.test(text);
+  const strongWeb = /\b(web|website|landing|saas|desktop|web app|admin panel|crm)\b/.test(text);
+  if (platform === 'mobile') return !(web && !mobile) || /\bapp\b/.test(text);
+  return !mobile || strongWeb;
+}
+
+/** Gallery queries for a section/screen on a platform, most specific first. */
+export function sectionQueries(sectionId, { platform = 'web', industry = '' } = {}) {
+  const t = SECTION_TYPES[sectionId];
+  if (!t) return [];
+  if (!t.screen) return [...(t.generic ? [] : [industry && `${industry} ${t.dribbble[0]}`]), ...t.dribbble].filter(Boolean);
+  const terms = platform === 'mobile' && t.mobileTerms ? t.mobileTerms : t.terms;
+  const [p1, p2] = PLATFORM_PREFIX[platform] || PLATFORM_PREFIX.web;
+  return [industry && `${industry} ${p1} ${terms[0]}`, `${p1} ${terms[0]}`, `${p2} ${terms[0]}`, ...terms.slice(1).map((x) => `${p1} ${x}`), `${terms[0]} ui`].filter(Boolean);
 }

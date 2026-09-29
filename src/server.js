@@ -70,6 +70,7 @@ server.registerTool(
           existingApp: z.string().optional().describe('Summary of the current app/codebase design if there is one.'),
           keywords: z.array(z.string()).optional().describe('Search keywords you plan to use.'),
           language: z.string().optional().describe('Language for copy, e.g. "es-MX".'),
+          projectType: z.enum(['website', 'webapp', 'mobile']).optional().describe('website = marketing site/landing; webapp = web system, SaaS, dashboard, admin panel; mobile = iOS/Android app. Decides page sections vs app screens, gallery platform, and how styles are rendered.'),
         })
         .optional(),
       copy: z
@@ -83,6 +84,21 @@ server.registerTool(
           features: z.array(z.object({ title: z.string(), body: z.string() })).optional(),
           stats: z.array(z.object({ value: z.string(), label: z.string() })).optional(),
           quote: z.object({ text: z.string(), author: z.string().optional() }).optional(),
+          app: z
+            .object({
+              name: z.string().optional(),
+              nav: z.array(z.string()).optional(),
+              pageTitle: z.string().optional(),
+              kpis: z.array(z.object({ label: z.string(), value: z.string(), delta: z.string().optional() })).optional(),
+              tableTitle: z.string().optional(),
+              columns: z.array(z.string()).optional(),
+              rows: z.array(z.array(z.string())).optional(),
+              userName: z.string().optional(),
+              cta: z.string().optional(),
+              emptyState: z.string().optional(),
+            })
+            .optional()
+            .describe('For web systems and apps: realistic product data used to render app style specimens (dashboard / phone screens).'),
         })
         .optional()
         .describe('Real draft copy for the product (in the user\'s language). Used to render every style specimen.'),
@@ -138,14 +154,15 @@ server.registerTool(
   {
     title: 'Page sections: recommend or set',
     description:
-      'Without `sections`: returns every section type inspo can research plus recommended sets per page type (landing, ecommerce, restaurant, studio, saas, portfolio, services), to help you recommend sections to the user. With `sections`: sets the session\'s section plan (page order), replacing the previous one.',
+      'Without `sections`: returns every website section and app screen inspo can research, plus recommended sets per project type (websites: landing, ecommerce, restaurant, studio, saas, portfolio, services; web systems: webapp, admin; apps: mobile, mobile-commerce, booking), to help you recommend them to the user. Mix freely (e.g. a SaaS marketing site + its dashboard). With `sections`: sets the session\'s section plan (page order), replacing the previous one.',
     inputSchema: { session: sessionArg, sections: sectionsInput.optional() },
   },
   async ({ session, sections }) => {
     try {
       if (!sections) {
         return text({
-          types: Object.fromEntries(SECTION_IDS.map((id) => [id, { en: SECTION_TYPES[id].name.en, es: SECTION_TYPES[id].name.es, ownPage: !!SECTION_TYPES[id].link }])),
+          sections: Object.fromEntries(SECTION_IDS.filter((id) => !SECTION_TYPES[id].screen).map((id) => [id, { en: SECTION_TYPES[id].name.en, es: SECTION_TYPES[id].name.es, ownPage: !!SECTION_TYPES[id].link }])),
+          screens: Object.fromEntries(SECTION_IDS.filter((id) => SECTION_TYPES[id].screen).map((id) => [id, { en: SECTION_TYPES[id].name.en, es: SECTION_TYPES[id].name.es }])),
           recommended: RECOMMENDED,
           tip: 'Recommend a set for this idea with a one-line why each, mark optional ones, and let the user add/remove before setting them.',
         });
@@ -167,7 +184,7 @@ server.registerTool(
   {
     title: 'Harvest ~50 references per section (background)',
     description:
-      'Fill every section with N references (default 50) from dedicated galleries (footer.design, navbar.gallery), Dribbble, and — the richest source — real award-winning sites (Awwwards, Siteinspire, plus `sites` you pick) automatically cut into sections: navbar, hero, about, catalog, footer… following links to /about, /shop, /pricing when a section lives on its own page. Runs in the background (several minutes) and streams into the board; returns immediately. Check with inspo_status.',
+      'Fill every section or app screen with N references (default 50). App screens (dashboard, tables, settings, login, onboarding, tab bar…) come from SaaS Interface, Mobbin (if logged in) and Dribbble filtered by platform. Website sections come from dedicated galleries (footer.design, navbar.gallery), Dribbble, and — the richest source — real award-winning sites (Awwwards, Siteinspire, plus `sites` you pick) automatically cut into sections: navbar, hero, about, catalog, footer… following links to /about, /shop, /pricing when a section lives on its own page. Runs in the background (several minutes) and streams into the board; returns immediately. Check with inspo_status.',
     inputSchema: {
       session: sessionArg,
       query: z.string().optional().describe('Industry keywords in English, 1-2 words (e.g. "coffee", "fintech", "architecture"). Used on Awwwards, Siteinspire and Dribbble.'),
@@ -176,12 +193,14 @@ server.registerTool(
       sites: z.array(z.string().url()).optional().describe('Live sites you know are excellent for this niche/vibe. Crawled first.'),
       awwwardsCategory: z.string().optional().describe('Awwwards category slug, e.g. "food-drink", "fashion", "architecture", "e-commerce", "technology", "real-estate".'),
       maxSites: z.number().int().min(2).max(200).optional().describe('Cap on live sites crawled. Default max(40, 1.5 × target).'),
+      platform: z.enum(['web', 'mobile']).optional().describe('Platform for app screens. Default: mobile when the project type is mobile, else web.'),
     },
   },
-  async ({ session, query, target = 50, sections, sites, awwwardsCategory, maxSites }) => {
+  async ({ session, query, target = 50, sections, sites, awwwardsCategory, maxSites, platform }) => {
     try {
       const s = await withSession(session);
-      const job = await startHarvest(s.id, { query, target, sections, sites, awwwardsCategory, maxSites, language: s.context?.language });
+      const pf = platform || (s.context?.projectType === 'mobile' ? 'mobile' : 'web');
+      const job = await startHarvest(s.id, { query, target, sections, sites, awwwardsCategory, maxSites, platform: pf, language: s.context?.language });
       const b = await startBoard();
       return text({
         job: job.id,
@@ -286,7 +305,7 @@ server.registerTool(
           report[r.source] = { error: r.error };
           continue;
         }
-        if (section && r.source === 'dribbble') r.cards = r.cards.filter((c) => cardMatchesSection(section, c));
+        if (section && r.source === 'dribbble') r.cards = r.cards.filter((c) => cardMatchesSection(section, c, s.context?.projectType === 'mobile' ? 'mobile' : 'web'));
         const saved = await mapLimit(r.cards, 6, async (c) => {
           const file = (await downloadAsset(s.id, c.image, { referer: SOURCES[r.source].home + '/' })) || (c.fallbackImage && (await downloadAsset(s.id, c.fallbackImage, { referer: SOURCES[r.source].home + '/' })));
           if (!file) return null;
@@ -399,6 +418,7 @@ const styleInput = z.object({
   imageTreatment: z.enum(['none', 'grayscale', 'duotone', 'grain', 'blur-glow', 'high-contrast']).optional(),
   texture: z.enum(['none', 'grain', 'grid', 'dots', 'noise-gradient', 'scanlines']).optional(),
   html: z.string().optional().describe('Optional fully custom specimen HTML (standalone document). Use for a direction the presets cannot express.'),
+  surface: z.enum(['landing', 'web-app', 'mobile-app']).optional().describe('What to render the style on. Default follows the project type: website → landing, webapp → web-app (dashboard), mobile → mobile-app (phone screens).'),
 });
 
 server.registerTool(
@@ -406,7 +426,7 @@ server.registerTool(
   {
     title: 'Propose visual style directions',
     description:
-      'Add 3-6 visual STYLE directions to the board. For each one inspo fetches real CC-licensed photos (Openverse), and renders the user\'s own landing page in that style (palette, fonts, layout, image treatment, texture) as a live specimen they can vote on. Start from presets and override palette/fonts to fit the brand, or pass custom html.',
+      'Add 3-6 visual STYLE directions to the board. For each one inspo fetches real CC-licensed photos (Openverse), and renders the user\'s own product in that style — a landing page for websites, a dashboard for web systems, three phone screens for mobile apps — (palette, fonts, layout, image treatment, texture) as a live specimen they can vote on. Start from presets and override palette/fonts to fit the brand, or pass custom html.',
     inputSchema: {
       session: sessionArg,
       styles: z.array(styleInput).min(1).max(16),
@@ -452,7 +472,12 @@ server.registerTool(
           if (!images.length && moodQuery) images.push(...(await fetchImages(s.id, moodQuery, { count: imagesPerStyle })));
         }
         const served = images.map((im) => ({ ...im, src: `/s/${s.id}/${im.src}` }));
-        const html = input.html || renderSpecimen({ style, copy: baseCopy, images: served });
+        const surface = input.surface || { webapp: 'web-app', mobile: 'mobile-app' }[s.context?.projectType] || 'landing';
+        const html =
+          input.html ||
+          (surface === 'landing'
+            ? renderSpecimen({ style, copy: baseCopy, images: served })
+            : (await import('./styles/app-specimen.js')).renderAppSpecimen({ style, copy: baseCopy, images: served, platform: surface === 'mobile-app' ? 'mobile' : 'web' }));
         const file = `styles/${style.id}.html`;
         await fs.writeFile(path.join(sessionDir(s.id), file), html);
         return {
@@ -463,6 +488,7 @@ server.registerTool(
           description: input.description || style.description,
           style,
           images: images.map((im) => ({ src: im.src, credit: im.credit, link: im.link })),
+          surface,
           file,
         };
       });

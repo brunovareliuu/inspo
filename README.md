@@ -7,6 +7,7 @@
 
 <p align="center">
   <b>Design research → a built page, inside Claude Code.</b><br>
+  For websites, web systems and mobile apps.<br>
   References for every section, style directions with real photos, live 3D components,<br>a board to vote on, a PDF report, and the page itself — iterated section by section.
 </p>
 
@@ -54,6 +55,18 @@
 | ![](docs/board-styles.jpg) | ![](docs/board-lab.jpg) |
 
 ![The PDF report](docs/report.jpg)
+
+## Websites, web systems and apps
+
+inspo adapts to what you're making:
+
+| You're making | It researches | Styles render as | Claude builds |
+|---|---|---|---|
+| **Website** (landing, store, portfolio) | Page sections: navbar, hero, about, catalog, pricing, testimonials, footer… | Your landing page | A responsive page |
+| **Web system** (SaaS, dashboard, admin, internal tool) | App screens: login, onboarding, dashboard, sidebar, tables, detail, forms, settings, billing, empty states… | A dashboard with your data | A clickable prototype |
+| **Mobile app** (iOS / Android) | App screens: onboarding, login, home, tab bar, feed, detail, search, profile, checkout… | Three phone screens | Phone-size screens |
+
+App screens come from SaaS Interface (real products like Grafana, Ahrefs, Mixpanel, Qonto), Dribbble filtered by platform (no mobile shots in a web system, and the other way around), and Mobbin when you log in once.
 
 ## Install
 
@@ -144,6 +157,7 @@ Everything for a project lives in `<project>/.inspo/<session>/`, which is git-ig
 | One Page Love | One-pagers, launches | |
 | Lapa Ninja | SaaS / startup landings | |
 | Mobbin | Real app screens and flows | Needs a Mobbin account: `inspo_login` |
+| SaaS Interface | Real SaaS screens by type (dashboard, tables, settings, sign-in…) | Harvest source for web app screens |
 | footer.design | Footers only | Harvest source for `footer` |
 | Navbar Gallery | Navigation bars only | Harvest source for `navbar` |
 | Live sites | Every section, cut from real sites | Awwwards categories and search, Siteinspire, Sites of the Day, plus sites Claude picks |

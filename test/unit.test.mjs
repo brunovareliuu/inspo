@@ -169,3 +169,15 @@ test('plan: user edits win over Claude, drafts come from likes, removed refs sta
   const again = await addItems(s.id, [{ kind: 'reference', source: 'dribbble', section: 'hero', url: 'https://d/c', image: 'assets/c2.jpg' }]);
   assert.equal(again.length, 0, 'removed reference is blocked');
 });
+
+test('app screens: platform-aware queries and filters', async () => {
+  const { sectionQueries, cardMatchesSection, SECTION_TYPES, RECOMMENDED } = await import('../src/sections.js');
+  assert.ok(SECTION_TYPES.dashboard.screen && !SECTION_TYPES.footer.screen);
+  assert.equal(sectionQueries('dashboard', { platform: 'web', industry: 'logistics' })[0], 'logistics saas dashboard');
+  assert.equal(sectionQueries('appnav', { platform: 'mobile' })[0], 'mobile app tab bar');
+  assert.ok(cardMatchesSection('dashboard', { title: 'SaaS dashboard for payments' }, 'web'));
+  assert.ok(!cardMatchesSection('dashboard', { title: 'Finance app', tags: 'mobile app ios dashboard' }, 'web'), 'mobile shots are not web screens');
+  assert.ok(cardMatchesSection('apphome', { title: 'Coffee ordering app', tags: 'mobile app ios' }, 'mobile'));
+  assert.ok(!cardMatchesSection('apphome', { title: 'Web dashboard home', tags: 'saas web' }, 'mobile'), 'web screens are not mobile screens');
+  for (const k of ['webapp', 'admin', 'mobile']) assert.ok(RECOMMENDED[k].every((id) => SECTION_TYPES[id]?.screen), k);
+});
