@@ -1,6 +1,6 @@
 # inspo
 
-**Investigación de diseño para Claude Code.** Le das una idea. Estudia tu app, saca referencias de Awwwards, Dribbble, Mobbin, Land-book y más, toma screenshots de sitios en vivo, dibuja tu landing en varios estilos con fotos reales y te abre un tablero donde votas todo, componentes 3D incluidos. Luego aprende tu gusto y llega a una dirección de diseño que sí te late.
+**Investigación de diseño y construcción de páginas para Claude Code.** Le cuentas tu idea y acuerdan las secciones de la página. Junta unas **50 referencias por sección** (navbar, hero, nosotros, catálogo, footer…) de Awwwards, Dribbble, Siteinspire, footer.design, navbar.gallery y sitios reales premiados que recorta en secciones automáticamente. Dibuja tu página en varios estilos con fotos reales y te abre un tablero donde votas todo, componentes 3D en vivo incluidos. Después te entrega un reporte en PDF, construye la página con lo que elegiste y la ajusta con tu feedback sección por sección.
 
 [English](README.md)
 
@@ -12,18 +12,28 @@
 
 ## Qué te da
 
-- **Referencias.** Awwwards, Dribbble, Land-book, Siteinspire, One Page Love, Lapa Ninja y Mobbin, con un navegador real. A los sitios en vivo les toma captura (hero y página completa) y los analiza: fuentes, paleta, bordes, escala tipográfica y con qué están hechos (three.js, GSAP, Lenis, Webflow, Framer, Spline…).
+- **50+ referencias por sección.** Una cosecha en segundo plano llena cada sección que necesites (19 tipos: navbar, hero, logos, features, servicios, catálogo, proyectos, nosotros, proceso, números, equipo, testimonios, precios, FAQ, blog, CTA, newsletter, contacto, footer). Sus fuentes:
+  - **Galerías dedicadas:** footer.design y navbar.gallery.
+  - **Dribbble.**
+  - **Sitios reales recortados en secciones.** Visita cientos de ganadores de Awwwards y Siteinspire, quita banners de cookies y popups de descuento, encuentra cada sección, sigue las ligas a /about, /shop o /pricing cuando la sección tiene su propia página, y captura solo esa parte.
+
+  Unas 250 referencias en 5 secciones tardan como 6 minutos, y el tablero se va llenando en vivo mientras corre.
+- **Galerías a la carta.** Awwwards, Dribbble, Land-book, Siteinspire, One Page Love, Lapa Ninja y Mobbin. De los sitios en vivo saca fuentes, paleta, bordes, escala tipográfica y tecnología (three.js, GSAP, Lenis, Webflow, Framer, Spline…).
 - **Estilos.** Tu propia landing, con tu copy, en 4–6 direcciones distintas. Cada una trae su paleta, fuentes de Google Fonts, layout, textura, tratamiento de imagen y fotos CC0 reales. Incluye 16 presets, y Claude los ajusta o inventa nuevos.
 - **Lab.** 18 componentes en vivo de nivel producción (shaders WebGL, globo de puntos, nudo de vidrio, galaxias de partículas, stacks con scroll, botones magnéticos…), más los que Claude escribe para tu idea. Los puedes repintar todos con un estilo que te gustó.
-- **El tablero.** Una página local donde votas 👍 / 👎 / ★, marcas *por qué* (layout, tipografía, color, animación, 3D…), dejas notas y le das **Enviar a Claude**. Tiene atajos de teclado, se guarda solo y está en español o inglés.
+- **El tablero.** Una página local donde votas 👍 / 👎 / ★ sección por sección, marcas *por qué* (layout, tipografía, color, animación, 3D…), dejas notas y le das **Enviar a Claude**. **⚡ Votar rápido** va una por una con `1` / `2` / `S`. Se guarda solo y está en español o inglés.
+- **Reporte en PDF.** Un entregable con acabado de estudio: portada, dirección, los ganadores de cada sección con tus notas, estilos, componentes y la página actual.
+- **La página.** Claude la construye con tus votos. En la pestaña **Página** ves cada versión en escritorio, tablet y móvil. Votas y dejas notas por sección, o activas **Comentar** y le das clic a lo que quieras para dejar una nota fijada. Claude lee los comentarios, con el elemento exacto, la rehace y publica la v2, v3…
 - **Rondas.** Claude lee tus votos, incluidas las miniaturas de lo que te gustó, y hace una segunda ronda más afinada.
 - **Brief.** La dirección final: concepto, principios, paleta, tipografía, estructura de la página, componentes, qué sí y qué no, y tokens CSS. Aparece en el tablero y se escribe en `DESIGN.md`.
 
-| Estilos | Referencias |
+| Referencias por sección | La página, con feedback por sección y comentarios fijados |
 |---|---|
-| ![](docs/board-styles.jpg) | ![](docs/board-references.jpg) |
-| **Lab** | **Brief** |
-| ![](docs/board-lab.jpg) | ![](docs/board-brief.jpg) |
+| ![](docs/board-references.jpg) | ![](docs/board-page.jpg) |
+| **Estilos** | **Lab** |
+| ![](docs/board-styles.jpg) | ![](docs/board-lab.jpg) |
+
+![El reporte en PDF](docs/report.jpg)
 
 ## Instalación
 
@@ -66,13 +76,14 @@ Solo describe lo que estás haciendo. La skill se activa sola, o la llamas con `
 /inspo landing para mi app de notas con IA, me encantan linear.app y stripe.com
 ```
 
-El ciclo:
+La conversación:
 
-1. **Entender.** Claude lee la idea, y tu código si existe (config de Tailwind, variables CSS, layouts), o ve tu app corriendo.
-2. **Investigar.** Búsquedas en galerías, capturas de los mejores sitios del nicho, 4–6 direcciones de estilo y componentes.
-3. **Votar.** Se abre el tablero en tu navegador. Votas, marcas razones, dejas notas y le das **Enviar a Claude**.
-4. **Afinar.** Claude te dice qué aprendió de tu gusto y hace una ronda 2 más enfocada.
-5. **Dirección.** Claude publica el brief y `DESIGN.md`, y te ofrece construirlo en tu stack.
+1. **La idea.** Claude te dice lo que entendió y pregunta solo lo que falta: público, qué debe transmitir, sitios que te gustan, marca. Si hay repo o app corriendo, los revisa.
+2. **Secciones.** Te pregunta qué secciones necesita la página.
+3. **Recomendación.** Propone una lista de secciones para tu tipo de página, con el porqué de cada una, y tú la ajustas.
+4. **Investigación y votos.** Cosecha de unas 50 referencias por sección, 4–6 estilos y componentes en vivo, todo en el tablero. Votas y le das **Enviar a Claude**. Claude resume lo que elegiste por sección, publica el brief y exporta el **PDF**.
+5. **La página.** Claude la construye con tus votos (estilo, referencias por sección, componentes, tu copy) y la publica en la pestaña **Página**.
+6. **Ciclo de feedback.** Votas y comentas sección por sección, y Claude la rehace. Se repite hasta que quede, y luego se integra a tu stack.
 
 Todo lo de un proyecto vive en `<proyecto>/.inspo/<sesión>/`, que se ignora en git automáticamente.
 
@@ -80,7 +91,10 @@ Todo lo de un proyecto vive en `<proyecto>/.inspo/<sesión>/`, que se ignora en 
 
 | Herramienta | Qué hace |
 |---|---|
-| `inspo_start` | Sesión nueva: idea, contexto y copy real |
+| `inspo_start` | Sesión nueva: idea, contexto, copy real y secciones |
+| `inspo_sections` | Catálogo de secciones y sets recomendados por tipo de página, o fija el plan |
+| `inspo_harvest` | Cosecha en segundo plano de N referencias por sección (50 por defecto) |
+| `inspo_status` | Progreso de la cosecha por sección (o cancelarla) |
 | `inspo_search` | Busca en galerías, guarda miniaturas y opcionalmente captura los sitios en vivo |
 | `inspo_capture` | Captura y analiza URLs específicas (fuentes, colores, tecnología) |
 | `inspo_analyze` | Ve cualquier URL, incluido `localhost`, y regresa captura y ADN de diseño |
@@ -88,7 +102,9 @@ Todo lo de un proyecto vive en `<proyecto>/.inspo/<sesión>/`, que se ignora en 
 | `inspo_add_component` | Agrega un componente propio al Lab |
 | `inspo_add_images` | Agrega un set de imágenes de moodboard (Openverse, con licencia CC) |
 | `inspo_open` | Abre el tablero |
-| `inspo_feedback` | Lee votos, razones, notas y patrones; puede esperar a **Enviar a Claude** |
+| `inspo_feedback` | Votos por sección, estilos, componentes y feedback de la página (votos por sección y comentarios fijados), con miniaturas; puede esperar a **Enviar a Claude** |
+| `inspo_add_build` | Publica una versión de la página (html, un archivo o una URL) en la pestaña Página |
+| `inspo_export_pdf` | Exporta el reporte de investigación en PDF |
 | `inspo_next_round` | Empieza la ronda N |
 | `inspo_brief` | Publica la dirección final y la escribe en `DESIGN.md` |
 | `inspo_remove` | Quita lo que no va |
@@ -106,6 +122,9 @@ Todo lo de un proyecto vive en `<proyecto>/.inspo/<sesión>/`, que se ignora en 
 | One Page Love | One-pagers y lanzamientos | |
 | Lapa Ninja | Landings de SaaS y startups | |
 | Mobbin | Pantallas y flujos reales de apps | Necesita cuenta de Mobbin: `inspo_login` |
+| footer.design | Solo footers | Fuente de la cosecha para `footer` |
+| Navbar Gallery | Solo navbars | Fuente de la cosecha para `navbar` |
+| Sitios en vivo | Todas las secciones, recortadas de sitios reales | Categorías y búsqueda de Awwwards, Siteinspire, Sites of the Day y los sitios que elige Claude |
 | Openverse | Fotos para estilos y moodboards | Licencia CC y créditos, sin API key. Prioriza el stock CC0 de StockSnap |
 
 Las galerías cambian su HTML. Si una se rompe, `node bin/inspo.js doctor` te dice cuál, y casi siempre se arregla con un PR de dos líneas en `src/sources/index.js`.

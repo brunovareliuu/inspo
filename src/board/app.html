@@ -90,8 +90,9 @@ main{padding:22px 24px 120px}
 
 /* ── Reference grid ──────────────────────── */
 .masonry{columns:var(--cols,4) 280px;column-gap:16px}
-.media.strip{height:118px}
-.media.strip img{height:100%;object-fit:cover;object-position:left center}
+.media.strip{display:grid;gap:2px;padding:10px 0;background:var(--panel-2)}
+.media.strip .half{display:block;height:58px;background-size:200% auto;background-repeat:no-repeat;background-position:left top}
+.media.strip .half.r{background-position:right top}
 .card{break-inside:avoid;margin:0 0 16px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;position:relative;transition:border-color .2s,transform .3s var(--ease),opacity .3s}
 .card:hover{border-color:var(--line-2)}
 .card.liked{border-color:color-mix(in oklab,var(--like) 70%,transparent);box-shadow:0 0 0 1px color-mix(in oklab,var(--like) 40%,transparent)}
@@ -577,7 +578,7 @@ function refCard(i) {
   const sub = [i.author, host(i.liveUrl || i.url)].filter(Boolean).join(' · ');
   return `<article class="card ${stateCls(i.id)}" data-id="${esc(i.id)}">
     <button class="media ${i.tall && !i.liveImage ? 'tall' : ''}${i.crop && i.section === 'navbar' ? ' strip' : ''}" data-lb="${esc(i.id)}" aria-label="${esc(i.title)}">
-      <img loading="lazy" src="${esc(img)}" alt="">
+      ${i.crop && i.section === 'navbar' ? `<span class="half" style="background-image:url('${esc(img)}')"></span><span class="half r" style="background-image:url('${esc(img)}')"></span>` : `<img loading="lazy" src="${esc(img)}" alt="">`}
       ${i.video ? `<video muted loop playsinline preload="none" data-src="${esc(safeUrl(i.video))}"></video>` : ''}
     </button>
     <div class="badge"><span>${esc(i.source)}</span>${i.analysis && i.source !== 'live' ? '<span>live</span>' : ''}${isNew(i)?`<span class="new">${t('newItems')}</span>`:''}</div>
