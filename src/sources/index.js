@@ -34,8 +34,11 @@ export const SOURCES = {
           const img = li.querySelector('img:not(noscript img)');
           if (!img) return null;
           const id = li.dataset.thumbnailId || li.id.replace(/\D/g, '');
-          const set = (img.getAttribute('srcset') || '').split(',').map((s) => s.trim().split(' ')[0]).filter(Boolean);
-          const best = set.find((s) => s.includes('800x600')) || set.at(-1) || img.currentSrc || img.src;
+          const set = (img.getAttribute('srcset') || img.dataset.srcset || '').split(',').map((s) => s.trim().split(' ')[0]).filter(Boolean);
+          // Lazy shots only carry their real URL inside <noscript>.
+          const ns = li.querySelector('noscript')?.textContent.match(/src="([^"]+)"/)?.[1]?.replace(/&amp;/g, '&');
+          const src = img.currentSrc || img.getAttribute('src') || '';
+          const best = set.find((s) => s.includes('800x600')) || set.at(-1) || (src && !src.startsWith('data:') ? src : null) || (ns && ns.replace(/resize=\d+x\d+/, 'resize=800x600'));
           const base = li.querySelector('[data-video-teaser-small]');
           const author = li.querySelector('.user-information .display-name, .display-name')?.textContent?.trim();
           const title = li.querySelector('.shot-title, [class*="shot-title"]')?.textContent?.trim() || (img.alt || '').split(/\s+/).slice(0, 9).join(' ');
@@ -68,7 +71,9 @@ export const SOURCES = {
           const a = img.closest('a');
           if (!a || !a.href.includes('onepagelove.com/')) return null;
           const src = img.currentSrc || img.src;
-          return { title: img.alt.replace(/\s*Thumbnail Preview\s*/i, ''), url: a.href, image: src.replace('width=420,height=560', 'width=840,height=1120') };
+          const title = img.alt.replace(/\s*Thumbnail Preview\s*/i, '');
+          if (/no thumbnail/i.test(title)) return null;
+          return { title, url: a.href, image: src.replace('width=420,height=560', 'width=840,height=1120') };
         })
         .filter(Boolean),
   },
@@ -149,6 +154,13 @@ async function scrapeWith(context, sourceId, query, { limit = 12, platform } = {
       await page.waitForTimeout(500);
     }
     let cards = await page.evaluate(src.extract);
+    if (!cards.length) {
+      // Background tabs may not render lazy grids: bring it forward and try again.
+      await page.bringToFront().catch(() => {});
+      await page.mouse.wheel(0, 800);
+      await page.waitForTimeout(2500);
+      cards = await page.evaluate(src.extract);
+    }
     const seen = new Set();
     cards = cards.filter((c) => c.image && !c.image.startsWith('data:') && !seen.has(c.url) && seen.add(c.url));
     if (!cards.length && sourceId === 'mobbin') {

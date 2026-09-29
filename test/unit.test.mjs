@@ -1,0 +1,93 @@
+// Offline unit tests: node --test test/
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
+
+process.env.INSPO_DIR = await fs.mkdtemp(path.join(os.tmpdir(), 'inspo-test-'));
+const { STYLE_PRESETS, resolveStyle, contrastRatio } = await import('../src/styles/presets.js');
+const { renderSpecimen, googleFontsHref, styleTokensCSS } = await import('../src/styles/specimen.js');
+const { createSession, addItems, saveFeedback, loadFeedback, loadSession, slugify } = await import('../src/session.js');
+const { summarizeFeedback } = await import('../src/feedback.js');
+const { listLibrary, parseMeta } = await import('../src/components.js');
+
+test('every preset resolves and renders without images', () => {
+  for (const p of STYLE_PRESETS) {
+    const style = resolveStyle(p.id);
+    const html = renderSpecimen({ style, copy: { brand: 'Tueste', headline: 'Café de *origen*' } });
+    assert.match(html, /<!doctype html>/i, p.id);
+    assert.match(html, /<em>origen<\/em>/, p.id);
+    assert.ok(html.includes(googleFontsHref(style).replace(/&/g, '&amp;')), `${p.id} links its fonts`);
+    assert.ok(contrastRatio(style.palette.fg, style.palette.bg) >= 4.5, `${p.id} fg/bg contrast`);
+  }
+});
+
+test('presets are distinct and complete', () => {
+  const ids = new Set(STYLE_PRESETS.map((p) => p.id));
+  assert.equal(ids.size, STYLE_PRESETS.length);
+  assert.ok(STYLE_PRESETS.length >= 12);
+  for (const p of STYLE_PRESETS) for (const k of ['bg', 'fg', 'accent']) assert.ok(p.palette[k], `${p.id}.${k}`);
+});
+
+test('custom styles and overrides merge', () => {
+  const s = resolveStyle({ preset: 'swiss-minimal', palette: { accent: '#0055ff' }, name: 'Swiss Blue' });
+  assert.equal(s.palette.accent, '#0055ff');
+  assert.equal(s.palette.bg, STYLE_PRESETS.find((p) => p.id === 'swiss-minimal').palette.bg);
+  const c = resolveStyle({ name: 'Night Shift', palette: { bg: '#050505' } });
+  assert.equal(c.id, 'night-shift');
+  assert.ok(contrastRatio(c.palette.fg, c.palette.bg) > 7);
+  assert.match(styleTokensCSS(c), /--bg:#050505/);
+});
+
+test('specimen escapes user copy', () => {
+  const html = renderSpecimen({ style: resolveStyle('tech-noir'), copy: { brand: '<script>alert(1)</script>', headline: '"><img src=x onerror=alert(1)>' }, images: [{ src: 'javascript:alert(1)', alt: 'x' }] });
+  assert.ok(!html.includes('<script>alert(1)</script>'));
+  assert.ok(!html.includes('<img src=x'));
+  assert.ok(!html.includes('javascript:alert'));
+});
+
+test('session lifecycle, dedupe and feedback summary', async () => {
+  const s = await createSession({ idea: 'Café de especialidad', title: 'Tueste Café' });
+  assert.equal(s.id, 'tueste-cafe');
+  const added = await addItems(s.id, [
+    { kind: 'reference', source: 'awwwards', title: 'A', url: 'https://a.com', image: 'assets/a.jpg', analysis: { fonts: [{ family: 'Inter', role: 'body' }], tech: ['GSAP'] } },
+    { kind: 'reference', source: 'dribbble', title: 'A again', url: 'https://a.com', image: 'assets/b.jpg' },
+    { kind: 'style', title: 'Swiss', style: resolveStyle('swiss-minimal'), file: 'styles/x.html' },
+  ]);
+  assert.equal(added.length, 2, 'duplicate url skipped');
+  const [ref, style] = added;
+  await saveFeedback(s.id, { items: { [ref.id]: { vote: 1, reasons: ['type'], note: 'love it' }, [style.id]: { vote: -1 }, 'lib-tilt-card': { vote: 1, star: true } }, general: 'more warmth', submit: true });
+  const fb = await loadFeedback(s.id);
+  assert.ok(fb.submittedAt);
+  const sum = summarizeFeedback(await loadSession(s.id), fb, [{ id: 'lib-tilt-card', name: 'Tilt Card', category: 'motion', tags: ['css'], file: 'tilt-card.html', library: true }]);
+  assert.equal(sum.totals.liked, 2);
+  assert.equal(sum.totals.disliked, 1);
+  assert.equal(sum.general, 'more warmth');
+  assert.deepEqual(sum.patterns.likedReasons, { type: 1 });
+  assert.equal(sum.patterns.likedTech.GSAP, 1);
+  assert.equal(sum.patterns.dislikedFonts['Inter Tight'], 1);
+});
+
+test('feedback input is sanitized', async () => {
+  const s = await createSession({ idea: 'x', title: 'sanitize' });
+  await saveFeedback(s.id, { items: { a: { vote: 99, note: 'n'.repeat(5000), reasons: 'nope' } } });
+  const fb = await loadFeedback(s.id);
+  assert.equal(fb.items.a.vote, 0);
+  assert.equal(fb.items.a.note.length, 2000);
+  assert.deepEqual(fb.items.a.reasons, []);
+});
+
+test('component library has valid metadata', async () => {
+  const lib = await listLibrary();
+  assert.ok(lib.length >= 18, `found ${lib.length}`);
+  for (const c of lib) {
+    assert.ok(['3d', 'motion', 'layout', 'text', 'cursor'].includes(c.category), `${c.id} category`);
+    assert.ok(c.description.length > 20, `${c.id} description`);
+  }
+  assert.equal(parseMeta('<!--inspo {"name":"X"} -->', 'x').name, 'X');
+});
+
+test('slugify handles accents', () => {
+  assert.equal(slugify('Café Ñandú & Co.'), 'cafe-nandu-co');
+});

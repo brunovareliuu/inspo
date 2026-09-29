@@ -1,0 +1,181 @@
+<!--inspo
+{"id":"ascii-shader","name":"ASCII Shader","category":"3d","tags":["webgl","three.js","post-processing","ascii","retro","hero"],"description":"A lit 3D torus rendered live through a glyph-atlas ASCII shader, a nod to donut.c for developer tools, terminals and creative-coding brands.","deps":["three@0.170.0"]}
+-->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ASCII Shader</title>
+<script>
+(function(){var q=new URLSearchParams(location.search);['bg','fg','muted','accent','accent2'].forEach(function(k){var v=q.get(k);if(v)document.documentElement.style.setProperty('--'+k,v)});var fd=q.get('fontDisplay'),fb=q.get('fontBody');if(fd||fb){var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?'+[fd,fb].filter(Boolean).map(function(f){return 'family='+encodeURIComponent(f)+':wght@400;500;600;700'}).join('&')+'&display=swap';document.head.appendChild(l);if(fd)document.documentElement.style.setProperty('--font-display','"'+fd+'"');if(fb)document.documentElement.style.setProperty('--font-body','"'+fb+'"')}})();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Instrument+Serif:ital@0;1&display=swap">
+<style>
+:root{--bg:#0a0a09;--fg:#f1eee4;--muted:#6f6c63;--accent:#c6ff3d;--accent2:#2f7d5b;--font-display:"Instrument Serif";--font-body:"JetBrains Mono"}
+html,body{margin:0;height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body),ui-monospace,monospace;-webkit-font-smoothing:antialiased}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
+.ui{position:fixed;inset:0;pointer-events:none;display:flex;flex-direction:column;justify-content:space-between;padding:clamp(16px,3vw,40px)}
+.row{display:flex;justify-content:space-between;gap:20px;font-size:clamp(9px,.8vw,12px);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.row b{color:var(--fg);font-weight:500}
+.row .on{color:var(--accent)}
+.bottom{display:flex;justify-content:space-between;align-items:flex-end;gap:24px}
+h1{margin:0;font-family:var(--font-display),Georgia,serif;font-weight:400;font-size:clamp(34px,7vw,120px);line-height:.9;letter-spacing:-.03em;text-shadow:0 0 30px var(--bg),0 0 12px var(--bg)}
+h1 em{color:var(--accent)}
+.term{font-size:clamp(9px,.82vw,12.5px);line-height:1.7;color:var(--muted);background:color-mix(in oklab,var(--bg) 80%,transparent);padding:.9em 1.1em;border:1px solid color-mix(in oklab,var(--fg) 12%,transparent);border-radius:6px;backdrop-filter:blur(6px)}
+.term b{color:var(--fg);font-weight:500}
+.term i{font-style:normal;color:var(--accent)}
+.caret{display:inline-block;width:.6em;height:1.1em;background:var(--accent);vertical-align:-.2em;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+@media (max-width:700px){.term,.row .mid{display:none}}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
+</head>
+<body>
+<div class="ui">
+  <div class="row"><div><b>donut</b>.sh</div><div class="mid">render: glyph atlas &nbsp;·&nbsp; <span class="on">● live</span></div><div>v0.9.3</div></div>
+  <div class="bottom">
+    <h1>Every pixel<br>is a <em>character</em>.</h1>
+    <div class="term"><i>$</i> npx donut --ascii<br><b>✓</b> 1 mesh · 2 lights · 15 glyphs<br><b>✓</b> ready in 4ms <span class="caret"></span></div>
+  </div>
+</div>
+<script type="module">
+import * as THREE from 'three';
+
+const root = document.documentElement;
+const cssRaw = (n, f) => getComputedStyle(root).getPropertyValue(n).trim() || f;
+const probe = document.createElement('canvas').getContext('2d', { willReadFrequently: true });
+function cssColor(name, fallback) {
+  const v = cssRaw(name, fallback);
+  probe.clearRect(0, 0, 1, 1); probe.fillStyle = fallback; probe.fillStyle = v; probe.fillRect(0, 0, 1, 1);
+  const d = probe.getImageData(0, 0, 1, 1).data;
+  return new THREE.Color().setRGB(d[0] / 255, d[1] / 255, d[2] / 255, THREE.SRGBColorSpace);
+}
+const C = { bg: cssColor('--bg', '#0a0a09'), fg: cssColor('--fg', '#f1eee4'), muted: cssColor('--muted', '#6f6c63'), a: cssColor('--accent', '#c6ff3d'), b: cssColor('--accent2', '#2f7d5b') };
+
+// ---------- glyph atlas ----------
+const CHARS = ' .,:;-=+*ox%#&@';
+const monoFont = '"JetBrains Mono", ui-monospace, monospace';
+try { await Promise.race([document.fonts.load(`500 88px ${monoFont}`), new Promise(r => setTimeout(r, 1500))]); } catch (e) {}
+const GW = 64, GH = 104;
+const atlasCanvas = document.createElement('canvas');
+atlasCanvas.width = GW * CHARS.length; atlasCanvas.height = GH;
+const g = atlasCanvas.getContext('2d');
+g.fillStyle = '#000'; g.fillRect(0, 0, atlasCanvas.width, GH);
+g.fillStyle = '#fff'; g.font = `500 84px ${monoFont}`; g.textAlign = 'center'; g.textBaseline = 'middle';
+[...CHARS].forEach((c, i) => g.fillText(c, i * GW + GW / 2, GH / 2 + 4));
+const atlas = new THREE.CanvasTexture(atlasCanvas);
+atlas.minFilter = THREE.LinearFilter; atlas.generateMipmaps = false;
+
+// ---------- 3D scene (rendered small, into a target) ----------
+const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
+const PR = Math.min(devicePixelRatio, 2);
+renderer.setPixelRatio(PR);
+document.body.prepend(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x000000);
+const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 50);
+camera.position.set(0, 0, 7);
+const donut = new THREE.Mesh(new THREE.TorusGeometry(1.1, .5, 64, 160), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: .35, metalness: 0 }));
+scene.add(donut);
+const key = new THREE.DirectionalLight(0xffffff, 2.3); key.position.set(-3, 4, 5); scene.add(key);
+const rim = new THREE.DirectionalLight(0xffffff, .7); rim.position.set(4, -2, -3); scene.add(rim);
+scene.add(new THREE.AmbientLight(0xffffff, .04));
+
+const rt = new THREE.WebGLRenderTarget(2, 2, { type: THREE.HalfFloatType, minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, depthBuffer: true });
+
+// ---------- ASCII pass ----------
+const post = new THREE.Scene();
+const postCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+const U = {
+  tScene: { value: rt.texture }, tAtlas: { value: atlas }, uCells: { value: new THREE.Vector2() }, uCount: { value: CHARS.length },
+  uTime: { value: 0 }, uMouse: { value: new THREE.Vector2(-1, -1) },
+  uBg: { value: C.bg }, uFg: { value: C.fg }, uA: { value: C.a }, uB: { value: C.b }, uMuted: { value: C.muted },
+};
+post.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.ShaderMaterial({
+  uniforms: U,
+  vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0., 1.); }',
+  fragmentShader: /* glsl */`
+    uniform sampler2D tScene, tAtlas; uniform vec2 uCells, uMouse; uniform float uCount, uTime;
+    uniform vec3 uBg, uFg, uA, uB, uMuted;
+    varying vec2 vUv;
+    float hash(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
+    float glyph(float idx, vec2 local){ return texture2D(tAtlas, vec2((idx + clamp(local.x, .02, .98)) / uCount, local.y)).r; }
+    void main(){
+      vec2 grid = vUv * uCells;
+      vec2 cell = floor(grid), local = fract(grid);
+      vec3 s = texture2D(tScene, (cell + .5) / uCells).rgb;
+      float l = pow(clamp(dot(s, vec3(.2126, .7152, .0722)), 0., 1.), 1. / 2.2);
+      // soft scan line sweeping down
+      float scan = exp(-pow((vUv.y - (1. - fract(uTime * .09))) * 9., 2.));
+      // cursor lens boosts nearby cells
+      float lens = smoothstep(.16, .0, distance(vUv * vec2(uCells.x / uCells.y * .6, 1.), uMouse * vec2(uCells.x / uCells.y * .6, 1.)));
+      float lb = clamp(l + scan * .12 * step(.04, l) + lens * .25 * step(.04, l), 0., 1.);
+      float idx = floor(lb * (uCount - 1.) + .5);
+      float gl = glyph(idx, local);
+      vec3 col = mix(uB, uA, smoothstep(.12, .62, lb));
+      col = mix(col, uFg, smoothstep(.72, .98, lb));
+      vec3 outc = mix(uBg, col, gl);
+      // sparse twinkling dust in empty space
+      float dust = step(lb, .03) * step(.992, hash(cell + floor(uTime * 1.5 + hash(cell) * 3.)));
+      outc = mix(outc, uMuted, glyph(1., local) * dust * .8);
+      gl_FragColor = vec4(outc, 1.);
+      #include <colorspace_fragment>
+    }`,
+})));
+
+let cellCss = 10;
+function resize() {
+  const w = innerWidth, h = innerHeight, asp = w / h;
+  renderer.setSize(w, h, false);
+  camera.aspect = asp;
+  camera.position.z = asp < 1 ? 7 / Math.max(asp, .5) : 7;
+  camera.updateProjectionMatrix();
+  cellCss = Math.max(8, Math.min(15, Math.round(Math.min(w, h * 1.4) / 84)));
+  const ch = cellCss, cw = cellCss * (GW / GH);
+  U.uCells.value.set(w / cw, h / ch);
+  rt.setSize(Math.ceil(w / cw) * 2, Math.ceil(h / ch) * 2);
+  donut.position.x = asp > 1.2 ? .95 : 0;
+  donut.position.y = asp > 1.2 ? .1 : .35;
+}
+addEventListener('resize', resize); resize();
+
+const mouse = new THREE.Vector2(), target = new THREE.Vector2();
+let lastMove = -10;
+addEventListener('pointermove', e => { target.set(e.clientX / innerWidth, 1 - e.clientY / innerHeight); lastMove = clock; });
+addEventListener('pointerleave', () => { lastMove = -10; });
+
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const RATE = reduce ? .25 : 1;
+let clock = 3.6, raf = 0, last = 0, paused = false;
+function frame(now) {
+  raf = 0;
+  const dt = Math.max(0, Math.min((now - last) / 1000, 1 / 20)) * RATE; last = now;
+  clock += dt;
+  const idle = clock - lastMove > 2.5;
+  if (idle) target.set(.5 + Math.sin(clock * .4) * .3, .5 + Math.cos(clock * .31) * .25);
+  mouse.lerp(target, 1 - Math.pow(.02, dt));
+  donut.rotation.x = .55 + Math.sin(clock * .4) * .35 - (mouse.y - .5) * .5;
+  donut.rotation.y = clock * .5 + (mouse.x - .5) * .6;
+  donut.rotation.z = clock * .15;
+  U.uTime.value = clock;
+  U.uMouse.value.copy(idle ? new THREE.Vector2(-5, -5) : mouse);
+  renderer.setRenderTarget(rt);
+  renderer.render(scene, camera);
+  renderer.setRenderTarget(null);
+  renderer.render(post, postCam);
+  schedule();
+}
+function schedule() { if (!raf && !paused && !document.hidden) raf = requestAnimationFrame(frame); }
+function start() { if (!raf) { last = performance.now(); schedule(); } }
+function stop() { cancelAnimationFrame(raf); raf = 0; }
+document.addEventListener('visibilitychange', () => document.hidden ? stop() : start());
+addEventListener('message', e => { if (e.data === 'inspo:pause') { paused = true; stop(); } if (e.data === 'inspo:play') { paused = false; start(); } });
+start();
+</script>
+</body>
+</html>

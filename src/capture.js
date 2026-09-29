@@ -8,23 +8,36 @@ const EXT = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'im
 /** Download a remote image into the session's assets folder. Returns "assets/<file>" or null. */
 export async function downloadAsset(sessionId, url, { referer, name } = {}) {
   if (!url) return null;
-  try {
-    const context = await getContext();
-    const res = await context.request.get(url, {
-      headers: { 'User-Agent': UA, Referer: referer || new URL(url).origin + '/', Accept: 'image/avif,image/webp,image/*,video/*,*/*' },
-      timeout: 25000,
-    });
-    if (!res.ok()) return null;
-    const type = (res.headers()['content-type'] || '').split(';')[0].trim();
+  const context = await getContext();
+  const headers = { 'User-Agent': UA, Referer: referer || new URL(url).origin + '/', Accept: 'image/avif,image/webp,image/*,video/*,*/*' };
+  const save = async (type, body) => {
+    type = (type || '').split(';')[0].trim();
     const ext = EXT[type] || (type.startsWith('image/') ? type.slice(6) : null);
-    if (!ext) return null;
-    const body = await res.body();
-    if (body.length < 1500) return null; // tracking pixels, placeholders
+    if (!ext || body.length < 1500) return null; // not an image, or a tracking pixel/placeholder
     const file = `${name || shortId(10)}.${ext}`;
     await fs.writeFile(path.join(assetsDir(sessionId), file), body);
     return `assets/${file}`;
+  };
+  try {
+    const res = await context.request.get(url, { headers, timeout: 25000 });
+    if (res.ok()) {
+      const saved = await save(res.headers()['content-type'], await res.body());
+      if (saved) return saved;
+    }
+  } catch {
+    /* fall through to the real browser */
+  }
+  // Some CDNs (Cloudflare) reject non-browser clients: load the image in a real tab instead.
+  const page = await context.newPage();
+  try {
+    await page.setExtraHTTPHeaders({ Referer: headers.Referer });
+    const res = await page.goto(url, { waitUntil: 'load', timeout: 25000 });
+    if (!res?.ok()) return null;
+    return await save(res.headers()['content-type'], await res.body());
   } catch {
     return null;
+  } finally {
+    await page.close().catch(() => {});
   }
 }
 
@@ -169,16 +182,36 @@ export async function analyzeUrl(url, { screenshotTo } = {}) {
 }
 
 /** Openverse: CC-licensed images, no API key. Used for style moodboards. */
-export async function searchImages(query, { count = 6, orientation } = {}) {
-  const params = new URLSearchParams({ q: query, page_size: String(Math.min(count * 3, 40)), license_type: 'commercial', mature: 'false' });
-  if (orientation === 'wide') params.set('aspect_ratio', 'wide');
-  if (orientation === 'tall') params.set('aspect_ratio', 'tall');
-  const res = await fetch(`https://api.openverse.org/v1/images/?${params}`, { headers: { 'User-Agent': 'inspo-mcp (https://github.com/brunovareliuu/inspo)' } });
-  if (!res.ok) throw new Error(`Openverse ${res.status}`);
-  const data = await res.json();
+export async function searchImages(query, { count = 6, orientation, page = 1, mustMatch } = {}) {
+  // Stock first, then commercial-use photos, then relax filters and shorten the query until something comes back.
+  const words = query.trim().split(/\s+/);
+  const attempts = [
+    { q: query, source: 'stocksnap' }, // CC0 professional stock: best quality when it covers the subject
+    { q: query, strict: true },
+    { q: query, strict: false },
+    ...(words.length > 2 ? [{ q: words.slice(0, 2).join(' '), strict: false }] : []),
+  ];
+  let data = { results: [] };
+  for (const a of attempts) {
+    const params = new URLSearchParams({ q: a.q, page_size: '20', page: String(page), mature: 'false' }); // 20 = anonymous API max
+    if (a.source) params.set('source', a.source);
+    if (a.strict) {
+      params.set('license_type', 'commercial');
+      params.set('category', 'photograph');
+      params.set('size', 'large');
+    }
+    if (orientation === 'wide') params.set('aspect_ratio', 'wide');
+    if (orientation === 'tall') params.set('aspect_ratio', 'tall');
+    const res = await fetch(`https://api.openverse.org/v1/images/?${params}`, { headers: { 'User-Agent': 'inspo-mcp (https://github.com/brunovareliuu/inspo)' } });
+    if (!res.ok) throw new Error(`Openverse ${res.status}`);
+    data = await res.json();
+    if ((data.results || []).length >= Math.min(count, 4)) break;
+  }
+  // Openverse ranks loosely; keep only results whose title/tags actually mention the subject.
+  const must = (mustMatch || '').toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length > 2);
+  const relevant = (r) => !must.length || must.some((w) => `${r.title || ''} ${(r.tags || []).map((t) => t.name).join(' ')}`.toLowerCase().includes(w));
   return (data.results || [])
-    .filter((r) => r.url && (r.width || 1000) >= 800)
-    .slice(0, count * 2)
+    .filter((r) => r.url && (r.width || 1000) >= 800 && relevant(r))
     .map((r) => ({
       src: r.url,
       alt: r.title || query,
@@ -187,19 +220,22 @@ export async function searchImages(query, { count = 6, orientation } = {}) {
     }));
 }
 
-/** Search + download a set of images, keeping the first `count` that actually download. */
-export async function fetchImages(sessionId, query, { count = 4, orientation } = {}) {
-  let found = [];
+/** Download the first `count` candidates that actually download. */
+export async function downloadImages(sessionId, candidates, count) {
+  const out = [];
+  for (let i = 0; i < candidates.length && out.length < count; i += 3) {
+    const batch = candidates.slice(i, i + 3);
+    const saved = await Promise.all(batch.map((img) => downloadAsset(sessionId, img.src, { referer: img.link })));
+    batch.forEach((img, j) => saved[j] && out.length < count && out.push({ ...img, remote: img.src, src: saved[j] }));
+  }
+  return out;
+}
+
+/** Search + download a set of images. */
+export async function fetchImages(sessionId, query, { count = 4, orientation, mustMatch } = {}) {
   try {
-    found = await searchImages(query, { count, orientation });
+    return await downloadImages(sessionId, await searchImages(query, { count, orientation, mustMatch }), count);
   } catch {
     return [];
   }
-  const out = [];
-  for (let i = 0; i < found.length && out.length < count; i += 3) {
-    const batch = found.slice(i, i + 3);
-    const saved = await Promise.all(batch.map((img) => downloadAsset(sessionId, img.src, { referer: img.link })));
-    batch.forEach((img, j) => saved[j] && out.length < count && out.push({ ...img, src: saved[j] }));
-  }
-  return out;
 }

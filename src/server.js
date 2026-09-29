@@ -10,7 +10,7 @@ import {
   sessionDir, assetsDir, slugify, shortId,
 } from './session.js';
 import { SOURCES, SOURCE_IDS, searchSources, loginFlow } from './sources/index.js';
-import { captureSite, analyzeUrl, downloadAsset, fetchImages } from './capture.js';
+import { captureSite, analyzeUrl, downloadAsset, fetchImages, searchImages, downloadImages } from './capture.js';
 import { listLibrary } from './components.js';
 import { summarizeFeedback } from './feedback.js';
 import { startBoard, boardUrl, openInBrowser } from './board/server.js';
@@ -270,7 +270,7 @@ server.registerTool(
       'Add 3-6 visual STYLE directions to the board. For each one inspo fetches real CC-licensed photos (Openverse), and renders the user\'s own landing page in that style (palette, fonts, layout, image treatment, texture) as a live specimen they can vote on. Start from presets and override palette/fonts to fit the brand, or pass custom html.',
     inputSchema: {
       session: sessionArg,
-      styles: z.array(styleInput).min(1).max(10),
+      styles: z.array(styleInput).min(1).max(16),
       imageSubject: z.string().optional().describe('What the photos should show, in English, e.g. "coffee beans roastery". Combined with each style\'s imageQuery.'),
       imagesPerStyle: z.number().int().min(0).max(8).optional().describe('Default 5.'),
       copy: z.record(z.string(), z.any()).optional().describe('Override the session copy for these specimens.'),
@@ -282,21 +282,35 @@ server.registerTool(
       const baseCopy = { brand: s.title, headline: s.idea.split(/[.!?\n]/)[0].slice(0, 90), ...(s.copy || {}), ...(copy || {}) };
       await fs.mkdir(path.join(sessionDir(s.id), 'styles'), { recursive: true });
 
-      const built = await mapLimit(styles, 3, async (input) => {
+      // One shared pool of on-subject photos, dealt out so styles don't all show the same shot.
+      let pool = [];
+      if (imageSubject && imagesPerStyle > 0) {
+        const pages = await Promise.all([1, 2, 3].map((page) => searchImages(imageSubject, { count: 20, page, mustMatch: imageSubject }).catch(() => [])));
+        pool = pages.flat().filter((im, i, a) => a.findIndex((x) => x.src === im.src) === i);
+      }
+      const used = new Set();
+
+      const built = await mapLimit(styles, 3, async (input, idx) => {
         const style = resolveStyle(input);
         style.id = `${slugify(style.name || style.id, 30)}-${shortId(4)}`;
         let images = [];
-        if (imagesPerStyle > 0) {
-          const queries = [
-            [imageSubject, style.imageQuery].filter(Boolean).join(' '),
-            imageSubject,
-            style.imageQuery,
-          ].filter((q, i, a) => q && a.indexOf(q) === i);
-          for (const q of queries) {
-            if (images.length >= imagesPerStyle) break;
-            const got = await fetchImages(s.id, q, { count: imagesPerStyle - images.length });
-            images.push(...got);
+        if (imagesPerStyle > 0 && !input.html) {
+          // 1-2 photos with this style's mood (still on-subject), then fill from the shared pool.
+          const moodQuery = input.imageQuery || style.imageQuery;
+          if (moodQuery) {
+            const q = imageSubject ? `${imageSubject} ${moodQuery.split(/\s+/)[0]}` : moodQuery;
+            const mood = (await searchImages(q, { count: 6, mustMatch: imageSubject }).catch(() => [])).filter((im) => !used.has(im.src));
+            mood.slice(0, 4).forEach((im) => used.add(im.src));
+            images.push(...(await downloadImages(s.id, mood.slice(0, 4), Math.min(2, imagesPerStyle))));
           }
+          const start = (idx * imagesPerStyle) % Math.max(pool.length, 1);
+          const rotated = [...pool.slice(start), ...pool.slice(0, start)];
+          const fresh = rotated.filter((im) => !used.has(im.src));
+          const candidates = [...fresh, ...rotated.filter((im) => used.has(im.src))];
+          const need = imagesPerStyle - images.length;
+          candidates.slice(0, need + 3).forEach((im) => used.add(im.src));
+          images.push(...(await downloadImages(s.id, candidates.slice(0, need + 3), need)));
+          if (!images.length && moodQuery) images.push(...(await fetchImages(s.id, moodQuery, { count: imagesPerStyle })));
         }
         const served = images.map((im) => ({ ...im, src: `/s/${s.id}/${im.src}` }));
         const html = input.html || renderSpecimen({ style, copy: baseCopy, images: served });
@@ -369,7 +383,7 @@ server.registerTool(
   async ({ session, query, count = 6 }) => {
     try {
       const s = await withSession(session);
-      const imgs = await fetchImages(s.id, query, { count });
+      const imgs = await fetchImages(s.id, query, { count, mustMatch: query });
       const added = await addItems(
         s.id,
         imgs.map((im) => ({ kind: 'reference', source: 'openverse', title: im.alt, url: im.link, image: im.src, credit: im.credit, query })),

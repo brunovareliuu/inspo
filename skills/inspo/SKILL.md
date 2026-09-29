@@ -35,7 +35,7 @@ Before calling tools, decide (see `references/research-playbook.md` for recipes)
 2. Run the `inspo_search` queries (parallel calls are fine). Use `captureLive: 2-3` on the most promising queries so Awwwards/Siteinspire winners get live screenshots + analysis.
 3. `inspo_capture` your known sites (with a `why`).
 4. Mobile/app product? Add `sources: ["mobbin"]` with `platform: "ios"`. If Mobbin says it needs login, offer `inspo_login` (the user logs in once in a window that opens).
-5. `inspo_add_styles` with the 4–6 directions and an `imageSubject` that describes what the photos should show.
+5. `inspo_add_styles` with the 4–6 directions and an `imageSubject`: a plain 1–2 word English noun for what the photos should show (`coffee`, `architecture`, `skincare`). Simple subjects hit the CC0 stock library; long phrases fall back to noisier results.
 6. `inspo_add_component` for the custom components (standalone HTML; CSS vars `--bg --fg --muted --accent --accent2`; three.js via importmap from cdn.jsdelivr.net; animate on its own; see `references/components.md`).
 7. Optional: `inspo_add_images` for art-direction moodboards (photography style, textures).
 8. Curate: skim the `inspo_search` results; `inspo_remove` anything off-brief, ads, templates-for-sale spam, broken shots. 30–60 references is a good round 1. Quality over volume.

@@ -102,6 +102,7 @@ main{padding:22px 24px 120px}
 .media video{position:absolute;inset:0;height:100%;object-fit:cover;opacity:0;transition:opacity .3s}
 .media:hover video{opacity:1}
 .badge{position:absolute;top:10px;left:10px;display:flex;gap:6px;z-index:2}
+.frame .badge{left:12px;right:auto;top:auto;bottom:12px}
 .badge span{font:500 11px var(--mono);padding:4px 8px;border-radius:999px;background:rgba(10,10,11,.72);backdrop-filter:blur(8px);color:#e9e8e3;border:1px solid rgba(255,255,255,.08)}
 .badge .new{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}
 .foot{display:flex;align-items:center;gap:10px;padding:10px 10px 10px 14px}
@@ -152,6 +153,7 @@ main{padding:22px 24px 120px}
 .comp .stage{position:relative;aspect-ratio:16/10;background:#000}
 .comp iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 .comp .stage .ph{position:absolute;inset:0;display:grid;place-items:center;color:var(--faint);font:12px var(--mono)}
+.comp .stage.live .ph{display:none}
 .comp .expand{position:absolute;top:10px;right:10px;width:32px;height:32px;border-radius:9px;background:rgba(10,10,11,.6);backdrop-filter:blur(8px);color:#fff;display:grid;place-items:center;opacity:0;transition:opacity .2s}
 .comp:hover .expand{opacity:1}
 .comp .foot small{font-family:var(--mono)}
@@ -525,8 +527,8 @@ function mountLab() {
   // Only keep iframes alive near the viewport: browsers cap live WebGL contexts (~16).
   labIO = new IntersectionObserver((es) => es.forEach((e) => {
     const stage = e.target; let fr = stage.querySelector('iframe');
-    if (e.isIntersecting && !fr) { fr = document.createElement('iframe'); fr.src = stage.dataset.src; fr.loading = 'lazy'; fr.title = 'component'; stage.prepend(fr); }
-    else if (!e.isIntersecting && fr) fr.remove();
+    if (e.isIntersecting && !fr) { fr = document.createElement('iframe'); fr.src = stage.dataset.src; fr.loading = 'lazy'; fr.title = 'component'; stage.prepend(fr); stage.classList.add('live'); }
+    else if (!e.isIntersecting && fr) { fr.remove(); stage.classList.remove('live'); }
   }), { rootMargin: '200px 0px' });
   document.querySelectorAll('.comp .stage').forEach((s) => labIO.observe(s));
 }

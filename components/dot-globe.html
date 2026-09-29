@@ -70,7 +70,7 @@ const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
 camera.position.set(0, 0, 6);
 
 const tilt = new THREE.Group(); tilt.rotation.set(0.38, 0, -0.12);
-const globe = new THREE.Group();
+const globe = new THREE.Group(); globe.rotation.y = -1.9;
 tilt.add(globe); scene.add(tilt);
 
 // ---------- land mask: rough continents + value noise edges ----------
@@ -117,14 +117,14 @@ const dotMat = (color, alpha, size) => new THREE.ShaderMaterial({
     void main(){ vec4 mv = modelViewMatrix * vec4(position, 1.); vec3 n = normalize(normalMatrix * position);
       vFace = dot(n, normalize(-mv.xyz)); gl_Position = projectionMatrix * mv; gl_PointSize = uSize / -mv.z; }`,
   fragmentShader: `uniform vec3 uColor; uniform float uAlpha; varying float vFace;
-    void main(){ float d = length(gl_PointCoord - .5); if (d > .5) discard; float a = smoothstep(.5, .3, d) * uAlpha * smoothstep(-.05, .35, vFace);
+    void main(){ float d = length(gl_PointCoord - .5); if (d > .5) discard; float a = smoothstep(.5, .3, d) * uAlpha * smoothstep(.18, .6, vFace);
       gl_FragColor = vec4(uColor, a);
       #include <colorspace_fragment>
     }`,
 });
 const mk = (arr) => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(arr, 3)); return g; };
 const landMat = dotMat(C.fg.clone().lerp(C.b, .15), .92, 30 * PR);
-const seaMat = dotMat(C.muted, .22, 22 * PR);
+const seaMat = dotMat(C.muted, .13, 22 * PR);
 globe.add(new THREE.Points(mk(landPos), landMat), new THREE.Points(mk(seaPos), seaMat));
 
 // occluder + atmosphere
@@ -137,16 +137,20 @@ const core = new THREE.Mesh(new THREE.SphereGeometry(.985, 64, 64), new THREE.Sh
     }`,
 }));
 globe.add(core);
-const atmo = new THREE.Mesh(new THREE.SphereGeometry(1.22, 64, 64), new THREE.ShaderMaterial({
-  uniforms: { uA: { value: C.a } }, side: THREE.BackSide, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
-  vertexShader: 'varying vec3 vN; varying vec3 vV; void main(){ vec4 mv = modelViewMatrix * vec4(position,1.); vN = normalize(normalMatrix*normal); vV = normalize(-mv.xyz); gl_Position = projectionMatrix*mv; }',
-  fragmentShader: `uniform vec3 uA; varying vec3 vN; varying vec3 vV;
-    void main(){ float d = dot(vN, vV); float g = pow(clamp(1. + d * 1.6, 0., 1.), 3.);
-      gl_FragColor = vec4(uA, g * .55);
+const atmo = new THREE.Mesh(new THREE.PlaneGeometry(3, 3), new THREE.ShaderMaterial({
+  uniforms: { uA: { value: C.a }, uB: { value: C.b } }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+  vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.); }',
+  fragmentShader: `uniform vec3 uA, uB; varying vec2 vUv;
+    void main(){ vec2 p = (vUv - .5) * 3.; float r = length(p);
+      float g = smoothstep(.9, 1.0, r) * exp(-max(r - 1., 0.) * 9.);
+      float halo = exp(-max(r - 1., 0.) * 3.2) * .25;
+      vec3 c = mix(uA, mix(uA, uB, .35), clamp(p.y * .5 + .5, 0., 1.));
+      gl_FragColor = vec4(c, (g * .9 + halo) * smoothstep(1.5, 1.2, r));
       #include <colorspace_fragment>
     }`,
 }));
-tilt.add(atmo);
+scene.add(atmo);
+
 
 // ---------- arcs ----------
 const latLon = (lat, lon, r = 1) => {
@@ -165,33 +169,42 @@ const arcFrag = `uniform float uHead; uniform vec3 uA, uB, uFg; varying vec2 vUv
   }`;
 const arcVert = 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.); }';
 const ringGeo = new THREE.RingGeometry(.6, 1, 48);
+const tmpV = new THREE.Vector3();
 const arcs = [];
 let seed = 11; const rnd = () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
 function spawn(arc, head0 = 0) {
-  let i = Math.floor(rnd() * cities.length), j = Math.floor(rnd() * cities.length);
-  while (j === i || cities[i].angleTo(cities[j]) < .5) j = Math.floor(rnd() * cities.length);
+  // prefer pairs on the hemisphere currently facing the camera
+  const facing = v => tmpV.copy(v).applyMatrix4(globe.matrixWorld).sub(tilt.position).z;
+  scene.updateMatrixWorld();
+  let i, j, tries = 0;
+  do {
+    i = Math.floor(rnd() * cities.length); j = Math.floor(rnd() * cities.length);
+    tries++;
+  } while ((j === i || cities[i].angleTo(cities[j]) < .5 || (tries < 40 && (facing(cities[i]) < .05 || facing(cities[j]) < .05))) && tries < 80);
+  if (i === j) j = (i + 1) % cities.length;
   const a = cities[i], b = cities[j];
   const dist = a.angleTo(b);
   const lift = 1 + dist * .32;
   const c1 = a.clone().lerp(b, .25).normalize().multiplyScalar(lift), c2 = a.clone().lerp(b, .75).normalize().multiplyScalar(lift);
   const curve = new THREE.CubicBezierCurve3(a.clone().multiplyScalar(1.004), c1, c2, b.clone().multiplyScalar(1.004));
   arc.mesh.geometry.dispose();
-  arc.mesh.geometry = new THREE.TubeGeometry(curve, 72, .0045, 5, false);
+  arc.mesh.geometry = new THREE.TubeGeometry(curve, 72, .006, 5, false);
   arc.head = head0; arc.speed = .45 + rnd() * .2; arc.end = b;
   arc.ring.position.copy(b.clone().multiplyScalar(1.006)); arc.ring.lookAt(b.clone().multiplyScalar(2));
   arc.ring.scale.setScalar(0.0001);
 }
-for (let k = 0; k < 9; k++) {
+for (let k = 0; k < 12; k++) {
   const mesh = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.ShaderMaterial({ uniforms: arcU(), vertexShader: arcVert, fragmentShader: arcFrag, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
   const ring = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ color: C.b, transparent: true, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending }));
   globe.add(mesh, ring);
   const arc = { mesh, ring };
-  spawn(arc, .2 + (k / 9) * 1.4);
+  spawn(arc, .15 + (k / 12) * 1.45);
   arcs.push(arc);
 }
 // city markers
 const cityGeo = mk(cities.flatMap(v => [v.x * 1.005, v.y * 1.005, v.z * 1.005]));
-globe.add(new THREE.Points(cityGeo, dotMat(C.b, 1, 70 * PR)));
+const cityMat = dotMat(C.b, 1, 70 * PR);
+globe.add(new THREE.Points(cityGeo, cityMat));
 
 // ---------- layout ----------
 function resize() {
@@ -199,15 +212,21 @@ function resize() {
   renderer.setSize(w, h, false);
   camera.aspect = asp; camera.updateProjectionMatrix();
   const vh = 2 * camera.position.z * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)), vw = vh * asp;
+  let s;
   if (asp >= 1) {
-    const s = Math.min(vh * .5, vw * .3);
-    tilt.scale.setScalar(s);
-    tilt.position.set(vw * .5 - s * 1.05, -vh * .08, 0);
+    s = Math.min(vh * .4, vw * .27);
+    tilt.position.set(vw * .5 - s * 1.02, -vh * .03, 0);
   } else {
-    const s = vw * .48;
-    tilt.scale.setScalar(s);
-    tilt.position.set(0, -vh * .5 + s * .9, 0);
+    s = vw * .46;
+    tilt.position.set(0, -vh * .5 + s * .85, 0);
   }
+  tilt.scale.setScalar(s);
+  atmo.scale.setScalar(s); atmo.position.copy(tilt.position);
+  // keep dot size proportional to on-screen dot spacing
+  const rPx = s / vh * h, spacing = rPx * Math.sqrt(4 * Math.PI / N) * camera.position.z * PR;
+  landMat.uniforms.uSize.value = spacing * .5;
+  seaMat.uniforms.uSize.value = spacing * .38;
+  cityMat.uniforms.uSize.value = Math.max(spacing * 1.2, 7 * camera.position.z * PR);
 }
 addEventListener('resize', resize); resize();
 
