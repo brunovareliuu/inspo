@@ -158,7 +158,304 @@ const SCREEN_TYPES = {
   map: { name: { en: 'Map & tracking', es: 'Mapa y rastreo' }, kw: 'map|location|tracking|delivery|route|gps', terms: ['map screen', 'delivery tracking'], si: ['maps'] },
   modal: { name: { en: 'Modals & dialogs', es: 'Modales y diálogos' }, kw: 'modal|dialog|pop-?up|drawer|sheet', terms: ['modal dialog', 'bottom sheet'] },
 };
-for (const [id, t] of Object.entries(SCREEN_TYPES)) SECTION_TYPES[id] = { ...t, screen: true, dribbble: t.terms };
+for (const [id, t] of Object.entries(SCREEN_TYPES)) SECTION_TYPES[id] = { ...t, screen: true, dribbble: t.terms, gal: { saasinterface: t.si || [] } };
+
+// Category pages on section/screen galleries: { gallery: [category slugs] }.
+const CATEGORY_GALLERIES = {
+ 'navbar': {
+  'maxibestof': [
+   'header'
+  ],
+  'collectui': [
+   'navigation',
+   'header-navigation'
+  ]
+ },
+ 'hero': {
+  'maxibestof': [
+   'hero'
+  ],
+  'collectui': [
+   'hero-section',
+   'landing-section'
+  ]
+ },
+ 'logos': {
+  'maxibestof': [
+   'brand'
+  ]
+ },
+ 'features': {
+  'maxibestof': [
+   'feature',
+   'value-proposition'
+  ],
+  'collectui': [
+   'features',
+   'bento'
+  ]
+ },
+ 'catalog': {
+  'collectui': [
+   'e-commerce',
+   'filter-products',
+   'single-product'
+  ]
+ },
+ 'work': {
+  'maxibestof': [
+   'gallery'
+  ],
+  'collectui': [
+   'portfolio',
+   'gallery'
+  ]
+ },
+ 'about': {
+  'maxibestof': [
+   'about-us'
+  ],
+  'collectui': [
+   'about-us'
+  ]
+ },
+ 'stats': {
+  'collectui': [
+   'statistics'
+  ]
+ },
+ 'testimonials': {
+  'maxibestof': [
+   'testimonial'
+  ],
+  'collectui': [
+   'testimonials'
+  ]
+ },
+ 'pricing': {
+  'collectui': [
+   'pricing'
+  ],
+  'nicelydone': [
+   'pricing'
+  ]
+ },
+ 'faq': {
+  'maxibestof': [
+   'faq'
+  ],
+  'collectui': [
+   'faq',
+   'accordion'
+  ]
+ },
+ 'blog': {
+  'collectui': [
+   'blog'
+  ]
+ },
+ 'cta': {
+  'maxibestof': [
+   'call-to-action'
+  ],
+  'collectui': [
+   'cta'
+  ]
+ },
+ 'newsletter': {
+  'maxibestof': [
+   'newsletter'
+  ],
+  'collectui': [
+   'subscribe'
+  ]
+ },
+ 'footer': {
+  'maxibestof': [
+   'footer'
+  ],
+  'collectui': [
+   'footer'
+  ]
+ },
+ 'auth': {
+  'collectui': [
+   'sign-up',
+   'otp-code'
+  ],
+  'nicelydone': [
+   'sign-up'
+  ]
+ },
+ 'onboarding': {
+  'collectui': [
+   'onboarding',
+   'product-tour',
+   'splash-screen'
+  ],
+  'nicelydone': [
+   'onboarding-checklist',
+   'account-setup',
+   'invite-teammates'
+  ]
+ },
+ 'dashboard': {
+  'collectui': [
+   'dashboard',
+   'admin-panel'
+  ],
+  'nicelydone': [
+   'dashboard'
+  ]
+ },
+ 'appnav': {
+  'collectui': [
+   'sidebar',
+   'navigation',
+   'tabs',
+   'mobile-menu'
+  ]
+ },
+ 'apphome': {
+  'collectui': [
+   'app-screens',
+   'mobile-app'
+  ]
+ },
+ 'table': {
+  'collectui': [
+   'table',
+   'list-items'
+  ],
+  'nicelydone': [
+   'table',
+   'filter-and-sort'
+  ]
+ },
+ 'detail': {
+  'collectui': [
+   'single-product',
+   'info-card'
+  ]
+ },
+ 'forms': {
+  'collectui': [
+   'form',
+   'date-picker',
+   'file-upload'
+  ],
+  'nicelydone': [
+   'add-and-create'
+  ]
+ },
+ 'settings': {
+  'collectui': [
+   'settings-page'
+  ],
+  'nicelydone': [
+   'account-settings',
+   'notification-settings',
+   'security-settings'
+  ]
+ },
+ 'charts': {
+  'collectui': [
+   'analytics-chart',
+   'statistics'
+  ],
+  'nicelydone': [
+   'stats'
+  ]
+ },
+ 'emptystate': {
+  'collectui': [
+   'empty-states',
+   'error-state',
+   '404-page'
+  ],
+  'nicelydone': [
+   'empty-state'
+  ]
+ },
+ 'notifications': {
+  'collectui': [
+   'notification',
+   'activity-feed'
+  ]
+ },
+ 'search': {
+  'collectui': [
+   'search',
+   'command-bar'
+  ],
+  'nicelydone': [
+   'search-results'
+  ]
+ },
+ 'profile': {
+  'collectui': [
+   'user-profile'
+  ]
+ },
+ 'billing': {
+  'collectui': [
+   'invoice',
+   'pricing'
+  ],
+  'nicelydone': [
+   'billing-settings',
+   'payment-method'
+  ]
+ },
+ 'checkout': {
+  'collectui': [
+   'checkout'
+  ],
+  'nicelydone': [
+   'checkout'
+  ]
+ },
+ 'calendar': {
+  'collectui': [
+   'calendar',
+   'schedule'
+  ]
+ },
+ 'kanban': {
+  'collectui': [
+   'project-management',
+   'todo-list'
+  ]
+ },
+ 'chat': {
+  'collectui': [
+   'chat-layout',
+   'direct-messaging',
+   'inbox'
+  ]
+ },
+ 'feed': {
+  'collectui': [
+   'newsfeed',
+   'social-media'
+  ]
+ },
+ 'map': {
+  'collectui': [
+   'map'
+  ]
+ },
+ 'modal': {
+  'collectui': [
+   'modal',
+   'pop-up'
+  ]
+ }
+};
+for (const [id, g] of Object.entries(CATEGORY_GALLERIES)) SECTION_TYPES[id].gal = { ...(SECTION_TYPES[id].gal || {}), ...g };
+
+/** Which platforms each category gallery covers. */
+export const GALLERY_PLATFORMS = { maxibestof: ['web'], collectui: ['web', 'mobile'], nicelydone: ['web'], saasinterface: ['web'] };
 
 export const SECTION_IDS = Object.keys(SECTION_TYPES);
 
@@ -303,6 +600,14 @@ export function cardMatchesSection(sectionId, card, platform = 'web') {
   const strongWeb = /\b(web|website|landing|saas|desktop|web app|admin panel|crm)\b/.test(text);
   if (platform === 'mobile') return !(web && !mobile) || /\bapp\b/.test(text);
   return !mobile || strongWeb;
+}
+
+/** Platform check only (for category galleries, where the category already guarantees the section). */
+export function platformOk(card, platform = 'web') {
+  const text = `${card.title || ''} ${card.tags || ''}`.toLowerCase();
+  const mobile = /\b(mobile|ios|android|iphone|app design|app ui|tab ?bar|bottom nav|mobile app)\b/.test(text);
+  const strongWeb = /\b(web|website|landing|saas|desktop|web app|dashboard|admin)\b/.test(text);
+  return platform === 'mobile' ? !strongWeb || mobile : !mobile || strongWeb;
 }
 
 /** Gallery queries for a section/screen on a platform, most specific first. */

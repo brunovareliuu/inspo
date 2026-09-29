@@ -60,7 +60,17 @@ export function summarizeFeedback(session, feedback, library = []) {
     }),
   );
 
-  // Feedback on built pages: section votes (b<v>:<section>) and click-comments (p<v>:<id>).
+  // Feedback on built pages: section votes (b<v>:<section>) and click-comments (p<v>:<id>),
+  // each optionally carrying an action and reference images (from the board or uploaded).
+  const attachments = (f) => {
+    const m = f.meta || {};
+    if (!m.refs?.length && !m.uploads?.length && (!m.action || m.action === 'tweak')) return {};
+    return {
+      action: m.action || 'tweak',
+      refs: (m.refs || []).map((id) => byId.get(id)).filter(Boolean).map((i) => ({ id: i.id, title: i.title || i.name, section: i.section, image: i.image, url: i.liveUrl || i.url })),
+      uploads: m.uploads || [],
+    };
+  };
   const builds = session.builds || [];
   const latest = builds.at(-1);
   const build = latest
@@ -69,11 +79,11 @@ export function summarizeFeedback(session, feedback, library = []) {
         label: latest.label,
         sections: Object.entries(feedback.items || {})
           .filter(([k]) => k.startsWith(`b${latest.v}:`))
-          .map(([k, f]) => ({ section: k.split(':').slice(1).join(':'), vote: f.vote, note: f.note, reasons: f.reasons }))
-          .filter((x) => x.vote || x.note || x.reasons?.length),
+          .map(([k, f]) => ({ section: k.split(':').slice(1).join(':'), vote: f.vote, note: f.note, reasons: f.reasons, ...attachments(f) }))
+          .filter((x) => x.vote || x.note || x.reasons?.length || x.refs?.length || x.uploads?.length),
         comments: Object.entries(feedback.items || {})
           .filter(([k]) => k.startsWith(`p${latest.v}:`))
-          .map(([, f]) => ({ note: f.note, section: f.meta?.section, selector: f.meta?.selector, text: f.meta?.text })),
+          .map(([, f]) => ({ note: f.note, section: f.meta?.section, selector: f.meta?.selector, text: f.meta?.text, ...attachments(f) })),
         olderVersionsWithFeedback: [...new Set(Object.keys(feedback.items || {}).filter((k) => /^[bp]\d+:/.test(k)).map((k) => Number(k.slice(1).split(':')[0])))].filter((v) => v !== latest.v),
       }
     : null;

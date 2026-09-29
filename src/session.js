@@ -150,11 +150,16 @@ export function saveFeedback(id, incoming) {
         };
         // Page-build comments carry where they were made.
         if (v.meta && typeof v.meta === 'object') {
+          const list = (x, re, n) => (Array.isArray(x) ? x.map(String).filter((y) => re.test(y)).slice(0, n) : []);
           fb.items[itemId].meta = {
             version: Number(v.meta.version) || 0,
             section: String(v.meta.section || '').slice(0, 60),
             selector: String(v.meta.selector || '').slice(0, 300),
             text: String(v.meta.text || '').slice(0, 200),
+            // What to do with the attached references: tweak this section, replace it, or add a new one above/below.
+            action: ['tweak', 'replace', 'above', 'below'].includes(v.meta.action) ? v.meta.action : 'tweak',
+            refs: list(v.meta.refs, /^[\w-]{1,80}$/, 8),
+            uploads: list(v.meta.uploads, /^assets\/u-[\w-]+\.(png|jpe?g|webp|gif|avif)$/, 6),
           };
         }
       }

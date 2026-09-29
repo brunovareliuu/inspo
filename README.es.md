@@ -40,11 +40,11 @@
 - **Galerías a la carta.** Awwwards, Dribbble, Land-book, Siteinspire, One Page Love, Lapa Ninja y Mobbin. De los sitios en vivo saca fuentes, paleta, bordes, escala tipográfica y tecnología (three.js, GSAP, Lenis, Webflow, Framer, Spline…).
 - **Estilos.** Tu propia landing, con tu copy, en 4–6 direcciones distintas. Cada una trae su paleta, fuentes de Google Fonts, layout, textura, tratamiento de imagen y fotos CC0 reales. Incluye 16 presets, y Claude los ajusta o inventa nuevos.
 - **Lab.** 18 componentes en vivo de nivel producción (shaders WebGL, globo de puntos, nudo de vidrio, galaxias de partículas, stacks con scroll, botones magnéticos…), más los que Claude escribe para tu idea. Los puedes repintar todos con un estilo que te gustó.
-- **El tablero.** Una página local donde votas 👍 / 👎 / ★ sección por sección, marcas *por qué* (layout, tipografía, color, animación, 3D…), dejas notas y le das **Enviar a Claude**. **⚡ Votar rápido** va una por una con `1` / `2` / `S`. Se guarda solo y está en español o inglés.
+- **El tablero.** Una página local donde votas 👍 / 👎 / ★ sección por sección, marcas *por qué* (layout, tipografía, color, animación, 3D…), dejas notas y le das **Enviar**. **⚡ Votar rápido** va una por una con `1` / `2` / `S`. Se guarda solo y está en español o inglés.
 - **En cada sección, solo lo que es.** Las tarjetas de galería deben estar etiquetadas con la sección (nada de landings completas ni apps bajo "footer"), y los recortes salen solo de detecciones seguras. Luego Claude revisa cada sección visualmente en hojas de contacto numeradas, quita lo que no va (y ya no vuelve) y rellena. También tienes un botón **✕ No es footer** (tecla `X`).
 - **Plan.** Después de votar, Claude analiza tus favoritos y escribe el plan de cada sección: la referencia principal, alternativas y qué se toma de layout, tipografía, color, imágenes y animación, más los componentes. En la pestaña **Plan** cambias la referencia por cualquiera de tus likes o de esa sección, cambias estilo o componentes, dejas notas y apruebas. Claude construye con ese plan.
 - **Reporte en PDF.** Un entregable con acabado de estudio: portada, dirección, los ganadores de cada sección con tus notas, estilos, componentes y la página actual.
-- **La página.** Claude la construye con tus votos. En la pestaña **Página** ves cada versión en escritorio, tablet y móvil. Votas y dejas notas por sección, o activas **Comentar** y le das clic a lo que quieras para dejar una nota fijada. Claude lee los comentarios, con el elemento exacto, la rehace y publica la v2, v3…
+- **La página.** Claude la construye con tus votos. En la pestaña **Página** ves cada versión en escritorio, tablet y móvil. Votas y dejas notas por sección, o activas **Comentar** y le das clic a lo que quieras para dejar una nota fijada. Cualquier comentario puede llevar una referencia, ya sea de tus imágenes o una que subas, más una acción: *ajustar*, *reemplazar esta sección por la referencia*, *agregar arriba* o *agregar abajo*. Claude ve las imágenes, aplica cada acción y publica la v2, v3…
 - **Rondas.** Claude lee tus votos, incluidas las miniaturas de lo que te gustó, y hace una segunda ronda más afinada.
 - **Brief.** La dirección final: concepto, principios, paleta, tipografía, estructura de la página, componentes, qué sí y qué no, y tokens CSS. Aparece en el tablero y se escribe en `DESIGN.md`.
 
@@ -114,7 +114,7 @@ La conversación:
 1. **La idea.** Claude te dice lo que entendió y pregunta solo lo que falta: público, qué debe transmitir, sitios que te gustan, marca. Si hay repo o app corriendo, los revisa.
 2. **Secciones.** Te pregunta qué secciones necesita la página.
 3. **Recomendación.** Propone una lista de secciones para tu tipo de página, con el porqué de cada una, y tú la ajustas.
-4. **Investigación y votos.** Cosecha de unas 50 referencias por sección, 4–6 estilos y componentes en vivo, todo en el tablero. Votas y le das **Enviar a Claude**. Claude resume lo que elegiste por sección, publica el brief y exporta el **PDF**.
+4. **Investigación y votos.** Cosecha de unas 50 referencias por sección, 4–6 estilos y componentes en vivo, todo en el tablero. Votas y le das **Enviar**. Claude resume lo que elegiste por sección, publica el brief y exporta el **PDF**.
 5. **La página.** Claude la construye con tus votos (estilo, referencias por sección, componentes, tu copy) y la publica en la pestaña **Página**.
 6. **Ciclo de feedback.** Votas y comentas sección por sección, y Claude la rehace. Se repite hasta que quede, y luego se integra a tu stack.
 
@@ -137,7 +137,7 @@ Todo lo de un proyecto vive en `<proyecto>/.inspo/<sesión>/`, que se ignora en 
 | `inspo_add_component` | Agrega un componente propio al Lab |
 | `inspo_add_images` | Agrega un set de imágenes de moodboard (Openverse, con licencia CC) |
 | `inspo_open` | Abre el tablero |
-| `inspo_feedback` | Votos por sección, estilos, componentes y feedback de la página (votos por sección y comentarios fijados), con miniaturas; puede esperar a **Enviar a Claude** |
+| `inspo_feedback` | Votos por sección, estilos, componentes y feedback de la página (votos por sección y comentarios fijados), con miniaturas; puede esperar a **Enviar** |
 | `inspo_add_build` | Publica una versión de la página (html, un archivo o una URL) en la pestaña Página |
 | `inspo_export_pdf` | Exporta el reporte de investigación en PDF |
 | `inspo_next_round` | Empieza la ronda N |
@@ -158,6 +158,11 @@ Todo lo de un proyecto vive en `<proyecto>/.inspo/<sesión>/`, que se ignora en 
 | Lapa Ninja | Landings de SaaS y startups | |
 | Mobbin | Pantallas y flujos reales de apps | Necesita cuenta de Mobbin: `inspo_login` |
 | SaaS Interface | Pantallas reales de SaaS por tipo (dashboard, tablas, configuración, login…) | Fuente de la cosecha para pantallas de sistemas web |
+| maxibestof | Secciones de sitios por tipo (hero, header, features, testimonios, FAQ, footer…) | Fuente de la cosecha para secciones |
+| Collect UI | Más de 150 categorías de UI (dashboard, sign up, checkout, configuración, precios, footer…) | Fuente de la cosecha para secciones y pantallas, web y móvil |
+| Nicelydone | Pantallas reales de SaaS (sign up, onboarding, dashboard, tablas, pagos…) | Fuente de la cosecha para pantallas de sistemas web |
+| CSS Design Awards · Web Design Inspiration · Dark Mode Design | Sitios premiados y curados en vivo | Alimentan los recortes de sitios reales |
+| Behance | Casos de UI de producto y branding | A la carta con `inspo_search` |
 | footer.design | Solo footers | Fuente de la cosecha para `footer` |
 | Navbar Gallery | Solo navbars | Fuente de la cosecha para `navbar` |
 | Sitios en vivo | Todas las secciones, recortadas de sitios reales | Categorías y búsqueda de Awwwards, Siteinspire, Sites of the Day y los sitios que elige Claude |

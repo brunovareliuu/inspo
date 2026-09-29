@@ -73,12 +73,12 @@ Also tell them the plan: about 50 references per section (ask if they want more 
    - Each section is a chip.
    - **⚡ Votar rápido** goes one by one with `1` (no), `2` (like), `S` (favorite).
    - Tag *why* (layout, type, color…) and leave notes.
-   - Press **Send to Claude** when done.
+   - Press **Enviar** when done.
 8. `inspo_feedback` with `wait: true` (timeoutSec up to 900). It returns the likes per section with thumbnails. If it times out, ask them to tell you when they're done.
 9. **Analyze and plan every section.**
    - For each section, call `inspo_feedback` with `section` and `images: 8–12` and really look at the favorites. Decide what the section will be: the leading reference and 2–4 alternates, plus concrete choices for layout, typography, color, imagery, motion and copy, and which components it uses.
    - Publish it with `inspo_plan` (overall summary, the chosen `style`, and the analysis per section, in the user's language), then `inspo_open` tab `plan`.
-   - Tell the user that in **Plan** they can see what goes in each section, swap the main reference for any of their likes or any reference of that section, add extras, change components or the style, leave notes, and approve each section. They press **Send to Claude** when done.
+   - Tell the user that in **Plan** they can see what goes in each section, swap the main reference for any of their likes or any reference of that section, add extras, change components or the style, leave notes, and approve each section. They press **Enviar** when done.
    - If a section is unclear (few likes, or contradictory ones), run `inspo_next_round` and a focused `inspo_search` / `inspo_harvest` for that section first.
 10. `inspo_feedback` with `wait: true` returns `plan`: the effective plan, where the user's edits win. Apply their notes and swaps, and update `inspo_plan` if you need to change your analysis. Repeat until the sections are approved, or the user says go.
 11. `inspo_brief` with the direction: name, summary, principles, palette, fonts, the page outline (the sections), chosen components, key reference ids, do/don't, and `tokensCss`.
@@ -109,11 +109,16 @@ Then `inspo_add_build` with `file` (absolute path) and a one-line `label`. Open 
 - Vote and note each section.
 - Switch on **✎ Comentar** and click anything on the page to leave a pinned comment.
 - Switch between desktop, tablet and mobile.
-- Press **Send to Claude** when done.
+- Press **Enviar** when done.
 
 ## 6. Feedback → redo → repeat
 
 `inspo_feedback` with `wait: true` returns `build`: per-section votes and notes, plus click-comments (section, the element's text, and a CSS selector).
+
+Each comment can carry an **action** and **reference images**, either picked from the board or uploaded by the user. The images are attached to the `inspo_feedback` result, so look at them. Apply the action literally:
+- `tweak`: adjust this section as the note says.
+- `replace`: rebuild this section following the attached reference (layout, hierarchy, feel), in the page's style.
+- `above` / `below`: add a NEW section above or below this one, modeled on the reference. Give it its own `data-inspo` id, and add it to the plan if it's a new section type.
 - Apply every note. Rebuild only the sections that need it, unless they asked for a new direction.
 - Save as a new version (keep the old file, or overwrite and let inspo keep the history) and `inspo_add_build` again with a label that says what changed ("v2: darker hero, bigger catalog cards").
 - Tell them what you changed per comment, in a short list.

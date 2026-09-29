@@ -40,11 +40,11 @@
 - **Galleries on demand.** Awwwards, Dribbble, Land-book, Siteinspire, One Page Love, Lapa Ninja and Mobbin. Live sites are analyzed for fonts, palette, radii, type scale and tech (three.js, GSAP, Lenis, Webflow, Framer, Spline…).
 - **Styles.** Your own landing page, with your copy, rendered in 4–6 distinct directions. Each one gets its own palette, Google Fonts, layout, texture and image treatment, and real CC0 photos. 16 presets included, and Claude can tune them or invent new ones.
 - **Lab.** 18 live, production-grade components (WebGL shaders, a dot globe, a glass knot, particle galaxies, sticky stacks, magnetic buttons…), plus custom ones Claude writes for your idea. You can re-tint all of them with a style you liked.
-- **The board.** A local page where you 👍 / 👎 / ★ section by section, tag *why* (layout, type, color, motion, 3D…), write notes, and hit **Send to Claude**. **⚡ Quick vote** goes one by one with `1` / `2` / `S`. It autosaves and runs in English or Spanish.
+- **The board.** A local page where you 👍 / 👎 / ★ section by section, tag *why* (layout, type, color, motion, 3D…), write notes, and hit **Send**. **⚡ Quick vote** goes one by one with `1` / `2` / `S`. It autosaves and runs in English or Spanish.
 - **Only the right thing in each section.** Gallery cards must be tagged with the section (no whole landing pages or app screens under "footer"), and crops only come from confident detections. Then Claude checks every section visually on numbered contact sheets, removes what doesn't belong (it never comes back), and refills. You also get a **✕ Not a footer** button (key `X`).
 - **Plan.** After you vote, Claude analyzes your favorites and writes the plan for each section: the leading reference, alternates, and what to take for layout, type, color, imagery and motion, plus the components. In the **Plan** tab you swap the reference for any of your likes or any reference in that section, change the style or components, leave notes and approve. Claude builds from that plan.
 - **PDF report.** A studio-style deliverable: cover, direction, the winners of every section with your notes, styles, components, and the current page.
-- **The page.** Claude builds it from your votes. The **Page** tab shows every version in desktop, tablet and mobile. You vote and note each section, or switch on **Comment** and click anything to pin a note. Claude reads the comments, with the exact element, rebuilds, and publishes v2, v3…
+- **The page.** Claude builds it from your votes. The **Page** tab shows every version in desktop, tablet and mobile. You vote and note each section, or switch on **Comment** and click anything to pin a note. Any comment can carry a reference, either one of your saved images or an uploaded one, plus an action: *tweak*, *replace this section with the reference*, *add above* or *add below*. Claude sees the images, applies each action, and publishes v2, v3…
 - **Rounds.** Claude reads your votes, including the thumbnails you liked, and runs a sharper second round.
 - **Brief.** The final direction: concept, principles, palette, type, page outline, components, do/don't, and CSS tokens. It shows on the board and is written to `DESIGN.md`.
 
@@ -114,7 +114,7 @@ The conversation:
 1. **The idea.** Claude reflects back what it understood and asks only what's missing: audience, the feeling, sites you love, brand assets. If there's a repo or running app, it looks at it.
 2. **Sections.** It asks which sections the page needs.
 3. **Recommendation.** It proposes a section list for your kind of page, one line of *why* each, and you adjust it.
-4. **Research and votes.** A harvest of about 50 references per section, 4–6 style directions and live components, all on the board. You vote and hit **Send to Claude**. Claude summarizes what you picked per section, publishes the brief, and exports the **PDF**.
+4. **Research and votes.** A harvest of about 50 references per section, 4–6 style directions and live components, all on the board. You vote and hit **Send**. Claude summarizes what you picked per section, publishes the brief, and exports the **PDF**.
 5. **The page.** Claude builds it from your votes (style, per-section references, components, your copy) and publishes it to the **Page** tab.
 6. **Feedback loop.** You vote and comment section by section, and Claude rebuilds. Repeat until it's right, then integrate it into your stack.
 
@@ -137,7 +137,7 @@ Everything for a project lives in `<project>/.inspo/<session>/`, which is git-ig
 | `inspo_add_component` | Add a custom live component to the Lab |
 | `inspo_add_images` | Add a moodboard image set (Openverse, CC-licensed) |
 | `inspo_open` | Open the board |
-| `inspo_feedback` | Votes per section, styles, components, and page feedback (section votes and pinned comments), with thumbnails; can wait for **Send to Claude** |
+| `inspo_feedback` | Votes per section, styles, components, and page feedback (section votes and pinned comments), with thumbnails; can wait for **Send** |
 | `inspo_add_build` | Publish a page version (html, a file, or a URL) to the Page tab |
 | `inspo_export_pdf` | Export the research report as a PDF |
 | `inspo_next_round` | Start round N |
@@ -158,6 +158,11 @@ Everything for a project lives in `<project>/.inspo/<session>/`, which is git-ig
 | Lapa Ninja | SaaS / startup landings | |
 | Mobbin | Real app screens and flows | Needs a Mobbin account: `inspo_login` |
 | SaaS Interface | Real SaaS screens by type (dashboard, tables, settings, sign-in…) | Harvest source for web app screens |
+| maxibestof | Website sections by type (hero, header, features, testimonials, FAQ, footer…) | Harvest source for page sections |
+| Collect UI | 150+ UI categories (dashboard, sign up, checkout, settings, pricing, footer…) | Harvest source for sections and screens, web and mobile |
+| Nicelydone | Real SaaS screens (sign up, onboarding, dashboard, tables, billing…) | Harvest source for web app screens |
+| CSS Design Awards · Web Design Inspiration · Dark Mode Design | Award-winning and curated live sites | Feed the live-site crawl |
+| Behance | Product UI and branding case studies | On demand with `inspo_search` |
 | footer.design | Footers only | Harvest source for `footer` |
 | Navbar Gallery | Navigation bars only | Harvest source for `navbar` |
 | Live sites | Every section, cut from real sites | Awwwards categories and search, Siteinspire, Sites of the Day, plus sites Claude picks |

@@ -21,7 +21,7 @@ import { SECTION_TYPES, SECTION_IDS, RECOMMENDED, sectionName, cardMatchesSectio
 import { startHarvest, cancelJob, getJob } from './harvest.js';
 import { contactSheets } from './review.js';
 
-const VERSION = '0.3.0';
+const VERSION = '0.4.0';
 const server = new McpServer({ name: 'inspo', version: VERSION });
 
 const text = (t) => ({ content: [{ type: 'text', text: typeof t === 'string' ? t : JSON.stringify(t, null, 2) }] });
@@ -585,7 +585,7 @@ server.registerTool(
   {
     title: 'Open the voting board',
     description:
-      'Start (if needed) and open the local board in the user\'s browser. Tabs: References (by section), Styles, Lab (live 3D/motion components), Page (the built page, with per-section feedback), Brief. The user likes/dislikes, stars, tags reasons and writes notes; everything autosaves, and "Send to Claude" marks the round as submitted.',
+      'Start (if needed) and open the local board in the user\'s browser. Tabs: References (by section), Styles, Lab (live 3D/motion components), Page (the built page, with per-section feedback), Brief. The user likes/dislikes, stars, tags reasons and writes notes; everything autosaves, and "Send" marks the round as submitted.',
     inputSchema: {
       session: sessionArg,
       tab: z.enum(['references', 'styles', 'lab', 'plan', 'page', 'brief']).optional(),
@@ -599,7 +599,7 @@ server.registerTool(
       const url = boardUrl(b.url, s.id, tab);
       const opened = open ? openInBrowser(url) : false;
       const counts = s.items.reduce((m, i) => ((m[i.kind] = (m[i.kind] || 0) + 1), m), {});
-      return text({ url, opened, counts, tip: 'Tell the user to vote and hit "Send to Claude", then call inspo_feedback with wait:true.' });
+      return text({ url, opened, counts, tip: 'Tell the user to vote and hit "Send", then call inspo_feedback with wait:true.' });
     } catch (err) {
       return fail(err);
     }
@@ -611,7 +611,7 @@ server.registerTool(
   {
     title: 'Read the user\'s votes',
     description:
-      'Read likes, dislikes, stars, reason tags and notes from the board: per section (bySection), styles, components, patterns (fonts, colors, tech, layouts shared by the likes) and feedback on the built page (build: per-section votes + click-comments). With wait:true, blocks until the user presses "Send to Claude" (or timeout). Attaches thumbnails of favorites (spread across sections) so you can see them; pass `section` to focus on one.',
+      'Read likes, dislikes, stars, reason tags and notes from the board: per section (bySection), styles, components, patterns (fonts, colors, tech, layouts shared by the likes) and feedback on the built page (build: per-section votes + click-comments). With wait:true, blocks until the user presses "Send" (or timeout). Attaches thumbnails of favorites (spread across sections) so you can see them; pass `section` to focus on one.',
     inputSchema: {
       session: sessionArg,
       wait: z.boolean().optional(),
@@ -637,12 +637,31 @@ server.registerTool(
       const library = await listLibrary();
       const summary = summarizeFeedback(s, fb, library);
       if (s.plan || fb.plan) summary.plan = effectivePlan(s, fb, library);
-      if (wait && !summary.submittedAt) summary.note = 'Timed out waiting for "Send to Claude"; returning votes so far.';
+      if (wait && !summary.submittedAt) summary.note = 'Timed out waiting for "Send"; returning votes so far.';
       // Section references are reported under bySection; keep the flat lists for everything else.
       summary.liked = summary.liked.filter((l) => !s.items.find((i) => i.id === l.id)?.section);
       summary.disliked = summary.disliked.filter((l) => !s.items.find((i) => i.id === l.id)?.section);
       if (section) summary.bySection = { [section]: summary.bySection[section] };
       const content = [{ type: 'text', text: JSON.stringify(summary, null, 2) }];
+
+      // Images attached to page comments come first: they are instructions ("replace with this", "add this above").
+      const attached = [...(summary.build?.sections || []), ...(summary.build?.comments || [])].flatMap((c) => [
+        ...(c.refs || []).map((r) => ({ rel: r.image, label: `attached to ${c.section || 'page'} comment (${c.action}): ${r.title}` })),
+        ...(c.uploads || []).map((u) => ({ rel: u, label: `uploaded for ${c.section || 'page'} comment (${c.action})` })),
+      ]);
+      for (const a of attached.slice(0, 8)) {
+        let abs = path.join(sessionDir(s.id), a.rel || '');
+        let ext = path.extname(abs).slice(1).toLowerCase();
+        if (ext === 'avif') {
+          abs = await jpegCopy(abs).catch(() => null);
+          ext = 'jpg';
+        }
+        const mime = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', gif: 'image/gif' }[ext];
+        const buf = abs && mime ? await fs.readFile(abs).catch(() => null) : null;
+        if (!buf || buf.length > 3_000_000) continue;
+        content.push({ type: 'text', text: `↓ ${a.label}` });
+        content.push({ type: 'image', data: buf.toString('base64'), mimeType: mime });
+      }
 
       // Favorites to look at: round-robin across sections (starred first), then styles/components.
       const lists = Object.values(summary.bySection).map((b) => (b?.liked || []).map((l) => l.id));
@@ -720,7 +739,7 @@ server.registerTool(
         ss.plan = { summary, style: style || null, sections, at: new Date().toISOString() };
       });
       const b = await startBoard();
-      return text({ board: boardUrl(b.url, s.id, 'plan'), unknownIds: unknown, tip: 'Open the Plan tab (inspo_open tab:"plan"), ask the user to review/swap/approve and press Send to Claude, then read inspo_feedback → plan.' });
+      return text({ board: boardUrl(b.url, s.id, 'plan'), unknownIds: unknown, tip: 'Open the Plan tab (inspo_open tab:"plan"), ask the user to review/swap/approve and press Send, then read inspo_feedback → plan.' });
     } catch (err) {
       return fail(err);
     }

@@ -4,7 +4,7 @@ import { SOURCES, searchSources, scrapeWith } from './sources/index.js';
 import { getContext, withProfile } from './browser.js';
 import { downloadAsset } from './capture.js';
 import { crawlSite } from './crawl.js';
-import { SECTION_TYPES, cardMatchesSection, sectionQueries } from './sections.js';
+import { SECTION_TYPES, GALLERY_PLATFORMS, cardMatchesSection, platformOk, sectionQueries } from './sections.js';
 import { addItems, loadSession, updateSession, shortId } from './session.js';
 
 const jobs = new Map();
@@ -125,20 +125,31 @@ async function run(sessionId, job, opts) {
   const platform = opts.platform || 'web';
   // 1) Dedicated galleries (footer.design, navbar.gallery, saasinterface for app screens): exactly-right material, fast.
   job.phase = 'galleries';
-  if (platform === 'web') {
-    for (const id of hungry(job)) {
-      for (const category of SECTION_TYPES[id].si || []) {
-        for (let pageNo = 1; pageNo <= 8 && need(job, id) > 0 && !job.cancelled; pageNo++) {
-          const r = await scrapeWith(context, 'saasinterface', '', { category, page: pageNo, limit: 40 }).catch(() => null);
-          if (!r?.cards?.length) break;
-          await add(sessionId, job, await saveCards(sessionId, 'saasinterface', r.cards.slice(0, need(job, id)), { section: id, query: `saasinterface/${category}` }));
+  // Every category page that matches the section (maxibestof, Collect UI, Nicelydone, SaaS Interface), paginated.
+  // `cap` limits what one gallery contributes, so a section isn't all from a single source.
+  const fromGalleries = async (id, cap) => {
+    for (const [gallery, categories] of Object.entries(SECTION_TYPES[id].gal || {})) {
+      if (!GALLERY_PLATFORMS[gallery]?.includes(platform)) continue;
+      const start = job.counts[id] || 0;
+      const room = () => Math.min(need(job, id), cap - ((job.counts[id] || 0) - start));
+      for (const category of categories) {
+        let before = -1;
+        for (let pageNo = 1; pageNo <= 6 && room() > 0 && !job.cancelled; pageNo++) {
+          const r = await scrapeWith(context, gallery, '', { category, page: pageNo, limit: 60 }).catch(() => null);
+          const cards = (r?.cards || []).filter((c) => platformOk(c, platform));
+          if (!cards.length) break;
+          await add(sessionId, job, await saveCards(sessionId, gallery, cards.slice(0, room()), { section: id, query: `${gallery}/${category}` }));
+          if (job.counts[id] === before) break; // pagination not supported or nothing new: stop paging
+          before = job.counts[id];
         }
-        log(`SaaS Interface ${category}: ${job.counts[id]} ${id}`);
       }
+      if ((job.counts[id] || 0) > start) log(`${SOURCES[gallery].name}: ${job.counts[id]} ${id}`);
     }
-  }
-  // Mobbin (real app screens) when the user has logged in once with inspo_login.
-  if (opts.mobbin !== false && job.sections.some((id) => SECTION_TYPES[id].screen)) {
+  };
+  await mapLimit(hungry(job), 2, (id) => fromGalleries(id, Math.ceil(job.target * 0.4)));
+
+  // Off by default; enable with mobbin:true after inspo_login.
+  if (opts.mobbin === true && job.sections.some((id) => SECTION_TYPES[id].screen)) {
     try {
       await withProfile(async (ctx) => {
         for (const id of hungry(job).filter((x) => SECTION_TYPES[x].screen)) {
@@ -198,7 +209,12 @@ async function run(sessionId, job, opts) {
       poolQueries.push(['awwwards', query, { page: 1 }], ['awwwards', query, { page: 2 }], ['siteinspire', query, {}]);
     }
     if (opts.awwwardsCategory) poolQueries.push(['awwwards', '', { category: opts.awwwardsCategory }], ['awwwards', '', { category: opts.awwwardsCategory, page: 2 }]);
-    poolQueries.push(['awwwards', '', { page: 1 }], ['awwwards', '', { page: 2 }]); // Sites of the Day: generic but excellent
+    if (query) poolQueries.push(['cssda', query, { page: 1 }]);
+    poolQueries.push(
+      ['awwwards', '', { page: 1 }], ['awwwards', '', { page: 2 }], // Sites of the Day: generic but excellent
+      ['cssda', '', { page: 1 }], ['cssda', '', { page: 2 }],
+      ['wdi', '', { page: 1 }], ['darkmode', '', {}],
+    );
     // Gather in parallel, then add in priority order (niche first, generic Sites of the Day last).
     const found = new Array(poolQueries.length);
     await mapLimit(poolQueries, 4, async ([src, q, o], idx) => {
@@ -234,8 +250,9 @@ async function run(sessionId, job, opts) {
 
   }
 
-  // 4) Top up anything still short with more Dribbble queries.
+  // 4) Top up anything still short: galleries without the cap first, then more Dribbble queries.
   job.phase = 'top-up';
+  for (const id of hungry(job)) await fromGalleries(id, Infinity);
   for (const id of hungry(job)) {
     for (const q of sectionQueries(id, { platform, industry: query }).slice(1)) {
       if (job.cancelled || !need(job, id)) break;

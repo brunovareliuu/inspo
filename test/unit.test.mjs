@@ -181,3 +181,23 @@ test('app screens: platform-aware queries and filters', async () => {
   assert.ok(!cardMatchesSection('apphome', { title: 'Web dashboard home', tags: 'saas web' }, 'mobile'), 'web screens are not mobile screens');
   for (const k of ['webapp', 'admin', 'mobile']) assert.ok(RECOMMENDED[k].every((id) => SECTION_TYPES[id]?.screen), k);
 });
+
+test('page comments carry an action and safe attachments', async () => {
+  const s = await createSession({ idea: 'x', title: 'attach' });
+  const [ref] = await addItems(s.id, [{ kind: 'reference', source: 'maxibestof', section: 'footer', url: 'https://m/f', image: 'assets/f.jpg', title: 'Big footer' }]);
+  const { updateSession } = await import('../src/session.js');
+  await updateSession(s.id, (ss) => { ss.builds = [{ v: 1, kind: 'html', src: 'builds/v1.html' }]; });
+  await saveFeedback(s.id, { items: {
+    'b1:footer': { note: 'make it like this', meta: { version: 1, section: 'footer', action: 'replace', refs: [ref.id, '../evil'], uploads: ['assets/u-abc123.png', '/etc/passwd', 'assets/x.png'] } },
+    'p1:zz': { note: 'add this above', meta: { version: 1, section: 'footer', action: 'nuke', refs: [ref.id] } },
+  } });
+  const fb = await loadFeedback(s.id);
+  assert.deepEqual(fb.items['b1:footer'].meta.uploads, ['assets/u-abc123.png'], 'only uploaded assets');
+  assert.deepEqual(fb.items['b1:footer'].meta.refs, [ref.id], 'no path tricks in refs');
+  assert.equal(fb.items['p1:zz'].meta.action, 'tweak', 'unknown action falls back to tweak');
+  const sum = summarizeFeedback(await loadSession(s.id), fb, []);
+  const sec = sum.build.sections.find((x) => x.section === 'footer');
+  assert.equal(sec.action, 'replace');
+  assert.equal(sec.refs[0].title, 'Big footer');
+  assert.equal(sec.uploads[0], 'assets/u-abc123.png');
+});

@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
-import { SESSIONS_DIR, loadSession, loadFeedback, saveFeedback, listSessions, latestSessionId, removeItems } from '../session.js';
+import { SESSIONS_DIR, loadSession, loadFeedback, saveFeedback, listSessions, latestSessionId, removeItems, assetsDir, shortId } from '../session.js';
 import { listLibrary, readLibraryComponent } from '../components.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -66,6 +66,28 @@ async function handle(req, res) {
     try {
       const fb = await saveFeedback(id, await readBody(req));
       return send(res, 200, { ok: true, updatedAt: fb.updatedAt, submittedAt: fb.submittedAt });
+    } catch (err) {
+      return send(res, 400, { error: err.message });
+    }
+  }
+
+  // Image the user attaches to a comment (raw body, image/*). Saved as assets/u-<id>.<ext>.
+  if (p === '/api/upload' && req.method === 'POST') {
+    const id = url.searchParams.get('session');
+    const ext = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp', 'image/gif': 'gif', 'image/avif': 'avif' }[(req.headers['content-type'] || '').split(';')[0]];
+    if (!id || !/^[a-z0-9-]+$/.test(id) || !ext) return send(res, 400, { error: 'session and an image content-type required' });
+    try {
+      let size = 0;
+      const chunks = [];
+      for await (const c of req) {
+        size += c.length;
+        if (size > 12_000_000) return send(res, 413, { error: 'image too large (12 MB max)' });
+        chunks.push(c);
+      }
+      const file = `u-${shortId(10)}.${ext}`;
+      await fs.mkdir(assetsDir(id), { recursive: true });
+      await fs.writeFile(path.join(assetsDir(id), file), Buffer.concat(chunks));
+      return send(res, 200, { path: `assets/${file}` });
     } catch (err) {
       return send(res, 400, { error: err.message });
     }

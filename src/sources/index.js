@@ -162,6 +162,107 @@ export const SOURCES = {
           return { title: `${title} — ${location.pathname.split('/').filter(Boolean).pop()}`, url: link || `${location.href}#${encodeURIComponent(title)}`, image: src.replace(/-\d+x\d+(\.\w+)$/, '$1'), fallbackImage: src };
         }),
   },
+  maxibestof: {
+    name: 'maxibestof',
+    home: 'https://maxibestof.one',
+    about: 'Curated website SECTIONS by type (hero, header, features, testimonials, FAQ, footer…). Websites.',
+    url: (q, { category = 'hero', page = 1 } = {}) => `https://maxibestof.one/sections/${encodeURIComponent(category)}${page > 1 ? `?page=${page}` : ''}`,
+    extract: () =>
+      [...document.querySelectorAll('a[href*="/sections/"] img')]
+        .filter((img) => img.getBoundingClientRect().width > 180 && !/sponsor/i.test(img.alt))
+        .map((img) => ({ title: img.alt.split(/[:,]/)[0].slice(0, 80), tags: img.alt, url: img.closest('a').href, image: (img.currentSrc || img.src).replace(/width=\d+/, 'width=1400'), fallbackImage: img.currentSrc || img.src })),
+  },
+  collectui: {
+    name: 'Collect UI',
+    home: 'https://collectui.com',
+    about: 'UI design shots by category (150+: dashboard, sign up, checkout, settings, pricing, footer…). Web and mobile.',
+    url: (q, { category = 'dashboard', page = 1 } = {}) => `https://collectui.com/designs/${encodeURIComponent(category)}-ui-design-inspiration${page > 1 ? `?page=${page}` : ''}`,
+    extract: () =>
+      [...document.querySelectorAll('img')]
+        .filter((img) => img.getBoundingClientRect().width > 180 && /cdn\.collectui\.com\/media/.test(img.currentSrc || img.src))
+        .map((img) => {
+          const a = img.closest('a');
+          const src = img.currentSrc || img.src;
+          return { title: (img.alt || 'Collect UI').replace(/https?:\/\/\S+/g, '').trim().slice(0, 80) || 'Collect UI', tags: img.alt, url: a?.href || `${location.href}#${src.split('/').pop()}`, image: src };
+        }),
+  },
+  nicelydone: {
+    name: 'Nicelydone',
+    home: 'https://nicelydone.club',
+    about: 'Real SaaS product screens by type (sign up, onboarding, dashboard, tables, settings, billing…). Web apps.',
+    url: (q, { category = 'dashboard', page = 1 } = {}) => `https://nicelydone.club/examples/screens/${encodeURIComponent(category)}${page > 1 ? `?page=${page}` : ''}`,
+    extract: () =>
+      [...document.querySelectorAll('img')]
+        .filter((img) => img.getBoundingClientRect().width > 180 && /assets\.nicelydone\.club/.test(img.currentSrc || img.src))
+        .map((img) => {
+          const src = img.currentSrc || img.src;
+          return { title: img.alt.replace(/\s*screen$/i, '').replace(/\s*\|\s*Nicelydone/i, '').slice(0, 80), tags: img.alt, url: img.closest('a')?.href || location.href, image: src.replace(/w=\d+,h=\d+/, 'w=1440,h=900'), fallbackImage: src };
+        }),
+  },
+  cssda: {
+    name: 'CSS Design Awards',
+    home: 'https://www.cssdesignawards.com',
+    about: 'Award-winning websites (Website of the Day). Links to the live site.',
+    url: (q, { page = 1 } = {}) =>
+      q ? `https://www.cssdesignawards.com/search?search=${encodeURIComponent(q)}${page > 1 ? `&page=${page}` : ''}` : `https://www.cssdesignawards.com/wotd-award-winners${page > 1 ? `?page=${page}` : ''}`,
+    extract: () =>
+      [...document.querySelectorAll('.single-project')]
+        .map((card) => {
+          const img = card.querySelector('img');
+          const a = card.querySelector('a[href*="/sites/"]');
+          if (!img || !a) return null;
+          const live = [...card.querySelectorAll('a[href^="http"]')].map((x) => x.href).find((h) => !h.includes('cssdesignawards.com'));
+          return { title: img.alt.replace(/\s*website$/i, ''), url: a.href, liveUrl: live, image: img.currentSrc || img.src };
+        })
+        .filter(Boolean),
+  },
+  wdi: {
+    name: 'Web Design Inspiration',
+    home: 'https://www.webdesign-inspiration.com',
+    about: 'Curated websites, newest first. Links straight to the live site.',
+    url: (q, { page = 1 } = {}) => `https://www.webdesign-inspiration.com/${page > 1 ? `?page=${page}` : ''}`,
+    extract: () =>
+      [...document.querySelectorAll('img')]
+        .filter((img) => img.getBoundingClientRect().width > 180 && /media_/.test(img.currentSrc || img.src))
+        .map((img) => {
+          const live = img.closest('a')?.href;
+          return { title: img.alt.replace(/\s*Web Design$/i, ''), url: live, liveUrl: live && !live.includes('webdesign-inspiration.com') ? live : undefined, image: img.currentSrc || img.src };
+        })
+        .filter((c) => c.url),
+  },
+  darkmode: {
+    name: 'Dark Mode Design',
+    home: 'https://www.darkmodedesign.com',
+    about: 'Hand-picked dark websites. Links to the live site.',
+    url: () => 'https://www.darkmodedesign.com/',
+    extract: () =>
+      [...document.querySelectorAll('.collectionitem, [class*="collection-item"]')]
+        .map((card) => {
+          const img = card.querySelector('img');
+          const a = card.querySelector('a[href^="http"]');
+          if (!img || !a || /mobbin|sponsor/i.test(a.href + img.alt)) return null;
+          const live = a.href.replace(/[?&]ref=darkmodedesign/, '');
+          return { title: img.alt, url: live, liveUrl: live, image: img.currentSrc || img.src };
+        })
+        .filter(Boolean),
+  },
+  behance: {
+    name: 'Behance',
+    home: 'https://www.behance.net',
+    about: 'Design case studies: product UI, dashboards, apps, branding. Great for app concepts and art direction.',
+    url: (q) => `https://www.behance.net/search/projects/${encodeURIComponent(q || 'web design')}`,
+    extract: () =>
+      [...document.querySelectorAll('[class*="ProjectCover"] img, a[href*="/gallery/"] img')]
+        .filter((img) => img.getBoundingClientRect().width > 180 && /behance\.net\/projects/.test(img.currentSrc || img.src))
+        .map((img) => {
+          // The project link sits on an ancestor of the cover image: climb until we find it.
+          let el = img;
+          while (el && !el.querySelector?.('a[href*="/gallery/"]')) el = el.parentElement;
+          const a = img.closest('a[href*="/gallery/"]') || el?.querySelector('a[href*="/gallery/"]');
+          return { title: img.alt, tags: img.alt, url: a?.href?.split('?')[0], image: (img.currentSrc || img.src).replace('max_808', 'max_1200'), fallbackImage: img.currentSrc || img.src };
+        })
+        .filter((c) => c.url),
+  },
   mobbin: {
     name: 'Mobbin',
     home: 'https://mobbin.com',

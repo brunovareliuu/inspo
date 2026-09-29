@@ -250,6 +250,15 @@ pre.tokens{background:var(--panel-2);border-radius:10px;padding:14px;overflow:au
 .ptile-btns{display:flex;gap:6px;padding:8px 10px 10px;margin-top:auto}
 .pcompname{padding:14px 12px 0;font-weight:500}.pcompname small{display:block;color:var(--faint);font:11px var(--mono)}
 
+/* ── Comment attachments ─────────────────── */
+.attach{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px}
+.attach select{height:28px;border-radius:999px;border:1px solid var(--line);background:var(--panel-2);color:var(--fg);padding:0 8px;font-size:12px;max-width:100%}
+.attach .chip{height:28px;font-size:12px;cursor:pointer}
+.att-thumbs{display:flex;gap:6px;flex-wrap:wrap;width:100%;margin-top:4px}
+.att-thumbs figure{margin:0;position:relative;width:64px;height:46px;border-radius:7px;overflow:hidden;border:1px solid var(--line-2)}
+.att-thumbs img{width:100%;height:100%;object-fit:cover;object-position:top;display:block}
+.att-thumbs button{position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;background:rgba(10,10,11,.8);color:#fff;font-size:10px;line-height:18px}
+
 /* ── Page tab ────────────────────────────── */
 .pagegrid{display:grid;grid-template-columns:1fr 340px;gap:18px;height:calc(100vh - 190px)}
 .stage-wrap{position:relative;overflow:hidden;border-radius:var(--r);border:1px solid var(--line);background:#fff}
@@ -288,7 +297,7 @@ pre.tokens{background:var(--panel-2);border-radius:10px;padding:14px;overflow:au
 .lb .shots{display:flex;gap:6px}
 
 /* ── Send dialog / toast / empty ─────────── */
-dialog{background:var(--panel);color:var(--fg);border:1px solid var(--line-2);border-radius:18px;padding:24px;width:min(520px,92vw);box-shadow:0 40px 100px rgba(0,0,0,.6)}
+dialog{background:var(--panel);color:var(--fg);border:1px solid var(--line-2);border-radius:18px;padding:24px;width:min(720px,94vw);max-height:88vh;overflow:auto;box-shadow:0 40px 100px rgba(0,0,0,.6)}
 dialog::backdrop{background:rgba(0,0,0,.6);backdrop-filter:blur(4px)}
 dialog h3{margin:0 0 6px;font:400 34px/1 var(--serif)}
 dialog p{margin:0 0 16px;color:var(--dim)}
@@ -296,6 +305,17 @@ dialog .sum{display:flex;gap:18px;margin:0 0 16px;font:13px var(--mono);color:va
 dialog .sum b{color:var(--fg);font-size:22px;font-family:var(--font);display:block}
 dialog textarea{min-height:110px}
 dialog .actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+.rc h5{margin:4px 0 8px;font:500 11px var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--faint)}
+.rc-list{display:grid;gap:8px;max-height:44vh;overflow:auto;margin-bottom:14px;padding-right:4px}
+.rc-row{display:grid;grid-template-columns:64px 1fr;gap:12px;align-items:start;background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:8px}
+.rc-row.noimg{grid-template-columns:1fr}
+.rc-row img{width:64px;height:48px;object-fit:cover;object-position:top;border-radius:7px;display:block}
+.rc-row small{display:block;color:var(--faint);font-size:12px;margin-bottom:3px}
+.rc-row p{margin:0;font-size:14px;color:var(--fg)}
+.rc-row .tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px}
+.rc-row .tags span{font:11px var(--mono);border:1px solid var(--line-2);border-radius:999px;padding:1px 7px;color:var(--dim)}
+.rc-row .v-up{color:var(--like)}.rc-row .v-down{color:var(--nope)}.rc-row .v-star{color:var(--star)}
+.rc-empty{color:var(--dim);font-size:14px;margin:0 0 14px}
 .toast{position:fixed;bottom:24px;left:50%;transform:translate(-50%,20px);opacity:0;background:var(--fg);color:var(--bg);padding:12px 18px;border-radius:999px;font-weight:500;transition:all .35s var(--ease);z-index:100;pointer-events:none}
 .toast.on{opacity:1;transform:translate(-50%,0)}
 .empty{max-width:560px;margin:14vh auto;text-align:center;color:var(--dim)}
@@ -346,6 +366,7 @@ dialog .actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
   <h3 id="dlgTitle"></h3>
   <p id="dlgText"></p>
   <div class="sum" id="dlgSum"></div>
+  <div id="dlgComments"></div>
   <textarea class="note" id="general"></textarea>
   <div class="actions"><button class="btn ghost" id="dlgCancel"></button><button class="btn primary" id="dlgSend"></button></div>
 </dialog>
@@ -357,35 +378,37 @@ dialog .actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
 // ── i18n ────────────────────────────────────────────────
 const T = {
   en: {
-    styles:'Styles', references:'References', lab:'Lab', brief:'Brief', send:'Send to Claude', sent:'Sent — go back to Claude', saved:'saved', saving:'saving…',
+    styles:'Styles', references:'References', lab:'Lab', brief:'Brief', send:'Send', sent:'Sent ✓', saved:'saved', saving:'saving…',
     rated:'rated', all:'All', liked:'Liked', disliked:'Disliked', unrated:'Unrated', round:'Round', allRounds:'All rounds',
     like:'Like', dislike:'Not for me', star:'Favorite', note:'Why? Anything specific you like or hate…', open:'Open', close:'Close',
     specimen:'Specimen', moodboard:'Moodboard', gallery:'Gallery page', live:'Live site', fullpage:'Full page', hero:'Hero',
     fonts:'Fonts', colors:'Colors', tech:'Built with', reasons:'What works (or doesn’t)?',
     r:{layout:'Layout',type:'Typography',color:'Color',imagery:'Imagery',motion:'Motion','3d':'3D',vibe:'Vibe',copy:'Copy',detail:'Details'},
     tint:'Tint with', tintDefault:'Original colors', cats:{all:'All','3d':'3D','motion':'Motion','text':'Text','cursor':'Cursor','layout':'Layout'},
-    dlgTitle:'Send this round', dlgText:'Claude reads your votes, reasons and notes, then comes back with a sharper round (or the final direction).', general:'General notes for Claude (optional): what should the next round look like?',
-    cancel:'Keep voting', dlgSend:'Send to Claude', likedN:'liked', dislikedN:'passed', starredN:'favorites',
+    dlgTitle:'Send this round', dlgText:'This goes out with your votes:', general:'General notes (optional): what should come next?', commentsRound:'Your comments this round', noComments:'No comments this round — only your votes go out.', pageL:'Page', planL:'Plan', pinL:'comment on',
+    cancel:'Keep voting', dlgSend:'Send', likedN:'liked', dislikedN:'passed', starredN:'favorites',
     emptyTitle:'Nothing here yet', emptyText:'Ask Claude to research your idea. Sessions appear here as soon as they start.', noBrief:'Your taste so far', noBriefText:'Claude publishes the final direction here with inspo_brief. Meanwhile, this is what your votes say:',
     noItems:'No items for this filter.', keys:'keys', principles:'Principles', palette:'Palette', type:'Type', outline:'Page outline', doL:'Do', dontL:'Don’t', comps:'Components', refs:'References', tokens:'Tokens',
-    plan:'Plan', planTitle:'Page plan', planDraft:'Draft from your likes. Press Send to Claude and Claude analyzes every section and fills this in.', notA:'Not a', removedFrom:'Removed from', approve:'Approved', changeRef:'Change reference', seeAll:'Whole section', myLikes:'My likes', compsL:'Components', stylesL:'Styles', changeStyle:'Change style', usePrimary:'Main', addExtra:'+ Extra', removeExtra:'− Extra', useIt:'Use', addIt:'Add', removeIt:'Remove', changedByYou:'changed by you', planNote:'What would you change in this section?', pickRef:'Pick a reference', noLikesSec:'No likes in this section yet — showing all.', rowLayout:'Layout', rowType:'Typography', rowColor:'Color', rowImagery:'Imagery', rowMotion:'Motion', rowCopy:'Copy', analyzing:'Claude analyzes this section when you press Send.', styleL:'Style', page:'Page', general:'General', quick:'Quick vote', harvesting:'Collecting references', sitesL:'sites', showNew:'Show new', version:'Version', desktop:'Desktop', tablet:'Tablet', mobile:'Mobile',
+    act_tweak:'Tweak this section', act_replace:'Replace with the reference', act_above:'Add above', act_below:'Add below', attachRef:'Reference', uploadImg:'Upload image', attachTitle:'Attach a reference', attach:'Attach', detach:'Remove', thisSection:'This section', allRefs:'All',
+    plan:'Plan', planTitle:'Page plan', planDraft:'Draft from your likes. Press Send and every section gets analyzed and filled in here.', notA:'Not a', removedFrom:'Removed from', approve:'Approved', changeRef:'Change reference', seeAll:'Whole section', myLikes:'My likes', compsL:'Components', stylesL:'Styles', changeStyle:'Change style', usePrimary:'Main', addExtra:'+ Extra', removeExtra:'− Extra', useIt:'Use', addIt:'Add', removeIt:'Remove', changedByYou:'changed by you', planNote:'What would you change in this section?', pickRef:'Pick a reference', noLikesSec:'No likes in this section yet — showing all.', rowLayout:'Layout', rowType:'Typography', rowColor:'Color', rowImagery:'Imagery', rowMotion:'Motion', rowCopy:'Copy', analyzing:'Analyzed after you press Send.', styleL:'Style', page:'Page', general:'General', quick:'Quick vote', harvesting:'Collecting references', sitesL:'sites', showNew:'Show new', version:'Version', desktop:'Desktop', tablet:'Tablet', mobile:'Mobile',
     comment:'Comment', commentHint:'Comment mode: click anything on the page', sectionsL:'Sections', commentsL:'Comments', noBuild:'No page yet', noBuildText:'When you have picked your favorites, Claude builds the page and it shows up here. Vote section by section, or switch on Comment and click anything.',
     commentOn:'Comment on', save:'Save', del:'Delete', noSecFound:'No sections found in this page.', target:'goal', crossOrigin:'This version runs on another server, so click-comments are off. Use the section notes.', done:'Done',
     topReasons:'Why you liked things', likedStyles:'Styles you liked', likedRefs:'References you liked', likedComps:'Components you liked', nothingYet:'Vote on a few things first.', newItems:'new', updated:'Board updated',
   },
   es: {
-    styles:'Estilos', references:'Referencias', lab:'Lab', brief:'Brief', send:'Enviar a Claude', sent:'Enviado — regresa con Claude', saved:'guardado', saving:'guardando…',
+    styles:'Estilos', references:'Referencias', lab:'Lab', brief:'Brief', send:'Enviar', sent:'Enviado ✓', saved:'guardado', saving:'guardando…',
     rated:'votados', all:'Todo', liked:'Me gustan', disliked:'No', unrated:'Sin votar', round:'Ronda', allRounds:'Todas las rondas',
     like:'Me gusta', dislike:'No me late', star:'Favorito', note:'¿Por qué? Algo que te guste u odies en específico…', open:'Abrir', close:'Cerrar',
     specimen:'Mockup', moodboard:'Moodboard', gallery:'Página en galería', live:'Sitio en vivo', fullpage:'Página completa', hero:'Hero',
     fonts:'Fuentes', colors:'Colores', tech:'Hecho con', reasons:'¿Qué funciona (o no)?',
     r:{layout:'Layout',type:'Tipografía',color:'Color',imagery:'Imágenes',motion:'Animación','3d':'3D',vibe:'Vibe',copy:'Copy',detail:'Detalles'},
     tint:'Pintar con', tintDefault:'Colores originales', cats:{all:'Todo','3d':'3D','motion':'Motion','text':'Texto','cursor':'Cursor','layout':'Layout'},
-    dlgTitle:'Enviar esta ronda', dlgText:'Claude lee tus votos, razones y notas, y regresa con una ronda más afinada (o la dirección final).', general:'Notas generales para Claude (opcional): ¿cómo debería ser la siguiente ronda?',
-    cancel:'Seguir votando', dlgSend:'Enviar a Claude', likedN:'me gustan', dislikedN:'descartados', starredN:'favoritos',
+    dlgTitle:'Enviar esta ronda', dlgText:'Esto se envía junto con tus votos:', general:'Notas generales (opcional): ¿qué sigue?', commentsRound:'Tus comentarios de esta ronda', noComments:'No dejaste comentarios en esta ronda; solo se envían tus votos.', pageL:'Página', planL:'Plan', pinL:'comentario sobre',
+    cancel:'Seguir votando', dlgSend:'Enviar', likedN:'me gustan', dislikedN:'descartados', starredN:'favoritos',
     emptyTitle:'Todavía no hay nada', emptyText:'Pídele a Claude que investigue tu idea. Las sesiones aparecen aquí en cuanto empiezan.', noBrief:'Tu gusto hasta ahora', noBriefText:'Claude publica aquí la dirección final con inspo_brief. Mientras, esto dicen tus votos:',
     noItems:'Nada con este filtro.', keys:'teclas', principles:'Principios', palette:'Paleta', type:'Tipografía', outline:'Estructura de la página', doL:'Sí', dontL:'No', comps:'Componentes', refs:'Referencias', tokens:'Tokens',
-    plan:'Plan', planTitle:'Plan de la página', planDraft:'Borrador con tus likes. Dale Enviar a Claude y Claude analiza cada sección y llena esto.', notA:'No es', removedFrom:'Quitado de', approve:'Aprobado', changeRef:'Cambiar referencia', seeAll:'Toda la sección', myLikes:'Mis likes', compsL:'Componentes', stylesL:'Estilos', changeStyle:'Cambiar estilo', usePrimary:'Principal', addExtra:'+ Extra', removeExtra:'− Extra', useIt:'Usar', addIt:'Agregar', removeIt:'Quitar', changedByYou:'cambiado por ti', planNote:'¿Qué cambiarías en esta sección?', pickRef:'Elige una referencia', noLikesSec:'Todavía no hay likes en esta sección; te muestro todas.', rowLayout:'Layout', rowType:'Tipografía', rowColor:'Color', rowImagery:'Imágenes', rowMotion:'Animación', rowCopy:'Copy', analyzing:'Claude analiza esta sección cuando le das Enviar.', styleL:'Estilo', page:'Página', general:'General', quick:'Votar rápido', harvesting:'Buscando referencias', sitesL:'sitios', showNew:'Mostrar nuevos', version:'Versión', desktop:'Escritorio', tablet:'Tablet', mobile:'Móvil',
+    act_tweak:'Ajustar esta sección', act_replace:'Reemplazar por la referencia', act_above:'Agregar arriba', act_below:'Agregar abajo', attachRef:'Referencia', uploadImg:'Subir imagen', attachTitle:'Adjuntar referencia', attach:'Adjuntar', detach:'Quitar', thisSection:'Esta sección', allRefs:'Todas',
+    plan:'Plan', planTitle:'Plan de la página', planDraft:'Borrador con tus likes. Dale Enviar y aquí aparece el análisis de cada sección.', notA:'No es', removedFrom:'Quitado de', approve:'Aprobado', changeRef:'Cambiar referencia', seeAll:'Toda la sección', myLikes:'Mis likes', compsL:'Componentes', stylesL:'Estilos', changeStyle:'Cambiar estilo', usePrimary:'Principal', addExtra:'+ Extra', removeExtra:'− Extra', useIt:'Usar', addIt:'Agregar', removeIt:'Quitar', changedByYou:'cambiado por ti', planNote:'¿Qué cambiarías en esta sección?', pickRef:'Elige una referencia', noLikesSec:'Todavía no hay likes en esta sección; te muestro todas.', rowLayout:'Layout', rowType:'Tipografía', rowColor:'Color', rowImagery:'Imágenes', rowMotion:'Animación', rowCopy:'Copy', analyzing:'Se analiza cuando le das Enviar.', styleL:'Estilo', page:'Página', general:'General', quick:'Votar rápido', harvesting:'Buscando referencias', sitesL:'sitios', showNew:'Mostrar nuevos', version:'Versión', desktop:'Escritorio', tablet:'Tablet', mobile:'Móvil',
     comment:'Comentar', commentHint:'Modo comentario: da clic en cualquier parte de la página', sectionsL:'Secciones', commentsL:'Comentarios', noBuild:'Todavía no hay página', noBuildText:'Cuando elijas tus favoritos, Claude construye la página y aparece aquí. Vota sección por sección, o activa Comentar y da clic en lo que quieras.',
     commentOn:'Comentario sobre', save:'Guardar', del:'Borrar', noSecFound:'No encontré secciones en esta página.', target:'meta', crossOrigin:'Esta versión corre en otro servidor, así que los comentarios con clic no están disponibles. Usa las notas por sección.', done:'Listo',
     topReasons:'Por qué te gustaron', likedStyles:'Estilos que te gustaron', likedRefs:'Referencias que te gustaron', likedComps:'Componentes que te gustaron', nothingYet:'Vota algunas cosas primero.', newItems:'nuevo', updated:'Tablero actualizado',
@@ -431,7 +454,9 @@ const assetUrl = (rel) => rel ? (/^https?:/.test(rel) ? rel : `/s/${S.id}/${rel}
 
 // ── persistence ─────────────────────────────────────────
 let pending = {}, saveTimer = null;
+const touched = new Set(), planTouched = new Set(); // edited since the last send
 function setFb(id, patch) {
+  touched.add(id);
   FB.items[id] = { ...fbOf(id), ...patch };
   pending[id] = FB.items[id];
   $('#saved').textContent = t('saving'); $('#saved').classList.remove('on');
@@ -775,10 +800,10 @@ function renderPageSide() {
   if (!box) return;
   box.innerHTML = pageSections.length ? pageSections.map((x) => {
     const id = `b${b.v}:${x.key}`;
-    return `<div class="psec ${stateCls(id)}" data-id="${esc(id)}" data-pkey="${esc(x.key)}"><div class="psec-h"><b>${esc(x.name)}</b>${votesHtml(id)}</div><textarea class="note" rows="1" data-note="${esc(id)}" placeholder="${esc(t('note'))}">${esc(fbOf(id).note)}</textarea></div>`;
+    return `<div class="psec ${stateCls(id)}" data-id="${esc(id)}" data-pkey="${esc(x.key)}"><div class="psec-h"><b>${esc(x.name)}</b>${votesHtml(id)}</div><textarea class="note" rows="1" data-note="${esc(id)}" placeholder="${esc(t('note'))}">${esc(fbOf(id).note)}</textarea>${attachBar(id)}</div>`;
   }).join('') : `<p class="hint">${t('noSecFound')}</p>`;
   const pins = Object.entries(FB.items).filter(([k]) => k.startsWith(`p${b.v}:`));
-  $('#ppins').innerHTML = pins.map(([k, f], i) => `<div class="pin"><span class="pin-n">${i + 1}</span><div><small>${esc(f.meta?.section ? secName(f.meta.section) : '')}${f.meta?.text ? ' · “' + esc(f.meta.text.slice(0, 60)) + '”' : ''}</small><p>${esc(f.note)}</p></div><button class="lang" data-delpin="${esc(k)}" title="${t('del')}">✕</button></div>`).join('') || `<p class="hint">${b.kind === 'url' ? '' : t('commentHint')}</p>`;
+  $('#ppins').innerHTML = pins.map(([k, f], i) => `<div class="pin"><span class="pin-n">${i + 1}</span><div style="flex:1;min-width:0"><small>${esc(f.meta?.section ? secName(f.meta.section) : '')}${f.meta?.text ? ' · “' + esc(f.meta.text.slice(0, 60)) + '”' : ''}</small><p>${esc(f.note)}</p>${attachBar(k)}</div><button class="lang" data-delpin="${esc(k)}" title="${t('del')}">✕</button></div>`).join('') || `<p class="hint">${b.kind === 'url' ? '' : t('commentHint')}</p>`;
 }
 function cssPath(el) {
   const parts = [];
@@ -805,21 +830,51 @@ function wireComments(doc, b) {
     openPinEditor({ section, selector: cssPath(el), text, version: b.v });
   }, true);
 }
+let draftPin = null; // a click-comment being written: attachments can be added before saving
 function openPinEditor(meta) {
   const box = $('#ppins');
+  box.querySelector('.pin.editing')?.remove();
+  draftPin = { id: `p${meta.version}:${Math.random().toString(36).slice(2, 8)}`, meta: { ...meta, action: 'tweak', refs: [], uploads: [] } };
   const ed = document.createElement('div');
   ed.className = 'pin editing';
-  ed.innerHTML = `<div style="flex:1"><small>${t('commentOn')} ${esc(meta.section ? secName(meta.section) : '')} · “${esc(meta.text.slice(0, 60))}”</small><textarea class="note" rows="3" autofocus></textarea><div style="display:flex;gap:6px;margin-top:6px;justify-content:flex-end"><button class="btn ghost" data-pincancel="1">✕</button><button class="btn primary" data-pinsave="1">${t('save')}</button></div></div>`;
+  ed.innerHTML = `<div style="flex:1;min-width:0"><small>${t('commentOn')} ${esc(meta.section ? secName(meta.section) : '')} · “${esc(meta.text.slice(0, 60))}”</small><textarea class="note" rows="3" autofocus></textarea>${attachBar('draft')}<div style="display:flex;gap:6px;margin-top:6px;justify-content:flex-end"><button class="btn ghost" data-pincancel="1">✕</button><button class="btn primary" data-pinsave="1">${t('save')}</button></div></div>`;
   box.prepend(ed);
   const ta = ed.querySelector('textarea'); ta.focus();
   ed.querySelector('[data-pinsave]').onclick = () => {
-    if (!ta.value.trim()) return ed.remove();
-    const id = `p${meta.version}:${Math.random().toString(36).slice(2, 8)}`;
-    setFb(id, { note: ta.value.trim(), vote: 0, meta });
+    const m = draftPin.meta;
+    if (!ta.value.trim() && !m.refs.length && !m.uploads.length) { ed.remove(); draftPin = null; return; }
+    setFb(draftPin.id, { note: ta.value.trim(), vote: 0, meta: m });
+    draftPin = null;
     renderPageSide();
     try { drawPins($('#pageFrame').contentDocument, buildOf(pageV)); } catch {}
   };
-  ed.querySelector('[data-pincancel]').onclick = () => ed.remove();
+  ed.querySelector('[data-pincancel]').onclick = () => { ed.remove(); draftPin = null; };
+}
+
+// ── attachments on page comments: an action + references from the board or uploaded images ──
+const metaOf = (key) => (key === 'draft' ? draftPin?.meta || {} : fbOf(key).meta || {});
+function setMeta(key, patch) {
+  if (key === 'draft') { Object.assign(draftPin.meta, patch); refreshAttach('draft'); return; }
+  const [, v, sec] = key.match(/^b(\d+):(.+)$/) || [];
+  setFb(key, { meta: { version: Number(v) || 0, section: sec || '', ...metaOf(key), ...patch } });
+  refreshAttach(key);
+}
+function attachBar(key) {
+  const m = metaOf(key);
+  const acts = ['tweak', 'replace', 'above', 'below'].map((a) => `<option value="${a}" ${(m.action || 'tweak') === a ? 'selected' : ''}>${t('act_' + a)}</option>`).join('');
+  const thumbs = [
+    ...(m.refs || []).map((id) => { const it = itemById(id); return it ? `<figure title="${esc(it.title || '')}"><img src="${esc(thumbOf(it))}" alt=""><button data-detach="${esc(key)}|r|${esc(id)}" aria-label="${t('detach')}">✕</button></figure>` : ''; }),
+    ...(m.uploads || []).map((u) => `<figure><img src="${esc(assetUrl(u))}" alt=""><button data-detach="${esc(key)}|u|${esc(u)}" aria-label="${t('detach')}">✕</button></figure>`),
+  ].join('');
+  return `<div class="attach" data-attach-box="${esc(key)}"><select data-action="${esc(key)}" aria-label="action">${acts}</select><button class="chip" data-attach="${esc(key)}">＋ ${t('attachRef')}</button><label class="chip upl">⬆ ${t('uploadImg')}<input type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/avif" data-upload="${esc(key)}" hidden></label>${thumbs ? `<div class="att-thumbs">${thumbs}</div>` : ''}</div>`;
+}
+function refreshAttach(key) { document.querySelectorAll(`[data-attach-box="${CSS.escape(key)}"]`).forEach((el) => (el.outerHTML = attachBar(key))); }
+async function uploadFor(key, file) {
+  if (!file) return;
+  const res = await fetch(`/api/upload?session=${encodeURIComponent(S.id)}`, { method: 'POST', headers: { 'Content-Type': file.type }, body: file }).catch(() => null);
+  const data = await res?.json().catch(() => null);
+  if (!res?.ok || !data?.path) { toast('⚠︎ ' + (data?.error || 'upload')); return; }
+  setMeta(key, { uploads: [...(metaOf(key).uploads || []), data.path] });
 }
 function drawPins(doc, b) {
   if (!doc) return;
@@ -864,6 +919,7 @@ function planView() {
   return { drafted: !S.plan, summary: cp.summary || '', style, sections };
 }
 function setPlan(sid, patch) {
+  planTouched.add(sid);
   FB.plan = FB.plan || { style: null, sections: {} };
   FB.plan.sections = FB.plan.sections || {};
   const cur = FB.plan.sections[sid] || {};
@@ -904,12 +960,26 @@ function renderPlan() {
     }).join('')}</section>`;
 }
 let picker = null;
-function openPicker(sid, mode) {
-  picker = { sid, mode };
+function openPicker(sid, mode, attach = false) {
+  picker = { sid, mode, attach };
   drawPicker();
   $('#drawer').classList.add('open');
 }
+function drawAttachPicker() {
+  const { sid: key, mode } = picker;
+  const sec = key === 'draft' ? draftPin?.meta?.section : (key.match(/^[bp]\d+:(.+)$/) || [])[1];
+  const refs = itemsOf('reference');
+  const liked = refs.filter((i) => fbOf(i.id).vote === 1 || fbOf(i.id).star);
+  const inSec = refs.filter((i) => i.section && i.section === sec);
+  const list = mode === 'att-likes' ? (liked.length ? liked : refs) : mode === 'att-section' ? inSec : refs;
+  const on = new Set(metaOf(key).refs || []);
+  const tabs = ['att-likes', ...(inSec.length ? ['att-section'] : []), 'att-all'];
+  const label = { 'att-likes': t('myLikes'), 'att-section': `${t('thisSection')}${sec ? ' · ' + secName(sec) : ''}`, 'att-all': t('allRefs') };
+  $('#drawer').innerHTML = `<div class="dhead"><h3>${t('attachTitle')}</h3><div class="seg" style="margin:0">${tabs.map((m) => `<button aria-pressed="${m === mode}" data-pmode="${m}">${esc(label[m])}</button>`).join('')}</div><span class="grow"></span><button class="btn" data-closedrawer="1">${t('done')}</button></div>
+    <div class="pgrid">${list.map((it) => `<figure class="ptile ${on.has(it.id) ? 'liked' : ''}"><img loading="lazy" src="${esc(thumbOf(it))}" alt=""><figcaption>${it.section ? esc(secName(it.section)) + ' · ' : ''}${esc(it.title || '')}</figcaption><div class="ptile-btns"><button class="btn ${on.has(it.id) ? '' : 'primary'} small-btn" data-attachref="${esc(key)}|${esc(it.id)}">${on.has(it.id) ? t('detach') : t('attach')}</button></div></figure>`).join('')}</div>`;
+}
 function drawPicker() {
+  if (picker.attach) return drawAttachPicker();
   const { sid, mode } = picker;
   const pv = planView();
   const x = pv.sections.find((s) => s.id === sid);
@@ -1011,6 +1081,9 @@ document.addEventListener('click', (e) => {
   if (d.filter) { filter = d.filter; renderSub(); renderMain(); return; }
   if (d.wrong) { removeWrong(d.wrong); return; }
   if (d.pick) { openPicker(d.pick, d.mode); return; }
+  if (d.attach) { openPicker(d.attach, 'att-likes', true); return; }
+  if (d.attachref) { const [key, id] = d.attachref.split('|'); const refs = metaOf(key).refs || []; setMeta(key, { refs: refs.includes(id) ? refs.filter((x) => x !== id) : [...refs, id] }); drawPicker(); return; }
+  if (d.detach) { const [key, kind, val] = d.detach.split('|'); const m = metaOf(key); setMeta(key, kind === 'r' ? { refs: (m.refs || []).filter((x) => x !== val) } : { uploads: (m.uploads || []).filter((x) => x !== val) }); return; }
   if (d.pmode) { picker.mode = d.pmode; drawPicker(); return; }
   if (d.closedrawer) { closePicker(); return; }
   if (d.approve) { const x = planView().sections.find((s) => s.id === d.approve); setPlan(d.approve, { approved: !x.approved }); renderMain(); renderTabs(); return; }
@@ -1053,6 +1126,8 @@ document.addEventListener('input', (e) => {
 document.addEventListener('change', (e) => {
   if (e.target.id === 'tintSel') { tint = e.target.value; store.set('tint', tint); renderMain(); }
   if (e.target.id === 'pvSel') { pageV = Number(e.target.value); renderSub(); renderMain(); }
+  if (e.target.dataset?.action) setMeta(e.target.dataset.action, { action: e.target.value });
+  if (e.target.dataset?.upload) { uploadFor(e.target.dataset.upload, e.target.files?.[0]); e.target.value = ''; }
   if (e.target.id === 'sessionSel') { location.search = `?session=${encodeURIComponent(e.target.value)}&tab=${tab}`; }
 });
 document.addEventListener('mouseover', (e) => { const v = e.target.closest?.('.media')?.querySelector('video[data-src]'); if (v && !v.src) { v.src = v.dataset.src; } v?.play?.().catch(()=>{}); });
@@ -1083,6 +1158,7 @@ $('#sendBtn').onclick = () => {
   const n = (fn) => all.filter((i) => fn(fbOf(i.id))).length;
   $('#dlgTitle').textContent = t('dlgTitle'); $('#dlgText').textContent = t('dlgText');
   $('#dlgSum').innerHTML = `<span><b>${n((f) => f.vote === 1 || f.star)}</b>${t('likedN')}</span><span><b>${n((f) => f.vote === -1)}</b>${t('dislikedN')}</span><span><b>${n((f) => f.star)}</b>${t('starredN')}</span>`;
+  $('#dlgComments').innerHTML = roundComments();
   $('#general').placeholder = t('general'); $('#general').value = FB.general || '';
   $('#dlgCancel').textContent = t('cancel'); $('#dlgSend').innerHTML = `${t('dlgSend')} ${ICON.send}`;
   dlg.showModal();
@@ -1093,8 +1169,42 @@ $('#dlgSend').onclick = async () => {
   clearTimeout(saveTimer);
   const ok = await flush({ general: FB.general, submit: true });
   dlg.close();
+  if (ok) { FB.submittedAt = new Date().toISOString(); touched.clear(); planTouched.clear(); }
   toast(ok ? t('sent') : '⚠︎ ' + t('saving'));
 };
+
+/** Everything the user wrote this round (since the last send): notes, reasons, page comments, plan notes. */
+function roundComments() {
+  const since = FB.submittedAt || '';
+  const thisRound = (id, f) => touched.has(id) || !since || (f.at && f.at > since);
+  const rows = [];
+  const voteIcon = (f) => f.star ? '<span class="v-star">★</span> ' : f.vote === 1 ? '<span class="v-up">▲</span> ' : f.vote === -1 ? '<span class="v-down">▼</span> ' : '';
+  const attHtml = (m) => {
+    if (!m || (!m.refs?.length && !m.uploads?.length && (!m.action || m.action === 'tweak'))) return '';
+    const imgs = [...(m.refs || []).map((id) => thumbOf(itemById(id))), ...(m.uploads || []).map(assetUrl)].filter(Boolean);
+    return `<div class="tags"><span>${esc(t('act_' + (m.action || 'tweak')))}</span></div>${imgs.length ? `<div class="att-thumbs">${imgs.map((src) => `<figure><img src="${esc(src)}" alt=""></figure>`).join('')}</div>` : ''}`;
+  };
+  for (const [id, f] of Object.entries(FB.items)) {
+    const hasAtt = f.meta && (f.meta.refs?.length || f.meta.uploads?.length);
+    if (!(f.note || f.reasons?.length || hasAtt) || !thisRound(id, f)) continue;
+    const reasons = f.reasons?.length ? `<div class="tags">${f.reasons.map((r) => `<span>${esc(t('r.' + r))}</span>`).join('')}</div>` : '';
+    let m;
+    if ((m = id.match(/^b(\d+):(.+)$/))) rows.push({ html: `<div><small>${t('pageL')} v${m[1]} · ${esc(secName(m[2]))}</small><p>${voteIcon(f)}${esc(f.note)}</p>${reasons}${attHtml(f.meta)}</div>` });
+    else if ((m = id.match(/^p(\d+):/))) rows.push({ html: `<div><small>${t('pageL')} v${m[1]} · ${t('pinL')} ${esc(f.meta?.section ? secName(f.meta.section) : '')}${f.meta?.text ? ' “' + esc(f.meta.text.slice(0, 60)) + '”' : ''}</small><p>${esc(f.note)}</p>${attHtml(f.meta)}</div>` });
+    else {
+      const it = itemById(id);
+      if (!it) continue;
+      const where = it.kind === 'style' ? t('styles') : it.kind === 'component' ? 'Lab' : it.section ? secName(it.section) : t('references');
+      const img = it.kind === 'component' ? '' : thumbOf(it);
+      rows.push({ img, html: `<div><small>${esc(where)} · ${esc(it.title || it.name || '')}</small><p>${voteIcon(f)}${esc(f.note || '')}</p>${reasons}</div>` });
+    }
+  }
+  for (const [sid, v] of Object.entries(FB.plan?.sections || {})) {
+    if (v.note && planTouched.has(sid)) rows.push({ html: `<div><small>${t('planL')} · ${esc(secName(sid))}</small><p>${esc(v.note)}</p></div>` });
+  }
+  if (!rows.length) return `<p class="rc-empty">${t('noComments')}</p>`;
+  return `<div class="rc"><h5>${t('commentsRound')} · ${rows.length}</h5><div class="rc-list">${rows.map((r) => `<div class="rc-row ${r.img ? '' : 'noimg'}">${r.img ? `<img src="${esc(r.img)}" alt="">` : ''}${r.html}</div>`).join('')}</div></div>`;
+}
 function toast(msg) { const el = $('#toast'); el.textContent = msg; el.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('on'), 2600); }
 window.addEventListener('beforeunload', () => { if (Object.keys(pending).length) navigator.sendBeacon?.(`/api/feedback?session=${S.id}`, new Blob([JSON.stringify({ items: pending })], { type: 'application/json' })); });
 
