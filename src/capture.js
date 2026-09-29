@@ -211,7 +211,7 @@ export async function searchImages(query, { count = 6, orientation, page = 1, mu
   const must = (mustMatch || '').toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length > 2);
   const relevant = (r) => !must.length || must.some((w) => `${r.title || ''} ${(r.tags || []).map((t) => t.name).join(' ')}`.toLowerCase().includes(w));
   return (data.results || [])
-    .filter((r) => r.url && (r.width || 1000) >= 800 && relevant(r))
+    .filter((r) => r.url && (r.width || 1000) >= 800 && relevant(r) && !/rawpixel/i.test(`${r.source} ${r.provider} ${r.url}`)) // rawpixel images are watermarked
     .map((r) => ({
       src: r.url,
       alt: r.title || query,
