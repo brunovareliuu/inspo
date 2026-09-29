@@ -1,8 +1,26 @@
-# inspo
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/logo-dark.png">
+    <img src="docs/logo-light.png" alt="inspo" width="300">
+  </picture>
+</p>
+
+<p align="center">
+  <b>De la idea a la página construida, dentro de Claude Code.</b><br>
+  Referencias para cada sección, estilos con fotos reales, componentes 3D en vivo,<br>un tablero para votar, un reporte en PDF y la página misma, ajustada sección por sección.
+</p>
+
+<p align="center">
+  <a href="#instalación"><img alt="Claude Code plugin" src="https://img.shields.io/badge/Claude_Code-plugin-d6ff3d?style=flat-square&labelColor=0b0b0c"></a>
+  <a href="#herramientas"><img alt="MCP server" src="https://img.shields.io/badge/MCP-server-d6ff3d?style=flat-square&labelColor=0b0b0c"></a>
+  <img alt="Node 20+" src="https://img.shields.io/badge/node-%E2%89%A520-f2f1ec?style=flat-square&labelColor=0b0b0c">
+  <a href="LICENSE"><img alt="MIT" src="https://img.shields.io/badge/license-MIT-f2f1ec?style=flat-square&labelColor=0b0b0c"></a>
+  <a href="README.md"><img alt="English" src="https://img.shields.io/badge/read_in-English-f2f1ec?style=flat-square&labelColor=0b0b0c"></a>
+</p>
+
+<p align="center"><img src="docs/banner.png" alt="inspo: references per section, styles, and the built page with section feedback" width="100%"></p>
 
 **Investigación de diseño y construcción de páginas para Claude Code.** Le cuentas tu idea y acuerdan las secciones de la página. Junta unas **50 referencias por sección** (navbar, hero, nosotros, catálogo, footer…) de Awwwards, Dribbble, Siteinspire, footer.design, navbar.gallery y sitios reales premiados que recorta en secciones automáticamente. Dibuja tu página en varios estilos con fotos reales y te abre un tablero donde votas todo, componentes 3D en vivo incluidos. Después te entrega un reporte en PDF, construye la página con lo que elegiste y la ajusta con tu feedback sección por sección.
-
-[English](README.md)
 
 ![Tu landing en seis de los dieciséis estilos](docs/styles-grid.jpg)
 
@@ -22,6 +40,8 @@
 - **Estilos.** Tu propia landing, con tu copy, en 4–6 direcciones distintas. Cada una trae su paleta, fuentes de Google Fonts, layout, textura, tratamiento de imagen y fotos CC0 reales. Incluye 16 presets, y Claude los ajusta o inventa nuevos.
 - **Lab.** 18 componentes en vivo de nivel producción (shaders WebGL, globo de puntos, nudo de vidrio, galaxias de partículas, stacks con scroll, botones magnéticos…), más los que Claude escribe para tu idea. Los puedes repintar todos con un estilo que te gustó.
 - **El tablero.** Una página local donde votas 👍 / 👎 / ★ sección por sección, marcas *por qué* (layout, tipografía, color, animación, 3D…), dejas notas y le das **Enviar a Claude**. **⚡ Votar rápido** va una por una con `1` / `2` / `S`. Se guarda solo y está en español o inglés.
+- **En cada sección, solo lo que es.** Las tarjetas de galería deben estar etiquetadas con la sección (nada de landings completas ni apps bajo "footer"), y los recortes salen solo de detecciones seguras. Luego Claude revisa cada sección visualmente en hojas de contacto numeradas, quita lo que no va (y ya no vuelve) y rellena. También tienes un botón **✕ No es footer** (tecla `X`).
+- **Plan.** Después de votar, Claude analiza tus favoritos y escribe el plan de cada sección: la referencia principal, alternativas y qué se toma de layout, tipografía, color, imágenes y animación, más los componentes. En la pestaña **Plan** cambias la referencia por cualquiera de tus likes o de esa sección, cambias estilo o componentes, dejas notas y apruebas. Claude construye con ese plan.
 - **Reporte en PDF.** Un entregable con acabado de estudio: portada, dirección, los ganadores de cada sección con tus notas, estilos, componentes y la página actual.
 - **La página.** Claude la construye con tus votos. En la pestaña **Página** ves cada versión en escritorio, tablet y móvil. Votas y dejas notas por sección, o activas **Comentar** y le das clic a lo que quieras para dejar una nota fijada. Claude lee los comentarios, con el elemento exacto, la rehace y publica la v2, v3…
 - **Rondas.** Claude lee tus votos, incluidas las miniaturas de lo que te gustó, y hace una segunda ronda más afinada.
@@ -95,6 +115,8 @@ Todo lo de un proyecto vive en `<proyecto>/.inspo/<sesión>/`, que se ignora en 
 | `inspo_sections` | Catálogo de secciones y sets recomendados por tipo de página, o fija el plan |
 | `inspo_harvest` | Cosecha en segundo plano de N referencias por sección (50 por defecto) |
 | `inspo_status` | Progreso de la cosecha por sección (o cancelarla) |
+| `inspo_review` | Hojas de contacto numeradas de una sección para que Claude verifique cada imagen |
+| `inspo_plan` | Publica el plan por sección (referencia, alternativas, análisis, componentes) en la pestaña Plan |
 | `inspo_search` | Busca en galerías, guarda miniaturas y opcionalmente captura los sitios en vivo |
 | `inspo_capture` | Captura y analiza URLs específicas (fuentes, colores, tecnología) |
 | `inspo_analyze` | Ve cualquier URL, incluido `localhost`, y regresa captura y ADN de diseño |

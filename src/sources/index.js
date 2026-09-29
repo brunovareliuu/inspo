@@ -47,7 +47,7 @@ export const SOURCES = {
           const base = li.querySelector('[data-video-teaser-small]');
           const author = li.querySelector('.user-information .display-name, .display-name')?.textContent?.trim();
           const title = li.querySelector('.shot-title, [class*="shot-title"]')?.textContent?.trim() || (img.alt || '').split(/\s+/).slice(0, 9).join(' ');
-          return { title, author, url: `https://dribbble.com/shots/${id}`, image: best, video: base?.dataset.videoTeaserSmall || undefined };
+          return { title, author, tags: img.alt || '', url: `https://dribbble.com/shots/${id}`, image: best, video: base?.dataset.videoTeaserSmall || undefined };
         })
         .filter((c) => c && c.image),
   },

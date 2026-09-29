@@ -5,32 +5,38 @@
 export const SECTION_TYPES = {
   navbar: {
     name: { en: 'Navbar', es: 'Navbar' },
+    kw: 'nav|navbar|navigation|header|menu|mega ?menu',
     dribbble: ['website header navigation', 'website navbar', 'website menu navigation'],
     galleries: ['navbargallery'],
     generic: true, // industry words pull in app tab bars; keep these queries web-specific
   },
   hero: {
     name: { en: 'Hero', es: 'Hero' },
+    kw: 'hero|header|landing|homepage|home page|above the fold|first screen',
     dribbble: ['hero section', 'website hero', 'landing page hero'],
   },
   logos: {
     name: { en: 'Logos / social proof', es: 'Logos / prueba social' },
+    kw: 'logo(s| cloud| wall)?|clients|trusted|partners|brands',
     rx: 'trusted by|used by|loved by|our clients|clients|partners|backed by|as seen|featured in|confían|clientes|aliados|marcas',
     dribbble: ['logo cloud section', 'trusted by section'],
   },
   features: {
     name: { en: 'Features', es: 'Features / beneficios' },
+    kw: 'features?|benefits?',
     rx: 'feature|benefit|why (us|choose)|what you get|capabilities|beneficios|características|por qué',
     dribbble: ['features section', 'feature section website'],
   },
   services: {
     name: { en: 'Services', es: 'Servicios' },
+    kw: 'services?',
     rx: 'services|what we do|capabilities|expertise|servicios|qué hacemos',
     link: 'services|servicios|what-we-do',
     dribbble: ['services section website', 'agency services'],
   },
   catalog: {
     name: { en: 'Catalog / products', es: 'Catálogo / productos' },
+    kw: 'products?|shop|catalog(ue)?|store|e-?commerce|collection|listing|menu|pdp|plp',
     rx: 'shop|products?|collection|catalog|catalogue|store|menu|our (coffees|wines|beers)|tienda|productos|colecci|catálogo|menú|bestsellers?|new arrivals',
     link: 'shop|store|products|collections?|catalog|menu|tienda|productos|catalogo|coleccion',
     dribbble: ['product catalog website', 'ecommerce product grid', 'shop page design'],
@@ -38,73 +44,86 @@ export const SECTION_TYPES = {
   },
   work: {
     name: { en: 'Work / portfolio', es: 'Proyectos / portafolio' },
+    kw: 'portfolio|case stud(y|ies)|projects?|work|showcase',
     rx: 'work|projects|portfolio|case stud|selected|proyectos|portafolio|trabajos',
     link: 'work|projects|portfolio|case-studies|proyectos|trabajo',
     dribbble: ['portfolio website projects', 'case study grid'],
   },
   about: {
     name: { en: 'About us', es: 'Nosotros' },
+    kw: 'about|story|mission|who we are|company page|team',
     rx: 'about|our story|who we are|mission|manifesto|our values|nosotros|quiénes somos|quienes somos|historia|misión|filosof',
     link: 'about|our-story|story|who-we-are|nosotros|quienes-somos|historia|acerca',
     dribbble: ['about us page', 'about us section', 'our story page'],
   },
   process: {
     name: { en: 'How it works', es: 'Cómo funciona' },
+    kw: 'how it works|process|steps|timeline|workflow',
     rx: 'how it works|process|steps|how we work|cómo funciona|proceso|pasos',
     dribbble: ['how it works section', 'process steps website'],
   },
   stats: {
     name: { en: 'Stats', es: 'Números' },
+    kw: 'stats?|statistics|numbers|metrics|counters?|impact',
     rx: 'in numbers|by the numbers|impact|results|números|cifras|impacto',
     dribbble: ['stats section website', 'numbers section'],
   },
   team: {
     name: { en: 'Team', es: 'Equipo' },
+    kw: 'team|people|members|founders|staff',
     rx: 'team|people|founders|meet the|equipo|fundadores|conoce a',
     link: 'team|people|equipo',
     dribbble: ['team section website', 'meet the team page'],
   },
   testimonials: {
     name: { en: 'Testimonials', es: 'Testimonios' },
+    kw: 'testimonials?|reviews?|feedback|quotes?|social proof',
     rx: 'testimonial|reviews?|what (people|our clients|customers) say|loved by|wall of love|opiniones|testimonios|reseñas|lo que dicen',
     dribbble: ['testimonials section', 'customer reviews section'],
   },
   pricing: {
     name: { en: 'Pricing', es: 'Precios' },
+    kw: 'pricing|price|plans?|subscription|tiers?',
     rx: 'pricing|plans|price|subscribe|membership|precios|planes|suscripci',
     link: 'pricing|plans|precios|planes|subscribe|suscripcion',
     dribbble: ['pricing page', 'pricing section', 'subscription plans'],
   },
   faq: {
     name: { en: 'FAQ', es: 'Preguntas frecuentes' },
+    kw: 'faq|questions|accordion|help center',
     rx: 'faq|frequently asked|questions|preguntas',
     link: 'faq|preguntas',
     dribbble: ['faq section', 'faq accordion website'],
   },
   blog: {
     name: { en: 'Blog / journal', es: 'Blog' },
+    kw: 'blog|articles?|news|journal|posts?|magazine',
     rx: 'blog|journal|news|stories|articles|insights|noticias|artículos',
     link: 'blog|journal|news|stories|noticias',
     dribbble: ['blog page design', 'journal website'],
   },
   cta: {
     name: { en: 'Call to action', es: 'Llamado a la acción' },
+    kw: 'cta|call to action|sign ?up|get started|banner',
     rx: 'get started|start (your|now|today)|ready to|join|sign up|book a|empieza|únete|comienza|agenda',
     dribbble: ['cta section website', 'call to action section'],
   },
   newsletter: {
     name: { en: 'Newsletter', es: 'Newsletter' },
+    kw: 'newsletter|subscribe|email (capture|signup)',
     rx: 'newsletter|subscribe to|stay in the loop|sign up for|suscríbete|boletín',
     dribbble: ['newsletter section website'],
   },
   contact: {
     name: { en: 'Contact', es: 'Contacto' },
+    kw: 'contact|form|get in touch|inquir',
     rx: 'contact|get in touch|say hello|let.?s talk|write to us|contacto|contáctanos|escríbenos|hablemos',
     link: 'contact|contacto|get-in-touch',
     dribbble: ['contact page design', 'contact form website'],
   },
   footer: {
     name: { en: 'Footer', es: 'Footer' },
+    kw: 'footer',
     dribbble: ['website footer', 'footer design website', 'footer section'],
     galleries: ['footerdesign'],
     generic: true,
@@ -165,10 +184,9 @@ export function findSectionsInPage(specs) {
     const f = [...document.querySelectorAll('footer, [role="contentinfo"], [class*="footer" i], [id*="footer" i]')]
       .filter(visible)
       .map((el) => ({ el, b: box(el) }))
-      .filter(({ b }) => b.h > 80 && b.w > vw * 0.6 && b.top > window.innerHeight * 0.5)
+      .filter(({ b }) => b.h > 80 && b.w > vw * 0.6 && b.top > window.innerHeight * 0.5 && b.bottom > docH - 400)
       .sort((a, b) => b.b.bottom - a.b.bottom || b.b.h - a.b.h)[0];
     if (f) out.footer = { y: Math.max(0, f.b.top), h: Math.min(f.b.h, 1300), label: 'footer' };
-    else if (docH > 1400) out.footer = { y: docH - 560, h: 560, label: 'page bottom' };
   }
 
   // Content blocks: full-width sections between the hero and the footer.
@@ -197,7 +215,6 @@ export function findSectionsInPage(specs) {
     (sp, x) => sp.re.test(x.ht),
     (sp, x) => sp.re.test(x.attrs),
     (sp, x) => sp.priceGrid && (x.text.match(/[$€£]\s?\d|\d+[.,]\d{2}\s?(mxn|usd|eur)?/gi) || []).length >= 3,
-    (sp, x) => sp.re.test(x.text.slice(0, 120)),
   ];
   for (const test of passes) {
     for (const sp of pending) {
@@ -231,4 +248,15 @@ export function findSectionLinksInPage(specs) {
     if (a) out[spec.id] = new URL(a.href, location.href).href.split('#')[0];
   }
   return out;
+}
+
+/** Does a gallery card (title + tags) actually show this section? Filters out whole pages and app screens. */
+export function cardMatchesSection(sectionId, card) {
+  const t = SECTION_TYPES[sectionId];
+  if (!t?.kw) return true;
+  const text = `${card.title || ''} ${card.tags || ''}`.toLowerCase();
+  if (!new RegExp(`\\b(${t.kw})\\b`, 'i').test(text)) return false;
+  // Mobile app shots are noise for website sections unless they say "web".
+  if (/\b(mobile app|ios app|android|app design|app ui|tab ?bar|bottom nav)\b/.test(text) && !/\b(web|website|landing)\b/.test(text)) return false;
+  return true;
 }

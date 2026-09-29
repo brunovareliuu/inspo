@@ -4,7 +4,7 @@ import { SOURCES, searchSources, scrapeWith } from './sources/index.js';
 import { getContext } from './browser.js';
 import { downloadAsset } from './capture.js';
 import { crawlSite } from './crawl.js';
-import { SECTION_TYPES } from './sections.js';
+import { SECTION_TYPES, cardMatchesSection } from './sections.js';
 import { addItems, loadSession, updateSession, shortId } from './session.js';
 
 const jobs = new Map();
@@ -144,15 +144,17 @@ async function run(sessionId, job, opts) {
     const q = [SECTION_TYPES[id].generic ? '' : query, SECTION_TYPES[id].dribbble[0]].filter(Boolean).join(' ');
     const want = Math.min(need(job, id), Math.ceil(job.target * 0.4));
     if (!want) return;
-    const r = await scrapeWith(context, 'dribbble', q, { limit: want + 8 }).catch(() => null);
-    if (r?.cards?.length) await add(sessionId, job, await saveCards(sessionId, 'dribbble', r.cards.slice(0, want), { section: id, query: q }));
+    const r = await scrapeWith(context, 'dribbble', q, { limit: want * 3 + 12 }).catch(() => null);
+    const cards = (r?.cards || []).filter((c) => cardMatchesSection(id, c));
+    if (cards.length) await add(sessionId, job, await saveCards(sessionId, 'dribbble', cards.slice(0, want), { section: id, query: q }));
     log(`Dribbble “${q}”: ${job.counts[id]} ${id}`);
   });
 
   // 3) Real sites, cut into sections. The richest source: every site yields several sections.
   job.phase = 'sites';
   const pool = [];
-  const seenHosts = new Set();
+  // Sites already crawled in earlier harvests only give back duplicates: skip them.
+  const seenHosts = new Set((await loadSession(sessionId)).crawled || []);
   const push = (u, why) => {
     const h = host(u);
     if (!h || seenHosts.has(h) || /awwwards|siteinspire|dribbble|footer\.design|navbar\.gallery|webflow\.io$|framer\.(website|app)$/.test(h)) return;
@@ -192,16 +194,20 @@ async function run(sessionId, job, opts) {
       log(`${host(site.url)} skipped (${err.message.split('\n')[0].slice(0, 60)})`);
     }
     job.sites.done++;
+    await updateSession(sessionId, (ss) => {
+      ss.crawled = [...new Set([...(ss.crawled || []), host(site.url)])];
+    }).catch(() => {});
     persist(sessionId, job);
   });
 
   // 4) Top up anything still short with more Dribbble queries.
   job.phase = 'top-up';
   for (const id of hungry(job)) {
-    for (const q of [...SECTION_TYPES[id].dribbble.slice(1), `${SECTION_TYPES[id].dribbble[0]} design`]) {
+    for (const q of [...SECTION_TYPES[id].dribbble.slice(1), `${SECTION_TYPES[id].dribbble[0]} design`, `${SECTION_TYPES[id].dribbble[0]} web`]) {
       if (job.cancelled || !need(job, id)) break;
-      const r = await scrapeWith(context, 'dribbble', q, { limit: need(job, id) + 8 }).catch(() => null);
-      if (r?.cards?.length) await add(sessionId, job, await saveCards(sessionId, 'dribbble', r.cards.slice(0, need(job, id)), { section: id, query: q }));
+      const r = await scrapeWith(context, 'dribbble', q, { limit: Math.min(90, need(job, id) * 3 + 12) }).catch(() => null);
+      const cards = (r?.cards || []).filter((c) => cardMatchesSection(id, c));
+      if (cards.length) await add(sessionId, job, await saveCards(sessionId, 'dribbble', cards.slice(0, need(job, id)), { section: id, query: q }));
     }
     log(`top-up ${id}: ${job.counts[id]}`);
   }

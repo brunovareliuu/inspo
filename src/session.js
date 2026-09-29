@@ -90,7 +90,8 @@ export function updateSession(id, mutate) {
 export function addItems(id, items) {
   return updateSession(id, (s) => {
     const keyOf = (i) => (i.kind === 'reference' ? `${i.section || ''}::${i.url || i.liveUrl || i.image}` : null);
-    const seen = new Set(s.items.map(keyOf).filter(Boolean));
+    // Removed items stay blocked, so a later harvest never brings them back.
+    const seen = new Set([...s.items.map(keyOf).filter(Boolean), ...(s.blocked || [])]);
     const added = [];
     for (const item of items) {
       const key = keyOf(item);
@@ -101,6 +102,18 @@ export function addItems(id, items) {
       added.push(full);
     }
     return added;
+  });
+}
+
+/** Remove items and block them from coming back. Returns how many were removed. */
+export function removeItems(id, ids) {
+  return updateSession(id, (s) => {
+    const drop = new Set(ids);
+    const gone = s.items.filter((i) => drop.has(i.id));
+    s.items = s.items.filter((i) => !drop.has(i.id));
+    const keys = gone.filter((i) => i.kind === 'reference').map((i) => `${i.section || ''}::${i.url || i.liveUrl || i.image}`);
+    s.blocked = [...new Set([...(s.blocked || []), ...keys])];
+    return gone.length;
   });
 }
 
@@ -147,6 +160,23 @@ export function saveFeedback(id, incoming) {
       }
     }
     if (typeof incoming.general === 'string') fb.general = incoming.general.slice(0, 5000);
+    // The user's edits to Claude's per-section plan (they win over Claude's choices).
+    if (incoming.plan && typeof incoming.plan === 'object') {
+      const str = (v, n = 80) => (typeof v === 'string' ? v.slice(0, n) : undefined);
+      const ids = (v) => (Array.isArray(v) ? v.map(String).map((x) => x.slice(0, 80)).slice(0, 12) : undefined);
+      const plan = { style: str(incoming.plan.style) ?? null, sections: {} };
+      for (const [sid, v] of Object.entries(incoming.plan.sections || {}).slice(0, 40)) {
+        if (!v || typeof v !== 'object') continue;
+        plan.sections[String(sid).slice(0, 40)] = {
+          primary: str(v.primary) ?? null,
+          extra: ids(v.extra) ?? [],
+          components: ids(v.components) ?? null,
+          note: str(v.note, 2000) ?? '',
+          approved: Boolean(v.approved),
+        };
+      }
+      fb.plan = plan;
+    }
     if (incoming.submit) {
       fb.submittedAt = new Date().toISOString();
       fb.submissions = (fb.submissions || 0) + 1;

@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
-import { SESSIONS_DIR, loadSession, loadFeedback, saveFeedback, listSessions, latestSessionId } from '../session.js';
+import { SESSIONS_DIR, loadSession, loadFeedback, saveFeedback, listSessions, latestSessionId, removeItems } from '../session.js';
 import { listLibrary, readLibraryComponent } from '../components.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -66,6 +66,19 @@ async function handle(req, res) {
     try {
       const fb = await saveFeedback(id, await readBody(req));
       return send(res, 200, { ok: true, updatedAt: fb.updatedAt, submittedAt: fb.submittedAt });
+    } catch (err) {
+      return send(res, 400, { error: err.message });
+    }
+  }
+
+  // "Not a footer": the user removes a misfiled reference from the board.
+  if (p === '/api/remove' && req.method === 'POST') {
+    const id = url.searchParams.get('session');
+    if (!id || !/^[a-z0-9-]+$/.test(id)) return send(res, 400, { error: 'session required' });
+    try {
+      const { ids } = await readBody(req);
+      if (!Array.isArray(ids) || !ids.length) return send(res, 400, { error: 'ids required' });
+      return send(res, 200, { removed: await removeItems(id, ids.map(String).slice(0, 200)) });
     } catch (err) {
       return send(res, 400, { error: err.message });
     }

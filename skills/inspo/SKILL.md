@@ -45,20 +45,31 @@ Also tell them the plan: about 50 references per section (ask if they want more 
    - `inspo_add_styles`: 4–6 genuinely different directions justified by the idea, with `imageSubject` a plain 1–2 word English noun (`coffee`, `architecture`).
    - Pick relevant Lab components and write 1–3 custom ones for this idea with `inspo_add_component` (see `references/components.md`).
    - Optionally, `inspo_search` / `inspo_capture` with `section` for anything specific.
-5. `inspo_status` to check progress. When the harvest is done or close, tell the user how to vote, briefly:
+5. `inspo_status` to check progress.
+6. **Curate before the user votes: every section must contain only that section.**
+   - For each section, call `inspo_review` repeatedly until nothing is left to review. It returns numbered contact sheets; look at each image and ask whether it really is that section. A footer must be a footer, testimonials must be testimonials. Whole landing pages, app screens, ads and unrelated crops don't count.
+   - `inspo_remove` every wrong id. Removed items are blocked for good.
+   - Run `inspo_harvest` again to refill the gaps (it only fills deficits and skips sites it already crawled), then review the newcomers.
+   - Repeat until every section is at target and clean.
+   - The user also has a **✕ No es …** button (key `X`) on every card for anything you missed.
+7. When the harvest is done and curated, tell the user how to vote, briefly:
    - Each section is a chip.
    - **⚡ Votar rápido** goes one by one with `1` (no), `2` (like), `S` (favorite).
    - Tag *why* (layout, type, color…) and leave notes.
    - Press **Send to Claude** when done.
-6. `inspo_feedback` with `wait: true` (timeoutSec up to 900). It returns the likes per section with thumbnails. If it times out, ask them to tell you when they're done.
-7. Summarize what you learned **per section** in 1–2 lines each ("Hero: full-bleed photo + huge serif, no carousels; Footer: big wordmark, minimal links"), plus the overall style and components.
-   - If a section is unclear (few likes, or contradictory ones), run `inspo_next_round` and a focused `inspo_search` / `inspo_harvest` for just that section.
-8. `inspo_brief` with the direction: name, summary, principles, palette, fonts, the page outline (the sections), chosen components, key reference ids, do/don't, and `tokensCss`.
-9. `inspo_export_pdf`: the research report (cover, direction, the winners of every section with the user's notes, styles, components). It opens automatically. Tell them where it is.
+8. `inspo_feedback` with `wait: true` (timeoutSec up to 900). It returns the likes per section with thumbnails. If it times out, ask them to tell you when they're done.
+9. **Analyze and plan every section.**
+   - For each section, call `inspo_feedback` with `section` and `images: 8–12` and really look at the favorites. Decide what the section will be: the leading reference and 2–4 alternates, plus concrete choices for layout, typography, color, imagery, motion and copy, and which components it uses.
+   - Publish it with `inspo_plan` (overall summary, the chosen `style`, and the analysis per section, in the user's language), then `inspo_open` tab `plan`.
+   - Tell the user that in **Plan** they can see what goes in each section, swap the main reference for any of their likes or any reference of that section, add extras, change components or the style, leave notes, and approve each section. They press **Send to Claude** when done.
+   - If a section is unclear (few likes, or contradictory ones), run `inspo_next_round` and a focused `inspo_search` / `inspo_harvest` for that section first.
+10. `inspo_feedback` with `wait: true` returns `plan`: the effective plan, where the user's edits win. Apply their notes and swaps, and update `inspo_plan` if you need to change your analysis. Repeat until the sections are approved, or the user says go.
+11. `inspo_brief` with the direction: name, summary, principles, palette, fonts, the page outline (the sections), chosen components, key reference ids, do/don't, and `tokensCss`.
+12. `inspo_export_pdf`: the report (cover, direction, the page plan section by section, the winners with the user's notes, styles, components). It opens automatically. Tell them where it is.
 
 ## 5. Build the page from what they chose
 
-Build a real page, section by section, from the votes:
+Build a real page, section by section, from the **approved plan** (`inspo_feedback` → `plan`: the main reference, extras, components, analysis and notes per section):
 - **Style:** the liked style's palette, type and texture (the brief's tokens).
 - **Each section:** follow its liked references and notes. Look at the thumbnails (`inspo_feedback` with `section` shows that section's favorites). Take the principles and moves, never copy a site.
 - **Components:** the chosen Lab components, ported properly (read the files in the plugin's `components/` folder).

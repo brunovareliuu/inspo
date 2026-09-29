@@ -132,3 +132,40 @@ test('section crops of one site are kept apart; feedback groups by section and b
   await saveFeedback(s.id, { items: { 'p1:abc': { deleted: true } } });
   assert.equal((await loadFeedback(s.id)).items['p1:abc'], undefined, 'comments can be deleted');
 });
+
+test('gallery cards must show the section they are filed under', async () => {
+  const { cardMatchesSection } = await import('../src/sections.js');
+  assert.ok(cardMatchesSection('footer', { title: 'Website footer design', tags: 'footer web ui' }));
+  assert.ok(!cardMatchesSection('footer', { title: 'Coffee landing page', tags: 'hero homepage web' }));
+  assert.ok(!cardMatchesSection('navbar', { title: 'Tab bar', tags: 'mobile app ios navigation bottom nav' }));
+  assert.ok(cardMatchesSection('testimonials', { title: 'Customer reviews section', tags: 'saas website' }));
+});
+
+test('plan: user edits win over Claude, drafts come from likes, removed refs stay blocked', async () => {
+  const { effectivePlan } = await import('../src/feedback.js');
+  const { updateSession, removeItems } = await import('../src/session.js');
+  const s = await createSession({ idea: 'x', title: 'plan', sections: [{ id: 'hero', name: 'Hero' }, { id: 'footer', name: 'Footer' }] });
+  const [a, b, c, f] = await addItems(s.id, ['a', 'b', 'c'].map((k) => ({ kind: 'reference', source: 'dribbble', section: 'hero', url: `https://d/${k}`, title: k, image: `assets/${k}.jpg` }))
+    .concat([{ kind: 'reference', source: 'live', section: 'footer', url: 'https://x.com', title: 'f', image: 'assets/f.jpg' }]));
+  await saveFeedback(s.id, { items: { [a.id]: { vote: 1 }, [b.id]: { vote: 1, star: true }, [f.id]: { vote: 1 } } });
+  let plan = effectivePlan(await loadSession(s.id), await loadFeedback(s.id));
+  assert.equal(plan.drafted, true);
+  assert.equal(plan.sections.find((x) => x.id === 'hero').primary.id, b.id, 'draft picks the starred like');
+
+  await updateSession(s.id, (ss) => { ss.plan = { summary: 'warm', sections: [{ id: 'hero', primary: a.id, alternates: [b.id], components: ['lib-x'], analysis: { summary: 'big serif' } }] }; });
+  await saveFeedback(s.id, { plan: { sections: { hero: { primary: c.id, extra: [a.id], note: 'bigger', approved: true } } } });
+  plan = effectivePlan(await loadSession(s.id), await loadFeedback(s.id), [{ id: 'lib-x', name: 'X', file: 'x.html' }]);
+  const hero = plan.sections.find((x) => x.id === 'hero');
+  assert.equal(plan.drafted, false);
+  assert.equal(hero.primary.id, c.id);
+  assert.equal(hero.changedByUser.primary, true);
+  assert.deepEqual(hero.extra.map((x) => x.id), [a.id]);
+  assert.equal(hero.components[0].title, 'X', 'Claude components kept when the user did not touch them');
+  assert.equal(hero.analysis.summary, 'big serif');
+  assert.equal(hero.approved, true);
+  assert.equal(plan.sections.find((x) => x.id === 'footer').primary.id, f.id, 'unplanned sections fall back to likes');
+
+  assert.equal(await removeItems(s.id, [c.id]), 1);
+  const again = await addItems(s.id, [{ kind: 'reference', source: 'dribbble', section: 'hero', url: 'https://d/c', image: 'assets/c2.jpg' }]);
+  assert.equal(again.length, 0, 'removed reference is blocked');
+});

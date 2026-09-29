@@ -109,3 +109,61 @@ export function summarizeFeedback(session, feedback, library = []) {
     },
   };
 }
+
+/**
+ * The plan that will actually be built: Claude's per-section plan (session.plan) with the
+ * user's board edits (feedback.plan) applied on top. Without a Claude plan it drafts one
+ * from the likes so the board has something to show.
+ */
+export function effectivePlan(session, feedback = {}, library = []) {
+  const claude = session.plan || { sections: [] };
+  const user = feedback.plan || { sections: {} };
+  const libItems = library.map((c) => ({ ...c, kind: 'component', title: c.name, source: 'library' }));
+  const byId = new Map([...libItems, ...session.items].map((i) => [i.id, i]));
+  const mini = (id) => {
+    const it = byId.get(id);
+    return it ? { id, title: it.title || it.name, source: it.source, url: it.liveUrl || it.url, image: it.image || it.images?.[0]?.src, kind: it.kind } : null;
+  };
+  const fb = feedback.items || {};
+  const likedIn = (sid) =>
+    session.items
+      .filter((i) => i.section === sid && (fb[i.id]?.vote === 1 || fb[i.id]?.star))
+      .sort((a, b) => (fb[b.id]?.star ? 1 : 0) - (fb[a.id]?.star ? 1 : 0))
+      .map((i) => i.id);
+  const ids = [...new Set([...(session.sections || []).map((x) => x.id), ...(claude.sections || []).map((x) => x.id)])];
+  const sections = ids.map((sid) => {
+    const c = (claude.sections || []).find((x) => x.id === sid) || { id: sid, alternates: [], components: [], analysis: null };
+    const u = user.sections?.[sid] || {};
+    const liked = likedIn(sid);
+    const primary = u.primary || c.primary || liked[0] || null;
+    const components = u.components ?? c.components ?? [];
+    return {
+      id: sid,
+      name: (session.sections || []).find((x) => x.id === sid)?.name || sid,
+      primary: mini(primary),
+      alternates: (c.alternates?.length ? c.alternates : liked.filter((x) => x !== primary).slice(0, 4)).map(mini).filter(Boolean),
+      extra: (u.extra || []).map(mini).filter(Boolean),
+      components: components.map(mini).filter(Boolean),
+      analysis: c.analysis || null,
+      note: u.note || '',
+      approved: Boolean(u.approved),
+      likedCount: liked.length,
+      changedByUser: {
+        primary: Boolean(u.primary && u.primary !== c.primary),
+        components: u.components != null,
+        extra: Boolean(u.extra?.length),
+      },
+    };
+  });
+  const likedStyles = session.items.filter((i) => i.kind === 'style' && (fb[i.id]?.vote === 1 || fb[i.id]?.star)).map((i) => i.id);
+  const styleId = user.style || claude.style || likedStyles[0] || null;
+  const style = styleId ? session.items.find((i) => i.id === styleId) : null;
+  return {
+    drafted: !session.plan,
+    summary: claude.summary || '',
+    style: style ? { id: style.id, name: style.title, palette: style.style?.palette, fonts: style.style?.fonts } : null,
+    styleChangedByUser: Boolean(user.style && user.style !== claude.style),
+    approved: sections.length > 0 && sections.every((x) => x.approved),
+    sections,
+  };
+}

@@ -1,8 +1,26 @@
-# inspo
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/logo-dark.png">
+    <img src="docs/logo-light.png" alt="inspo" width="300">
+  </picture>
+</p>
+
+<p align="center">
+  <b>Design research → a built page, inside Claude Code.</b><br>
+  References for every section, style directions with real photos, live 3D components,<br>a board to vote on, a PDF report, and the page itself — iterated section by section.
+</p>
+
+<p align="center">
+  <a href="#install"><img alt="Claude Code plugin" src="https://img.shields.io/badge/Claude_Code-plugin-d6ff3d?style=flat-square&labelColor=0b0b0c"></a>
+  <a href="#tools"><img alt="MCP server" src="https://img.shields.io/badge/MCP-server-d6ff3d?style=flat-square&labelColor=0b0b0c"></a>
+  <img alt="Node 20+" src="https://img.shields.io/badge/node-%E2%89%A520-f2f1ec?style=flat-square&labelColor=0b0b0c">
+  <a href="LICENSE"><img alt="MIT" src="https://img.shields.io/badge/license-MIT-f2f1ec?style=flat-square&labelColor=0b0b0c"></a>
+  <a href="README.es.md"><img alt="Español" src="https://img.shields.io/badge/lee_en-español-f2f1ec?style=flat-square&labelColor=0b0b0c"></a>
+</p>
+
+<p align="center"><img src="docs/banner.png" alt="inspo: references per section, styles, and the built page with section feedback" width="100%"></p>
 
 **Design research and page building for Claude Code.** Tell it your idea and agree on the page sections. It gathers about **50 references per section** (navbar, hero, about, catalog, footer…) from Awwwards, Dribbble, Siteinspire, footer.design, navbar.gallery, and real award-winning sites that it cuts into sections automatically. It renders your page in several visual styles with real photos, and opens a board where you vote on all of it, live 3D components included. Then it hands you a PDF report, builds the page from what you picked, and iterates on your feedback section by section.
-
-[Español](README.es.md)
 
 ![Your landing page rendered in six of the sixteen style directions](docs/styles-grid.jpg)
 
@@ -22,6 +40,8 @@
 - **Styles.** Your own landing page, with your copy, rendered in 4–6 distinct directions. Each one gets its own palette, Google Fonts, layout, texture and image treatment, and real CC0 photos. 16 presets included, and Claude can tune them or invent new ones.
 - **Lab.** 18 live, production-grade components (WebGL shaders, a dot globe, a glass knot, particle galaxies, sticky stacks, magnetic buttons…), plus custom ones Claude writes for your idea. You can re-tint all of them with a style you liked.
 - **The board.** A local page where you 👍 / 👎 / ★ section by section, tag *why* (layout, type, color, motion, 3D…), write notes, and hit **Send to Claude**. **⚡ Quick vote** goes one by one with `1` / `2` / `S`. It autosaves and runs in English or Spanish.
+- **Only the right thing in each section.** Gallery cards must be tagged with the section (no whole landing pages or app screens under "footer"), and crops only come from confident detections. Then Claude checks every section visually on numbered contact sheets, removes what doesn't belong (it never comes back), and refills. You also get a **✕ Not a footer** button (key `X`).
+- **Plan.** After you vote, Claude analyzes your favorites and writes the plan for each section: the leading reference, alternates, and what to take for layout, type, color, imagery and motion, plus the components. In the **Plan** tab you swap the reference for any of your likes or any reference in that section, change the style or components, leave notes and approve. Claude builds from that plan.
 - **PDF report.** A studio-style deliverable: cover, direction, the winners of every section with your notes, styles, components, and the current page.
 - **The page.** Claude builds it from your votes. The **Page** tab shows every version in desktop, tablet and mobile. You vote and note each section, or switch on **Comment** and click anything to pin a note. Claude reads the comments, with the exact element, rebuilds, and publishes v2, v3…
 - **Rounds.** Claude reads your votes, including the thumbnails you liked, and runs a sharper second round.
@@ -95,6 +115,8 @@ Everything for a project lives in `<project>/.inspo/<session>/`, which is git-ig
 | `inspo_sections` | Section catalog and recommended sets per page type, or set the plan |
 | `inspo_harvest` | Background harvest of N references per section (default 50) |
 | `inspo_status` | Harvest progress per section (or cancel) |
+| `inspo_review` | Numbered contact sheets of a section, so Claude can verify every item visually |
+| `inspo_plan` | Publish the per-section plan (reference, alternates, analysis, components) to the Plan tab |
 | `inspo_search` | Search galleries (optionally for one section), save thumbnails, optionally capture the live sites |
 | `inspo_capture` | Screenshot and analyze specific URLs (fonts, colors, tech) |
 | `inspo_analyze` | Look at any URL, including `localhost`, and return a screenshot plus its design DNA |

@@ -7,18 +7,19 @@ import { z } from 'zod';
 
 import {
   SESSIONS_DIR, createSession, loadSession, updateSession, addItems, loadFeedback, listSessions,
-  sessionDir, assetsDir, slugify, shortId,
+  sessionDir, assetsDir, slugify, shortId, removeItems,
 } from './session.js';
 import { SOURCES, SOURCE_IDS, searchSources, loginFlow } from './sources/index.js';
 import { captureSite, analyzeUrl, downloadAsset, fetchImages, searchImages, downloadImages, jpegCopy } from './capture.js';
 import { listLibrary } from './components.js';
-import { summarizeFeedback } from './feedback.js';
+import { summarizeFeedback, effectivePlan } from './feedback.js';
 import { startBoard, boardUrl, openInBrowser } from './board/server.js';
 import { closeBrowser } from './browser.js';
 import { STYLE_PRESETS, resolveStyle } from './styles/presets.js';
 import { renderSpecimen } from './styles/specimen.js';
-import { SECTION_TYPES, SECTION_IDS, RECOMMENDED, sectionName } from './sections.js';
+import { SECTION_TYPES, SECTION_IDS, RECOMMENDED, sectionName, cardMatchesSection } from './sections.js';
 import { startHarvest, cancelJob, getJob } from './harvest.js';
+import { contactSheets } from './review.js';
 
 const VERSION = '0.2.1';
 const server = new McpServer({ name: 'inspo', version: VERSION });
@@ -216,6 +217,46 @@ server.registerTool(
   },
 );
 
+server.registerTool(
+  'inspo_review',
+  {
+    title: 'Check a section visually (contact sheets)',
+    description:
+      'Returns numbered contact sheets of a section\'s references so you can SEE them and verify each one really is that section (a footer is a footer, testimonials are testimonials — not a whole landing page, an app screen or an ad). Then inspo_remove the wrong ids (they are blocked for good) and run inspo_harvest again to refill. By default returns references not reviewed yet, 24 per call (2 sheets); call again for the next batch.',
+    inputSchema: {
+      session: sessionArg,
+      section: sectionEnum,
+      limit: z.number().int().min(4).max(48).optional().describe('Default 24.'),
+      all: z.boolean().optional().describe('Include already-reviewed items.'),
+    },
+  },
+  async ({ session, section, limit = 24, all }) => {
+    try {
+      const s = await withSession(session);
+      const pool = s.items.filter((i) => i.kind === 'reference' && i.section === section && (all || !i.reviewed));
+      const batch = pool.slice(0, limit);
+      if (!batch.length) return text({ section, remaining: 0, note: 'Everything in this section has been reviewed.' });
+      const b = await startBoard();
+      const sheets = await contactSheets({ boardUrl: b.url, sessionId: s.id, items: batch, title: `${sectionName(section, s.context?.language)} — ${s.title}` });
+      const ids = new Set(batch.map((i) => i.id));
+      await updateSession(s.id, (ss) => ss.items.forEach((i) => ids.has(i.id) && (i.reviewed = true)));
+      const content = [{
+        type: 'text',
+        text: JSON.stringify({
+          section,
+          question: `Which of these are NOT a ${section} section? Remove them with inspo_remove.`,
+          labels: batch.map((it, i) => `#${i + 1} ${it.id} · ${it.source} · ${it.title}`),
+          remainingAfterThis: pool.length - batch.length,
+        }, null, 1),
+      }];
+      for (const sh of sheets) content.push({ type: 'image', data: sh.buffer.toString('base64'), mimeType: 'image/jpeg' });
+      return { content };
+    } catch (err) {
+      return fail(err);
+    }
+  },
+);
+
 // ─── Research ───────────────────────────────────────────────────────────────
 
 server.registerTool(
@@ -245,6 +286,7 @@ server.registerTool(
           report[r.source] = { error: r.error };
           continue;
         }
+        if (section && r.source === 'dribbble') r.cards = r.cards.filter((c) => cardMatchesSection(section, c));
         const saved = await mapLimit(r.cards, 6, async (c) => {
           const file = (await downloadAsset(s.id, c.image, { referer: SOURCES[r.source].home + '/' })) || (c.fallbackImage && (await downloadAsset(s.id, c.fallbackImage, { referer: SOURCES[r.source].home + '/' })));
           if (!file) return null;
@@ -496,17 +538,13 @@ server.registerTool(
   'inspo_remove',
   {
     title: 'Remove items from the board',
-    description: 'Remove references/styles/components that are off-brief or broken (e.g. empty screenshots, cookie walls, ads).',
+    description: 'Remove references/styles/components that are off-brief, broken, or in the wrong section (e.g. a landing page filed under footer). Removed references are blocked so a later harvest never re-adds them; run inspo_harvest again to refill the section.',
     inputSchema: { session: sessionArg, ids: z.array(z.string()).min(1) },
   },
   async ({ session, ids }) => {
     try {
       const s = await withSession(session);
-      const removed = await updateSession(s.id, (ss) => {
-        const before = ss.items.length;
-        ss.items = ss.items.filter((i) => !ids.includes(i.id));
-        return before - ss.items.length;
-      });
+      const removed = await removeItems(s.id, ids);
       return text({ removed });
     } catch (err) {
       return fail(err);
@@ -524,7 +562,7 @@ server.registerTool(
       'Start (if needed) and open the local board in the user\'s browser. Tabs: References (by section), Styles, Lab (live 3D/motion components), Page (the built page, with per-section feedback), Brief. The user likes/dislikes, stars, tags reasons and writes notes; everything autosaves, and "Send to Claude" marks the round as submitted.',
     inputSchema: {
       session: sessionArg,
-      tab: z.enum(['styles', 'references', 'lab', 'page', 'brief']).optional(),
+      tab: z.enum(['references', 'styles', 'lab', 'plan', 'page', 'brief']).optional(),
       open: z.boolean().optional().describe('Open the browser (default true).'),
     },
   },
@@ -570,7 +608,9 @@ server.registerTool(
         }
         s = await withSession(s.id);
       }
-      const summary = summarizeFeedback(s, fb, await listLibrary());
+      const library = await listLibrary();
+      const summary = summarizeFeedback(s, fb, library);
+      if (s.plan || fb.plan) summary.plan = effectivePlan(s, fb, library);
       if (wait && !summary.submittedAt) summary.note = 'Timed out waiting for "Send to Claude"; returning votes so far.';
       // Section references are reported under bySection; keep the flat lists for everything else.
       summary.liked = summary.liked.filter((l) => !s.items.find((i) => i.id === l.id)?.section);
@@ -606,6 +646,55 @@ server.registerTool(
         }
       }
       return { content };
+    } catch (err) {
+      return fail(err);
+    }
+  },
+);
+
+const analysisInput = z
+  .object({
+    summary: z.string().describe('1-2 sentences: what this section will be and why (user\'s language).'),
+    layout: z.string().optional(),
+    typography: z.string().optional(),
+    color: z.string().optional(),
+    imagery: z.string().optional(),
+    motion: z.string().optional(),
+    copy: z.string().optional(),
+  })
+  .describe('What you take from the references for this section, concretely.');
+
+server.registerTool(
+  'inspo_plan',
+  {
+    title: 'Publish the per-section plan',
+    description:
+      'After analyzing the liked references (look at them with inspo_feedback, section by section), publish the plan of what goes in each section: the primary reference, alternates, components, and your analysis (layout, typography, color, imagery, motion, copy). It shows in the board\'s Plan tab, where the user can swap the primary for another like or any reference of that section, change the style or components, leave notes and approve. inspo_feedback returns the resulting plan (user edits win). Build from that plan.',
+    inputSchema: {
+      session: sessionArg,
+      summary: z.string().describe('The overall direction in 2-3 sentences.'),
+      style: z.string().optional().describe('Style item id (s-…) the page will use.'),
+      sections: z.array(z.object({
+        id: sectionEnum,
+        primary: z.string().describe('Reference item id that leads this section.'),
+        alternates: z.array(z.string()).optional().describe('Other liked reference ids worth considering (up to 4).'),
+        components: z.array(z.string()).optional().describe('Component ids (lib-… or c-…) used in this section.'),
+        analysis: analysisInput,
+      })).min(1),
+    },
+  },
+  async ({ session, summary, style, sections }) => {
+    try {
+      const s = await withSession(session);
+      const lib = await listLibrary();
+      const known = new Set([...s.items.map((i) => i.id), ...lib.map((c) => c.id)]);
+      const unknown = sections.flatMap((x) => [x.primary, ...(x.alternates || []), ...(x.components || [])]).filter((id) => !known.has(id));
+      if (style && !known.has(style)) unknown.push(style);
+      await updateSession(s.id, (ss) => {
+        ss.plan = { summary, style: style || null, sections, at: new Date().toISOString() };
+      });
+      const b = await startBoard();
+      return text({ board: boardUrl(b.url, s.id, 'plan'), unknownIds: unknown, tip: 'Open the Plan tab (inspo_open tab:"plan"), ask the user to review/swap/approve and press Send to Claude, then read inspo_feedback → plan.' });
     } catch (err) {
       return fail(err);
     }

@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23d6ff3d'/%3E%3Ccircle cx='16' cy='16' r='6' fill='%230b0b0c'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 128 128%27%3E%3Crect width=%27128%27 height=%27128%27 rx=%2730%27 fill=%27%230b0b0c%27/%3E%3Cg transform=%27translate(29 30)%27%3E%3Crect width=%2731%27 height=%2731%27 rx=%278%27 fill=%27%23f2f1ec%27/%3E%3Crect x=%2739%27 width=%2731%27 height=%2731%27 rx=%278%27 fill=%27%23d6ff3d%27 transform=%27rotate(-10 54.5 15.5)%27/%3E%3Crect y=%2739%27 width=%2731%27 height=%2731%27 rx=%278%27 fill=%27%23f2f1ec%27 opacity=%27.35%27/%3E%3Crect x=%2739%27 y=%2739%27 width=%2731%27 height=%2731%27 rx=%278%27 fill=%27%23f2f1ec%27 opacity=%27.7%27/%3E%3C/g%3E%3C/svg%3E">
 <style>
 :root{
   --bg:#0b0b0c; --panel:#131315; --panel-2:#1a1a1d; --line:#26262a; --line-2:#34343a;
@@ -28,7 +28,8 @@ a{color:inherit}
 /* ── Top bar ─────────────────────────────── */
 .top{position:sticky;top:0;z-index:40;background:color-mix(in oklab,var(--bg) 86%,transparent);backdrop-filter:blur(14px) saturate(1.4);border-bottom:1px solid var(--line)}
 .bar{display:flex;align-items:center;gap:18px;padding:12px 24px;min-height:62px}
-.logo{display:flex;align-items:center;gap:10px;font-weight:600;letter-spacing:-.02em;font-size:17px;white-space:nowrap}
+.logo{display:flex;align-items:center;gap:9px;white-space:nowrap}
+.logo span{font:400 26px/1 var(--serif);letter-spacing:-.01em;margin-top:-3px}
 .logo i{width:22px;height:22px;border-radius:7px;background:var(--acc);display:grid;place-items:center}
 .logo i:after{content:"";width:8px;height:8px;border-radius:50%;background:var(--acc-ink)}
 .sess{display:flex;flex-direction:column;min-width:0;max-width:340px}
@@ -37,7 +38,7 @@ a{color:inherit}
 .sess select option{background:var(--panel)}
 .sess small{color:var(--faint);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tabs{display:flex;gap:2px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:3px;margin:0 auto}
-.tab{padding:7px 14px;border-radius:999px;color:var(--dim);font-weight:500;display:flex;gap:7px;align-items:center;transition:color .2s,background .2s}
+.tab{padding:7px 12px;border-radius:999px;color:var(--dim);font-weight:500;display:flex;gap:7px;align-items:center;transition:color .2s,background .2s}
 .tab:hover{color:var(--fg)}
 .tab[aria-selected=true]{background:var(--fg);color:var(--bg)}
 .tab .n{font:500 11px var(--mono);opacity:.6}
@@ -47,7 +48,7 @@ a{color:inherit}
 .meter b{display:block;height:100%;background:var(--acc);width:0;transition:width .5s var(--ease)}
 .saved{font:12px var(--mono);color:var(--faint);min-width:52px;text-align:right;transition:color .3s}
 .saved.on{color:var(--acc)}
-.btn{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 14px;border-radius:999px;border:1px solid var(--line-2);font-weight:500;transition:background .2s,border-color .2s,transform .15s}
+.btn{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 14px;border-radius:999px;white-space:nowrap;border:1px solid var(--line-2);font-weight:500;transition:background .2s,border-color .2s,transform .15s}
 .btn:hover{border-color:var(--dim)}
 .btn:active{transform:scale(.97)}
 .btn.primary{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}
@@ -197,6 +198,58 @@ pre.tokens{background:var(--panel-2);border-radius:10px;padding:14px;overflow:au
 .spin{width:12px;height:12px;border-radius:50%;border:2px solid var(--line-2);border-top-color:var(--acc);animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 
+/* ── Wrong-section button ────────────────── */
+.wrongbtn{position:absolute;top:10px;right:10px;z-index:3;font:500 11px var(--font);padding:5px 9px;border-radius:999px;background:rgba(10,10,11,.78);color:#fff;border:1px solid rgba(255,255,255,.15);opacity:0;transition:opacity .15s}
+.card:hover .wrongbtn{opacity:1}
+.wrongbtn:hover{background:var(--nope);border-color:var(--nope)}
+
+/* ── Plan tab ────────────────────────────── */
+.plan{max-width:1280px;margin:0 auto;display:grid;gap:22px}
+.plan-top{display:grid;grid-template-columns:1fr 320px;gap:24px;align-items:end;margin-bottom:10px}
+.plan-top h1{font:400 clamp(34px,4.4vw,60px)/1.02 var(--serif);margin:8px 0 6px;letter-spacing:-.01em;text-wrap:balance}
+.eyebrow{font:500 11px var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--faint)}
+.plan-style{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:grid;gap:8px;justify-items:start}
+.plan-style b{font-size:17px}.plan-style small{color:var(--dim)}
+.psection{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px 20px;transition:border-color .2s}
+.psection.approved{border-color:var(--like)}
+.psection header{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.psection header .num{font:500 12px var(--mono);color:var(--faint)}
+.psection header h3{margin:0;font:400 30px/1 var(--serif)}
+.changed{font:500 11px var(--mono);color:var(--star);border:1px solid currentColor;border-radius:999px;padding:3px 8px}
+.chip.ok[aria-pressed=true]{background:var(--like);color:var(--acc-ink);border-color:var(--like)}
+.pbody{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:24px}
+.pmain{display:block;width:100%;position:relative;border-radius:12px;overflow:hidden;background:var(--panel-2);cursor:zoom-in;max-height:520px}
+.pmain img{display:block;width:100%;height:auto}
+.pmain span{position:absolute;left:10px;bottom:10px;font-size:12px;padding:4px 8px;border-radius:999px;background:rgba(10,10,11,.75);color:#fff;max-width:90%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pmain.empty{height:220px;display:grid;place-items:center;color:var(--dim);border:1px dashed var(--line-2);cursor:pointer}
+.palts{display:flex;gap:8px;margin-top:10px;overflow-x:auto;padding-bottom:4px}
+.palt{position:relative;margin:0;flex:none}
+.palt button:first-child{display:block;width:120px;height:80px;border-radius:8px;overflow:hidden;border:1px solid var(--line)}
+.palt img{width:100%;height:100%;object-fit:cover;object-position:top}
+.palt.extra button:first-child{border-color:var(--acc)}
+.palt span{position:absolute;left:4px;bottom:4px;font:500 10px var(--mono);background:var(--acc);color:var(--acc-ink);border-radius:4px;padding:1px 4px}
+.pdel{margin-left:6px;color:var(--faint);font-size:11px}
+.palt .pdel{position:absolute;top:4px;right:4px;margin:0;width:20px;height:20px;border-radius:50%;background:rgba(10,10,11,.8);color:#fff}
+.pactions{display:flex;gap:8px;margin-top:10px}
+.ptext{display:grid;gap:12px;align-content:start}
+.psum{margin:0;font-size:17px;line-height:1.5}
+.ptext dl{display:grid;grid-template-columns:110px 1fr;gap:8px 14px;margin:0;font-size:14px}
+.ptext dt{color:var(--faint);font:500 12px var(--mono);text-transform:uppercase;letter-spacing:.05em;padding-top:2px}
+.ptext dd{margin:0;color:var(--dim)}
+.pcomps{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.pcomps .eyebrow{margin-right:6px}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(760px,96vw);z-index:90;background:var(--bg);border-left:1px solid var(--line-2);box-shadow:-30px 0 80px rgba(0,0,0,.5);transform:translateX(105%);transition:transform .3s var(--ease);overflow:auto;padding:18px}
+.drawer.open{transform:none}
+.dhead{display:flex;align-items:center;gap:12px;position:sticky;top:-18px;background:var(--bg);padding:6px 0 14px;z-index:2}
+.dhead h3{margin:0;font:400 28px/1 var(--serif)}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+.ptile{margin:0;background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
+.ptile.liked{border-color:color-mix(in oklab,var(--like) 60%,transparent)}
+.ptile img{width:100%;height:150px;object-fit:cover;object-position:top;display:block}
+.ptile figcaption{padding:8px 10px 0;font-size:12px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ptile-btns{display:flex;gap:6px;padding:8px 10px 10px;margin-top:auto}
+.pcompname{padding:14px 12px 0;font-weight:500}.pcompname small{display:block;color:var(--faint);font:11px var(--mono)}
+
 /* ── Page tab ────────────────────────────── */
 .pagegrid{display:grid;grid-template-columns:1fr 340px;gap:18px;height:calc(100vh - 190px)}
 .stage-wrap{position:relative;overflow:hidden;border-radius:var(--r);border:1px solid var(--line);background:#fff}
@@ -250,6 +303,7 @@ dialog .actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
 .empty code{font-family:var(--mono);background:var(--panel);padding:2px 6px;border-radius:6px}
 
 @media (max-width:980px){
+  .plan-top,.pbody{grid-template-columns:1fr}
   .pagegrid{grid-template-columns:1fr;height:auto}.stage-wrap{height:70vh}
   .bar{flex-wrap:wrap;gap:10px;padding:10px 16px}
   .tabs{order:3;margin:0;width:100%;justify-content:space-between}
@@ -265,7 +319,7 @@ dialog .actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
 <body>
 <header class="top">
   <div class="bar">
-    <div class="logo"><i></i>inspo</div>
+    <div class="logo"><svg width="24" height="24" viewBox="-4 -8 74 76" aria-hidden="true"><rect width="28" height="28" rx="7" fill="#f2f1ec"/><rect x="36" width="28" height="28" rx="7" fill="#d6ff3d" transform="rotate(-10 50 14)"/><rect y="36" width="28" height="28" rx="7" fill="#f2f1ec" opacity=".35"/><rect x="36" y="36" width="28" height="28" rx="7" fill="#f2f1ec" opacity=".7"/></svg><span>inspo</span></div>
     <div class="sess"><select id="sessionSel" aria-label="Session"></select><small id="idea"></small></div>
     <nav class="tabs" role="tablist" id="tabs"></nav>
     <div class="right">
@@ -287,6 +341,7 @@ dialog .actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
   <button class="nav next" id="lbNext" aria-label="Next"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></button>
 </div>
 
+<div class="drawer" id="drawer" role="dialog" aria-modal="true"></div>
 <dialog id="sendDlg">
   <h3 id="dlgTitle"></h3>
   <p id="dlgText"></p>
@@ -313,7 +368,7 @@ const T = {
     cancel:'Keep voting', dlgSend:'Send to Claude', likedN:'liked', dislikedN:'passed', starredN:'favorites',
     emptyTitle:'Nothing here yet', emptyText:'Ask Claude to research your idea. Sessions appear here as soon as they start.', noBrief:'Your taste so far', noBriefText:'Claude publishes the final direction here with inspo_brief. Meanwhile, this is what your votes say:',
     noItems:'No items for this filter.', keys:'keys', principles:'Principles', palette:'Palette', type:'Type', outline:'Page outline', doL:'Do', dontL:'Don’t', comps:'Components', refs:'References', tokens:'Tokens',
-    page:'Page', general:'General', quick:'Quick vote', harvesting:'Collecting references', sitesL:'sites', showNew:'Show new', version:'Version', desktop:'Desktop', tablet:'Tablet', mobile:'Mobile',
+    plan:'Plan', planTitle:'Page plan', planDraft:'Draft from your likes. Press Send to Claude and Claude analyzes every section and fills this in.', notA:'Not a', removedFrom:'Removed from', approve:'Approved', changeRef:'Change reference', seeAll:'Whole section', myLikes:'My likes', compsL:'Components', stylesL:'Styles', changeStyle:'Change style', usePrimary:'Main', addExtra:'+ Extra', removeExtra:'− Extra', useIt:'Use', addIt:'Add', removeIt:'Remove', changedByYou:'changed by you', planNote:'What would you change in this section?', pickRef:'Pick a reference', noLikesSec:'No likes in this section yet — showing all.', rowLayout:'Layout', rowType:'Typography', rowColor:'Color', rowImagery:'Imagery', rowMotion:'Motion', rowCopy:'Copy', analyzing:'Claude analyzes this section when you press Send.', styleL:'Style', page:'Page', general:'General', quick:'Quick vote', harvesting:'Collecting references', sitesL:'sites', showNew:'Show new', version:'Version', desktop:'Desktop', tablet:'Tablet', mobile:'Mobile',
     comment:'Comment', commentHint:'Comment mode: click anything on the page', sectionsL:'Sections', commentsL:'Comments', noBuild:'No page yet', noBuildText:'When you have picked your favorites, Claude builds the page and it shows up here. Vote section by section, or switch on Comment and click anything.',
     commentOn:'Comment on', save:'Save', del:'Delete', noSecFound:'No sections found in this page.', target:'goal', crossOrigin:'This version runs on another server, so click-comments are off. Use the section notes.', done:'Done',
     topReasons:'Why you liked things', likedStyles:'Styles you liked', likedRefs:'References you liked', likedComps:'Components you liked', nothingYet:'Vote on a few things first.', newItems:'new', updated:'Board updated',
@@ -330,7 +385,7 @@ const T = {
     cancel:'Seguir votando', dlgSend:'Enviar a Claude', likedN:'me gustan', dislikedN:'descartados', starredN:'favoritos',
     emptyTitle:'Todavía no hay nada', emptyText:'Pídele a Claude que investigue tu idea. Las sesiones aparecen aquí en cuanto empiezan.', noBrief:'Tu gusto hasta ahora', noBriefText:'Claude publica aquí la dirección final con inspo_brief. Mientras, esto dicen tus votos:',
     noItems:'Nada con este filtro.', keys:'teclas', principles:'Principios', palette:'Paleta', type:'Tipografía', outline:'Estructura de la página', doL:'Sí', dontL:'No', comps:'Componentes', refs:'Referencias', tokens:'Tokens',
-    page:'Página', general:'General', quick:'Votar rápido', harvesting:'Buscando referencias', sitesL:'sitios', showNew:'Mostrar nuevos', version:'Versión', desktop:'Escritorio', tablet:'Tablet', mobile:'Móvil',
+    plan:'Plan', planTitle:'Plan de la página', planDraft:'Borrador con tus likes. Dale Enviar a Claude y Claude analiza cada sección y llena esto.', notA:'No es', removedFrom:'Quitado de', approve:'Aprobado', changeRef:'Cambiar referencia', seeAll:'Toda la sección', myLikes:'Mis likes', compsL:'Componentes', stylesL:'Estilos', changeStyle:'Cambiar estilo', usePrimary:'Principal', addExtra:'+ Extra', removeExtra:'− Extra', useIt:'Usar', addIt:'Agregar', removeIt:'Quitar', changedByYou:'cambiado por ti', planNote:'¿Qué cambiarías en esta sección?', pickRef:'Elige una referencia', noLikesSec:'Todavía no hay likes en esta sección; te muestro todas.', rowLayout:'Layout', rowType:'Tipografía', rowColor:'Color', rowImagery:'Imágenes', rowMotion:'Animación', rowCopy:'Copy', analyzing:'Claude analiza esta sección cuando le das Enviar.', styleL:'Estilo', page:'Página', general:'General', quick:'Votar rápido', harvesting:'Buscando referencias', sitesL:'sitios', showNew:'Mostrar nuevos', version:'Versión', desktop:'Escritorio', tablet:'Tablet', mobile:'Móvil',
     comment:'Comentar', commentHint:'Modo comentario: da clic en cualquier parte de la página', sectionsL:'Secciones', commentsL:'Comentarios', noBuild:'Todavía no hay página', noBuildText:'Cuando elijas tus favoritos, Claude construye la página y aparece aquí. Vota sección por sección, o activa Comentar y da clic en lo que quieras.',
     commentOn:'Comentario sobre', save:'Guardar', del:'Borrar', noSecFound:'No encontré secciones en esta página.', target:'meta', crossOrigin:'Esta versión corre en otro servidor, así que los comentarios con clic no están disponibles. Usa las notas por sección.', done:'Listo',
     topReasons:'Por qué te gustaron', likedStyles:'Estilos que te gustaron', likedRefs:'Referencias que te gustaron', likedComps:'Componentes que te gustaron', nothingYet:'Vota algunas cosas primero.', newItems:'nuevo', updated:'Tablero actualizado',
@@ -383,8 +438,10 @@ function setFb(id, patch) {
   clearTimeout(saveTimer); saveTimer = setTimeout(flush, 450);
   renderProgress();
 }
+let planDirty = false;
 async function flush(extra = {}) {
   const body = { items: pending, ...extra }; pending = {};
+  if (planDirty) { body.plan = FB.plan; planDirty = false; }
   const res = await fetch(`/api/feedback?session=${encodeURIComponent(S.id)}`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) }).catch(() => null);
   const el = $('#saved');
   if (res?.ok) { el.textContent = t('saved'); el.classList.add('on'); setTimeout(() => el.classList.remove('on'), 1200); }
@@ -423,8 +480,9 @@ function renderAll() {
 }
 
 function renderTabs() {
-  const n = { styles: itemsOf('style').length, references: itemsOf('reference').length, lab: components().length, page: S?.builds?.length ? 'v' + S.builds.at(-1).v : '', brief: S?.brief ? '✓' : '' };
-  $('#tabs').innerHTML = ['references','styles','lab','page','brief'].map((k) =>
+  const pv = S ? planView() : null;
+  const n = { styles: itemsOf('style').length, references: itemsOf('reference').length, lab: components().length, plan: !pv?.sections.length ? '' : pv.sections.every((x) => x.approved) ? '✓' : `${pv.sections.filter((x) => x.approved).length}/${pv.sections.length}`, page: S?.builds?.length ? 'v' + S.builds.at(-1).v : '', brief: S?.brief ? '✓' : '' };
+  $('#tabs').innerHTML = ['references','styles','lab','plan','page','brief'].map((k) =>
     `<button class="tab" role="tab" aria-selected="${tab===k}" data-tab="${k}">${t(k)}${n[k]!=='' ? ` <span class="n">${n[k]}</span>` : ''}</button>`).join('');
 }
 
@@ -456,7 +514,7 @@ function jobBar() {
 }
 
 function renderSub() {
-  if (!S || tab === 'brief') { $('#sub').innerHTML = ''; return; }
+  if (!S || tab === 'brief' || tab === 'plan') { $('#sub').innerHTML = ''; return; }
   if (tab === 'page') { $('#sub').innerHTML = pageBar(); return; }
   let list = tab === 'lab' ? components() : itemsOf(tab === 'styles' ? 'style' : 'reference');
   let h = '';
@@ -522,6 +580,7 @@ function renderMain() {
   else if (tab === 'references') m.innerHTML = renderRefs();
   else if (tab === 'lab') { m.innerHTML = renderLab(); mountLab(); }
   else if (tab === 'page') { m.innerHTML = renderPage(); mountPage(); }
+  else if (tab === 'plan') m.innerHTML = renderPlan();
   else m.innerHTML = renderBrief();
   if (tab === 'styles') fitFrames();
 }
@@ -583,6 +642,7 @@ function refCard(i) {
     </button>
     <div class="badge"><span>${esc(i.source)}</span>${i.analysis && i.source !== 'live' ? '<span>live</span>' : ''}${isNew(i)?`<span class="new">${t('newItems')}</span>`:''}</div>
     ${f.note ? '<span class="note-dot"></span>' : ''}
+    ${i.section ? `<button class="wrongbtn" data-wrong="${esc(i.id)}" title="(X)">✕ ${t('notA')} ${esc(secName(i.section).toLowerCase())}</button>` : ''}
     <div class="foot"><div class="t"><b>${esc(i.title)}</b><small>${esc(sub)}</small></div>${votesHtml(i.id)}</div>
     ${reasonsHtml(i.id)}
   </article>`;
@@ -782,6 +842,112 @@ function highlightSection(key, scroll) {
   if (scroll) x.el.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
+
+// ── plan (Claude's per-section plan + the user's edits) ─
+const itemById = (id) => S.items.find((i) => i.id === id) || components().find((c) => c.id === id);
+function planView() {
+  const cp = S.plan || { sections: [] };
+  const up = FB.plan || { sections: {} };
+  const liked = (sid) => S.items.filter((i) => i.section === sid && (fbOf(i.id).vote === 1 || fbOf(i.id).star)).sort((a, b) => (fbOf(b.id).star ? 1 : 0) - (fbOf(a.id).star ? 1 : 0)).map((i) => i.id);
+  const ids = [...new Set([...(S.sections || []).map((x) => x.id), ...(cp.sections || []).map((x) => x.id)])];
+  const sections = ids.map((sid) => {
+    const c = (cp.sections || []).find((x) => x.id === sid) || { alternates: [], components: [] };
+    const u = up.sections?.[sid] || {};
+    const l = liked(sid);
+    const primary = u.primary || c.primary || l[0] || null;
+    const alternates = (c.alternates?.length ? c.alternates : l.filter((x) => x !== primary).slice(0, 4)).filter((x) => x !== primary);
+    return { id: sid, primary, alternates, extra: u.extra || [], components: u.components ?? c.components ?? [], analysis: c.analysis, note: u.note || '', approved: !!u.approved,
+      changed: (u.primary && u.primary !== c.primary) || u.components != null || (u.extra || []).length > 0 };
+  });
+  const likedStyles = itemsOf('style').filter((x) => fbOf(x.id).vote === 1 || fbOf(x.id).star);
+  const style = itemById(up.style || cp.style || likedStyles[0]?.id);
+  return { drafted: !S.plan, summary: cp.summary || '', style, sections };
+}
+function setPlan(sid, patch) {
+  FB.plan = FB.plan || { style: null, sections: {} };
+  FB.plan.sections = FB.plan.sections || {};
+  const cur = FB.plan.sections[sid] || {};
+  FB.plan.sections[sid] = { primary: null, extra: [], components: null, note: '', approved: false, ...cur, ...patch };
+  planDirty = true;
+  $('#saved').textContent = t('saving');
+  clearTimeout(saveTimer); saveTimer = setTimeout(flush, 450);
+}
+const thumbOf = (it) => it ? assetUrl(it.liveImage || it.image || it.images?.[0]?.src) : '';
+function renderPlan() {
+  const pv = planView();
+  if (!pv.sections.length) return `<div class="empty"><h2>${t('planTitle')}</h2><p>${t('planDraft')}</p></div>`;
+  const st = pv.style;
+  const sw = st?.style?.palette ? Object.values(st.style.palette).slice(0, 7).map((c) => `<span style="background:${esc(c)}"></span>`).join('') : '';
+  const rowsOf = (a) => a ? [['layout','rowLayout'],['typography','rowType'],['color','rowColor'],['imagery','rowImagery'],['motion','rowMotion'],['copy','rowCopy']].filter(([k]) => a[k]).map(([k, l]) => `<dt>${t(l)}</dt><dd>${esc(a[k])}</dd>`).join('') : '';
+  return `<section class="plan">
+    <div class="plan-top"><div><span class="eyebrow">${t('planTitle')}</span><h1>${esc(pv.summary || S.title)}</h1>${pv.drafted ? `<p class="hint">${t('planDraft')}</p>` : ''}</div>
+      <div class="plan-style"><span class="eyebrow">${t('styleL')}</span>${st ? `<b>${esc(st.title)}</b><div class="swatches">${sw}</div><small>${esc(st.style?.fonts?.display || '')} · ${esc(st.style?.fonts?.body || '')}</small>` : `<small class="hint">—</small>`}<button class="btn small-btn" data-pick="__style" data-mode="styles">${t('changeStyle')}</button></div></div>
+    ${pv.sections.map((x, n) => {
+      const main = itemById(x.primary);
+      const thumbs = [...x.alternates.map((id) => [id, 'alt']), ...x.extra.map((id) => [id, 'extra'])].map(([id, kind]) => { const it = itemById(id); return it ? `<figure class="palt ${kind}"><button data-use="${esc(x.id)}|${esc(id)}" title="${t('usePrimary')}"><img loading="lazy" src="${esc(thumbOf(it))}" alt=""></button>${kind === 'extra' ? `<button class="pdel" data-unextra="${esc(x.id)}|${esc(id)}" title="${t('removeIt')}">✕</button><span>extra</span>` : ''}</figure>` : ''; }).join('');
+      const comps = x.components.map((id) => { const c = itemById(id); return c ? `<span class="chip">${esc(c.name || c.title)}<button class="pdel" data-uncomp="${esc(x.id)}|${esc(id)}">✕</button></span>` : ''; }).join('');
+      return `<article class="psection ${x.approved ? 'approved' : ''}" data-psec="${esc(x.id)}">
+        <header><span class="num">${String(n + 1).padStart(2, '0')}</span><h3>${esc(secName(x.id))}</h3>${x.changed ? `<span class="changed">${t('changedByYou')}</span>` : ''}<span class="grow"></span><button class="chip ok" aria-pressed="${x.approved}" data-approve="${esc(x.id)}">✓ ${t('approve')}</button></header>
+        <div class="pbody">
+          <div class="pmedia">
+            ${main ? `<button class="pmain" data-plb="${esc(x.id)}"><img src="${esc(thumbOf(main))}" alt=""><span>${esc(main.title)}</span></button>` : `<button class="pmain empty" data-pick="${esc(x.id)}" data-mode="likes">${t('pickRef')}</button>`}
+            ${thumbs ? `<div class="palts">${thumbs}</div>` : ''}
+            <div class="pactions"><button class="btn small-btn" data-pick="${esc(x.id)}" data-mode="likes">${t('changeRef')}</button><button class="btn ghost small-btn" data-pick="${esc(x.id)}" data-mode="all">${t('seeAll')}</button></div>
+          </div>
+          <div class="ptext">
+            <p class="psum">${x.analysis?.summary ? esc(x.analysis.summary) : `<span class="hint">${t('analyzing')}</span>`}</p>
+            ${rowsOf(x.analysis) ? `<dl>${rowsOf(x.analysis)}</dl>` : ''}
+            <div class="pcomps"><span class="eyebrow">${t('compsL')}</span>${comps}<button class="chip" data-pick="${esc(x.id)}" data-mode="components">+</button></div>
+            <textarea class="note" rows="2" data-pnote="${esc(x.id)}" placeholder="${esc(t('planNote'))}">${esc(x.note)}</textarea>
+          </div>
+        </div></article>`;
+    }).join('')}</section>`;
+}
+let picker = null;
+function openPicker(sid, mode) {
+  picker = { sid, mode };
+  drawPicker();
+  $('#drawer').classList.add('open');
+}
+function drawPicker() {
+  const { sid, mode } = picker;
+  const pv = planView();
+  const x = pv.sections.find((s) => s.id === sid);
+  const tabs = sid === '__style' ? ['styles'] : ['likes', 'all', 'components'];
+  let list = [];
+  if (mode === 'styles') list = [...itemsOf('style')].sort((a, b) => ((fbOf(b.id).vote === 1 || fbOf(b.id).star) ? 1 : 0) - ((fbOf(a.id).vote === 1 || fbOf(a.id).star) ? 1 : 0));
+  else if (mode === 'components') list = [...components()].sort((a, b) => ((fbOf(b.id).vote === 1 || fbOf(b.id).star) ? 1 : 0) - ((fbOf(a.id).vote === 1 || fbOf(a.id).star) ? 1 : 0));
+  else {
+    const all = itemsOf('reference').filter((i) => i.section === sid);
+    const liked = all.filter((i) => fbOf(i.id).vote === 1 || fbOf(i.id).star);
+    list = mode === 'likes' && liked.length ? liked : all;
+  }
+  const noLikes = mode === 'likes' && !itemsOf('reference').some((i) => i.section === sid && (fbOf(i.id).vote === 1 || fbOf(i.id).star));
+  const tiles = list.map((it) => {
+    const isLiked = fbOf(it.id).vote === 1 || fbOf(it.id).star;
+    let btns = '';
+    if (mode === 'styles') btns = `<button class="btn primary small-btn" data-setstyle="${esc(it.id)}">${pv.style?.id === it.id ? '✓' : t('useIt')}</button>`;
+    else if (mode === 'components') { const on = x.components.includes(it.id); btns = `<button class="btn ${on ? '' : 'primary'} small-btn" data-togcomp="${esc(sid)}|${esc(it.id)}">${on ? t('removeIt') : t('addIt')}</button>`; }
+    else { const isMain = x.primary === it.id, isExtra = x.extra.includes(it.id); btns = `<button class="btn ${isMain ? '' : 'primary'} small-btn" data-use="${esc(sid)}|${esc(it.id)}">${isMain ? '✓ ' : ''}${t('usePrimary')}</button><button class="btn small-btn" data-togextra="${esc(sid)}|${esc(it.id)}">${isExtra ? t('removeExtra') : t('addExtra')}</button>`; }
+    const img = mode === 'components' ? '' : `<img loading="lazy" src="${esc(thumbOf(it))}" alt="">`;
+    return `<figure class="ptile ${isLiked ? 'liked' : ''}">${img}${mode === 'components' ? `<div class="pcompname">${esc(it.name || it.title)}<small>${esc(it.category || '')}</small></div>` : ''}<figcaption>${esc(it.title || it.name)}</figcaption><div class="ptile-btns">${btns}</div></figure>`;
+  }).join('');
+  const label = { likes: t('myLikes'), all: t('seeAll'), components: t('compsL'), styles: t('stylesL') };
+  $('#drawer').innerHTML = `<div class="dhead"><h3>${esc(sid === '__style' ? t('changeStyle') : secName(sid))}</h3><div class="seg" style="margin:0">${tabs.map((m) => `<button aria-pressed="${m === mode}" data-pmode="${m}">${label[m]}</button>`).join('')}</div><span class="grow"></span><button class="btn" data-closedrawer="1">${t('done')}</button></div>
+    ${noLikes ? `<p class="hint">${t('noLikesSec')}</p>` : ''}<div class="pgrid">${tiles}</div>`;
+}
+function closePicker() { $('#drawer').classList.remove('open'); picker = null; if (tab === 'plan') { renderMain(); renderTabs(); } }
+
+async function removeWrong(id) {
+  const it = S.items.find((i) => i.id === id);
+  if (!it) return;
+  S.items = S.items.filter((i) => i.id !== id);
+  const res = await fetch(`/api/remove?session=${encodeURIComponent(S.id)}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids: [id] }) }).catch(() => null);
+  toast(res?.ok ? `${t('removedFrom')} ${secName(it.section)}` : '⚠︎');
+  if ($('#lb').classList.contains('open')) { lbList = lbList.filter((x) => x.id !== id); lbIdx = Math.min(lbIdx, lbList.length - 1); lbList.length ? drawLb() : closeLb(); }
+  else { renderTabs(); renderSub(); renderMain(); }
+}
+
 // ── lightbox ────────────────────────────────────────────
 function openLb(list, id, shot = 'hero') {
   lbList = list; lbIdx = Math.max(0, list.findIndex((i) => i.id === id)); lbShot = shot;
@@ -813,7 +979,7 @@ function drawLb() {
     ${a?.colors ? `<div><h5>${t('colors')}</h5><div class="pal">${[...new Set([...(a.colors.background||[]), ...(a.colors.text||[])])].slice(0,10).map((c) => `<span style="background:${esc(c)}" title="${esc(c)}"></span>`).join('')}</div></div>` : ''}
     ${a?.tech?.length ? `<div><h5>${t('tech')}</h5><div class="row">${a.tech.map((x) => `<span>${esc(x)}</span>`).join('')}</div></div>` : ''}
     ${i.credit ? `<p class="credits">📷 ${esc(i.credit)}</p>` : ''}
-    <div class="keys"><span><kbd>←</kbd><kbd>→</kbd></span><span><kbd>1</kbd> ${t('dislike')}</span><span><kbd>2</kbd> ${t('like')}</span><span><kbd>S</kbd> ${t('star')}</span><span><kbd>N</kbd> note</span></div>`;
+    <div class="keys"><span><kbd>←</kbd><kbd>→</kbd></span><span><kbd>1</kbd> ${t('dislike')}</span><span><kbd>2</kbd> ${t('like')}</span><span><kbd>S</kbd> ${t('star')}</span>${i.section ? `<span><kbd>X</kbd> ${t('notA')} ${esc(secName(i.section).toLowerCase())}</span>` : ''}<span><kbd>N</kbd> note</span></div>`;
 }
 
 // ── actions ─────────────────────────────────────────────
@@ -843,6 +1009,18 @@ document.addEventListener('click', (e) => {
   const d = tgt.dataset;
   if (d.tab) { tab = d.tab; store.set('tab', tab); filter = 'all'; source = 'all'; round = 'all'; commentMode = false; pendingNew = 0; history.replaceState(null, '', `?session=${S?.id||''}&tab=${tab}`); renderAll(); window.scrollTo(0,0); return; }
   if (d.filter) { filter = d.filter; renderSub(); renderMain(); return; }
+  if (d.wrong) { removeWrong(d.wrong); return; }
+  if (d.pick) { openPicker(d.pick, d.mode); return; }
+  if (d.pmode) { picker.mode = d.pmode; drawPicker(); return; }
+  if (d.closedrawer) { closePicker(); return; }
+  if (d.approve) { const x = planView().sections.find((s) => s.id === d.approve); setPlan(d.approve, { approved: !x.approved }); renderMain(); renderTabs(); return; }
+  if (d.use) { const [sid, id] = d.use.split('|'); const x = planView().sections.find((s) => s.id === sid); setPlan(sid, { primary: id, extra: x.extra.filter((e) => e !== id) }); picker ? drawPicker() : renderMain(); return; }
+  if (d.togextra) { const [sid, id] = d.togextra.split('|'); const x = planView().sections.find((s) => s.id === sid); setPlan(sid, { extra: x.extra.includes(id) ? x.extra.filter((e) => e !== id) : [...x.extra, id] }); drawPicker(); return; }
+  if (d.unextra) { const [sid, id] = d.unextra.split('|'); const x = planView().sections.find((s) => s.id === sid); setPlan(sid, { extra: x.extra.filter((e) => e !== id) }); renderMain(); return; }
+  if (d.togcomp) { const [sid, id] = d.togcomp.split('|'); const x = planView().sections.find((s) => s.id === sid); setPlan(sid, { components: x.components.includes(id) ? x.components.filter((e) => e !== id) : [...x.components, id] }); drawPicker(); return; }
+  if (d.uncomp) { const [sid, id] = d.uncomp.split('|'); const x = planView().sections.find((s) => s.id === sid); setPlan(sid, { components: x.components.filter((e) => e !== id) }); renderMain(); return; }
+  if (d.setstyle) { FB.plan = FB.plan || { style: null, sections: {} }; FB.plan.style = d.setstyle; planDirty = true; clearTimeout(saveTimer); saveTimer = setTimeout(flush, 300); drawPicker(); return; }
+  if (d.plb) { const x = planView().sections.find((s) => s.id === d.plb); const ids = [x.primary, ...x.alternates, ...x.extra]; openLb(ids.map(itemById).filter(Boolean), x.primary); return; }
   if (d.sec) { sec = d.sec; filter = 'all'; source = 'all'; history.replaceState(null, '', `?session=${S.id}&tab=references&sec=${sec}`); renderSub(); renderMain(); window.scrollTo(0, 0); return; }
   if (d.shownew) { pendingNew = 0; renderSub(); renderMain(); return; }
   if (d.quick) { const l = visible(itemsOf('reference')).filter(filterFn('unrated')); if (l.length) openLb(l, l[0].id); return; }
@@ -867,6 +1045,7 @@ document.addEventListener('click', (e) => {
 document.addEventListener('mouseover', (e) => { const k = e.target.closest?.('.psec')?.dataset.pkey; if (k) highlightSection(k, false); });
 document.addEventListener('focusin', (e) => { const k = e.target.closest?.('.psec')?.dataset.pkey; if (k) highlightSection(k, true); });
 document.addEventListener('input', (e) => {
+  if (e.target.dataset?.pnote) { setPlan(e.target.dataset.pnote, { note: e.target.value }); return; }
   const id = e.target.dataset?.note; if (!id) return;
   setFb(id, { note: e.target.value });
   document.querySelectorAll(`textarea[data-note="${CSS.escape(id)}"]`).forEach((ta) => ta !== e.target && (ta.value = e.target.value));
@@ -878,6 +1057,7 @@ document.addEventListener('change', (e) => {
 });
 document.addEventListener('mouseover', (e) => { const v = e.target.closest?.('.media')?.querySelector('video[data-src]'); if (v && !v.src) { v.src = v.dataset.src; } v?.play?.().catch(()=>{}); });
 document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && $('#drawer').classList.contains('open')) { closePicker(); return; }
   if (!$('#lb').classList.contains('open')) return;
   if (e.target.matches('textarea,input')) { if (e.key === 'Escape') e.target.blur(); return; }
   const i = lbList[lbIdx];
@@ -887,6 +1067,7 @@ document.addEventListener('keydown', (e) => {
   else if (e.key === '2' || e.key.toLowerCase() === 'l') { vote(i.id, 'like'); setTimeout(() => { lbIdx = Math.min(lbIdx + 1, lbList.length - 1); drawLb(); }, 220); }
   else if (e.key === '1' || e.key.toLowerCase() === 'd') { vote(i.id, 'nope'); setTimeout(() => { lbIdx = Math.min(lbIdx + 1, lbList.length - 1); drawLb(); }, 220); }
   else if (e.key.toLowerCase() === 's') vote(i.id, 'star');
+  else if (e.key.toLowerCase() === 'x' && i.section) removeWrong(i.id);
   else if (e.key.toLowerCase() === 'n') { e.preventDefault(); $('#lbSide textarea')?.focus(); }
   else if (e.key.toLowerCase() === 'f' && i.fullImage) { lbShot = lbShot === 'full' ? 'hero' : 'full'; drawLb(); }
 });
