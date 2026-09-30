@@ -1,0 +1,54 @@
+name: Something doesn't work
+description: A bug in inspo (a broken source, the board, a build…).
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting it. If a gallery stopped returning results, run `node bin/inspo.js doctor` first and paste what it says.
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where does it happen?
+      options:
+        - Install / plugin
+        - Harvest (references per section)
+        - A gallery source (Awwwards, Dribbble, Mobbin…)
+        - Styles
+        - Lab components
+        - The board (votes, Send, quick vote)
+        - Plan
+        - Page builds and comments
+        - PDF report
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happens
+      description: What you see, and what you expected to see.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: How to reproduce it
+      placeholder: |
+        1. /inspo …
+        2. On the board I…
+        3. I see…
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: What `doctor`, `inspo_status` or the browser console say.
+      render: shell
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: The release or commit (see `package.json`), your Node version and your OS.
+      placeholder: inspo 0.4.0 · Node 22 · macOS 15

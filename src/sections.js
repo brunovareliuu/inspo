@@ -610,6 +610,16 @@ export function platformOk(card, platform = 'web') {
   return platform === 'mobile' ? !strongWeb || mobile : !mobile || strongWeb;
 }
 
+/** Dribbble queries that keep the industry in every search: the on-topic share of a harvest. */
+export function industryQueries(sectionId, { platform = 'web', industry = '' } = {}) {
+  const t = SECTION_TYPES[sectionId];
+  if (!t || !industry) return [];
+  if (!t.screen) return t.dribbble.map((x) => `${industry} ${x}`);
+  const terms = platform === 'mobile' && t.mobileTerms ? t.mobileTerms : t.terms;
+  const [p1] = PLATFORM_PREFIX[platform] || PLATFORM_PREFIX.web;
+  return terms.map((x) => `${industry} ${p1} ${x}`);
+}
+
 /** Gallery queries for a section/screen on a platform, most specific first. */
 export function sectionQueries(sectionId, { platform = 'web', industry = '' } = {}) {
   const t = SECTION_TYPES[sectionId];

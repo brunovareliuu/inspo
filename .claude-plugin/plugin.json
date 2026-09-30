@@ -1,6 +1,6 @@
 {
   "name": "inspo",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Design research agent for web projects. Give it an idea: it studies your app, scrapes Awwwards, Dribbble, Mobbin, Land-book & co, screenshots live sites, proposes style directions with real images, and opens a board where you vote on references, styles and live 3D/motion components. Ends with a design brief and tokens.",
   "author": { "name": "Bruno Varela", "url": "https://github.com/brunovareliuu" },
   "homepage": "https://github.com/brunovareliuu/inspo",

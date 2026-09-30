@@ -1,62 +1,168 @@
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/logo-dark.png">
-    <img src="docs/logo-light.png" alt="inspo" width="300">
-  </picture>
-</p>
+<div align="center">
 
-<p align="center">
-  <b>Design research → a built page, inside Claude Code.</b><br>
-  For websites, web systems and mobile apps.<br>
-  References for every section, style directions with real photos, live 3D components,<br>a board to vote on, a PDF report, and the page itself — iterated section by section.
-</p>
+**English** · [Español](README.es.md)
 
-<p align="center">
-  <a href="#install"><img alt="Claude Code plugin" src="https://img.shields.io/badge/Claude_Code-plugin-d6ff3d?style=flat-square&labelColor=0b0b0c"></a>
-  <a href="#tools"><img alt="MCP server" src="https://img.shields.io/badge/MCP-server-d6ff3d?style=flat-square&labelColor=0b0b0c"></a>
-  <img alt="Node 20+" src="https://img.shields.io/badge/node-%E2%89%A520-f2f1ec?style=flat-square&labelColor=0b0b0c">
-  <a href="LICENSE"><img alt="MIT" src="https://img.shields.io/badge/license-MIT-f2f1ec?style=flat-square&labelColor=0b0b0c"></a>
-  <a href="README.es.md"><img alt="Español" src="https://img.shields.io/badge/lee_en-español-f2f1ec?style=flat-square&labelColor=0b0b0c"></a>
-</p>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/banner-dark.png">
+  <img alt="inspo: design research turned into a built page, inside Claude Code" src="docs/banner-light.png" width="100%">
+</picture>
 
-<p align="center"><img src="docs/banner.png" alt="inspo: references per section, styles, and the built page with section feedback" width="100%"></p>
+<br>
 
-**Design research and page building for Claude Code.** Tell it your idea and agree on the page sections. It gathers about **50 references per section** (navbar, hero, about, catalog, footer…) from Awwwards, Dribbble, Siteinspire, footer.design, navbar.gallery, and real award-winning sites that it cuts into sections automatically. It renders your page in several visual styles with real photos, and opens a board where you vote on all of it, live 3D components included. Then it hands you a PDF report, builds the page from what you picked, and iterates on your feedback section by section.
+**Tell Claude your idea. inspo gathers about 50 references for every section of your page,
+renders it in several styles with real photos, opens a board where you vote on all of it, and
+then builds the page.**<br>
+For websites, web systems and mobile apps. Open source, and it runs on your machine.
 
-![Your landing page rendered in six of the sixteen style directions](docs/styles-grid.jpg)
+<br>
+
+[![CI](https://github.com/brunovareliuu/inspo/actions/workflows/ci.yml/badge.svg)](https://github.com/brunovareliuu/inspo/actions/workflows/ci.yml)
+[![MIT License](https://img.shields.io/badge/license-MIT-d6ff3d?labelColor=0b0b0c)](LICENSE)
+[![Claude Code plugin](https://img.shields.io/badge/Claude_Code-plugin-d6ff3d?labelColor=0b0b0c)](#install)
+[![MCP server](https://img.shields.io/badge/MCP-server-d6ff3d?labelColor=0b0b0c)](#tools)
+[![Node 20+](https://img.shields.io/badge/node-%E2%89%A520-339933?logo=nodedotjs&logoColor=white)](package.json)
+[![Playwright](https://img.shields.io/badge/Playwright-Chrome-2EAD33?logo=playwright&logoColor=white)](https://playwright.dev)
+
+[**Install in 30 seconds**](#install) · [Use it](#use-it) · [What it does](#what-it-does) · [Tools](#tools) · [How it's built](#how-its-built) · [Contributing](CONTRIBUTING.md)
+
+<br>
+
+<img alt="The board: 50 hero references for a coffee subscription, with likes, dislikes and stars" src="docs/board-references.jpg" width="100%">
+
+</div>
+
+## Why inspo
+
+<table>
+<tr>
+<td width="50%" valign="top">
+
+**References from your industry.** A restaurant gets food. About 40 of every 50 references
+come from your industry, and the other 10 come from anywhere, for ideas you wouldn't have
+looked for.
+
+</td>
+<td width="50%" valign="top">
+
+**Real sites, cut into sections.** It visits award-winning sites, closes the cookie banners,
+finds the hero, the catalog or the footer, and screenshots just that part. You compare footers
+with footers.
+
+</td>
+</tr>
+<tr>
+<td valign="top">
+
+**You vote instead of describing.** 👍, 👎 or ★ on every reference, style and component, plus
+*why* (layout, type, color, motion…). Claude reads the votes and the images you liked.
+
+</td>
+<td valign="top">
+
+**It ends in a page.** Claude builds the page from your votes, and you keep commenting section
+by section until it's right. v1, v2, v3… all on the same board.
+
+</td>
+</tr>
+</table>
 
 ```
 /inspo a subscription for Mexican specialty coffee, roasted weekly
 ```
 
-## What you get
+## What it does
 
-- **50+ references per section.** A background harvest fills every section you need (19 types: navbar, hero, logos, features, services, catalog, work, about, process, stats, team, testimonials, pricing, FAQ, blog, CTA, newsletter, contact, footer). Its sources:
-  - **Dedicated galleries:** footer.design, navbar.gallery.
-  - **Dribbble.**
-  - **Real sites cut into sections.** It visits hundreds of Awwwards and Siteinspire winners, removes cookie banners and discount popups, finds each section, follows links to /about, /shop and /pricing when a section has its own page, and screenshots just that part.
+<table>
+<tr>
+<td colspan="2" valign="top">
 
-  Around 250 references across 5 sections takes about 6 minutes, and the board fills live while it runs.
-- **Galleries on demand.** Awwwards, Dribbble, Land-book, Siteinspire, One Page Love, Lapa Ninja and Mobbin. Live sites are analyzed for fonts, palette, radii, type scale and tech (three.js, GSAP, Lenis, Webflow, Framer, Spline…).
-- **Styles.** Your own landing page, with your copy, rendered in 4–6 distinct directions. Each one gets its own palette, Google Fonts, layout, texture and image treatment, and real CC0 photos. 16 presets included, and Claude can tune them or invent new ones.
-- **Lab.** 18 live, production-grade components (WebGL shaders, a dot globe, a glass knot, particle galaxies, sticky stacks, magnetic buttons…), plus custom ones Claude writes for your idea. You can re-tint all of them with a style you liked.
-- **The board.** A local page where you 👍 / 👎 / ★ section by section, tag *why* (layout, type, color, motion, 3D…), write notes, and hit **Send**. **⚡ Quick vote** goes one by one with `1` / `2` / `S`. It autosaves and runs in English or Spanish.
-- **Only the right thing in each section.** Gallery cards must be tagged with the section (no whole landing pages or app screens under "footer"), and crops only come from confident detections. Then Claude checks every section visually on numbered contact sheets, removes what doesn't belong (it never comes back), and refills. You also get a **✕ Not a footer** button (key `X`).
-- **Plan.** After you vote, Claude analyzes your favorites and writes the plan for each section: the leading reference, alternates, and what to take for layout, type, color, imagery and motion, plus the components. In the **Plan** tab you swap the reference for any of your likes or any reference in that section, change the style or components, leave notes and approve. Claude builds from that plan.
-- **PDF report.** A studio-style deliverable: cover, direction, the winners of every section with your notes, styles, components, and the current page.
-- **The page.** Claude builds it from your votes. The **Page** tab shows every version in desktop, tablet and mobile. You vote and note each section, or switch on **Comment** and click anything to pin a note. Any comment can carry a reference, either one of your saved images or an uploaded one, plus an action: *tweak*, *replace this section with the reference*, *add above* or *add below*. Claude sees the images, applies each action, and publishes v2, v3…
-- **Rounds.** Claude reads your votes, including the thumbnails you liked, and runs a sharper second round.
-- **Brief.** The final direction: concept, principles, palette, type, page outline, components, do/don't, and CSS tokens. It shows on the board and is written to `DESIGN.md`.
+### 50+ references per section
+A background harvest fills every section you need (19 types: navbar, hero, logos, features,
+services, catalog, work, about, process, stats, team, testimonials, pricing, FAQ, blog, CTA,
+newsletter, contact, footer) from **dedicated galleries** (footer.design, navbar.gallery),
+**Dribbble**, and **real sites cut into sections**: it visits hundreds of Awwwards and
+Siteinspire winners, removes cookie banners and discount popups, and follows links to /about,
+/shop and /pricing when a section has its own page. Around 250 references across 5 sections
+take about 6 minutes, and the board fills live while it runs.
 
-| References by section | The page, with section feedback and pinned comments |
-|---|---|
-| ![](docs/board-references.jpg) | ![](docs/board-page.jpg) |
-| **Styles** | **Lab** |
-| ![](docs/board-styles.jpg) | ![](docs/board-lab.jpg) |
+<img alt="The catalog section: product grids from coffee brands, cut from live sites and Dribbble" src="docs/board-section.jpg" width="100%">
 
-![The PDF report](docs/report.jpg)
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
 
-## Websites, web systems and apps
+### Styles
+Your own landing page, with your copy, in 4–6 distinct directions. Each one gets its own
+palette, Google Fonts, layout, texture and real CC0 photos. 16 presets included, and Claude
+can tune them or invent new ones.
+
+<img alt="Two style directions for the coffee brand: Swiss Minimal and Editorial Serif" src="docs/board-styles.jpg" width="100%">
+
+</td>
+<td width="50%" valign="top">
+
+### Lab
+18 live, production-grade components (WebGL shaders, a dot globe, a glass knot, particle
+galaxies, sticky stacks, magnetic buttons…) plus custom ones Claude writes for your idea.
+Re-tint all of them with a style you liked.
+
+<img alt="The Lab: live 3D and motion components" src="docs/board-lab.jpg" width="100%">
+
+</td>
+</tr>
+<tr>
+<td colspan="2" valign="top">
+
+### Plan
+After you vote, Claude analyzes your favorites and writes the plan for each section: the
+leading reference, alternates, and what to take for layout, type, color, imagery and motion,
+plus the components. You swap the reference for any of your likes, change the style, leave
+notes and approve. Claude builds from that plan.
+
+<img alt="The plan for the hero: the leading reference, alternates, and what to take from it" src="docs/board-plan.jpg" width="100%">
+
+</td>
+</tr>
+<tr>
+<td colspan="2" valign="top">
+
+### The page
+Claude builds it from your votes and publishes it to the **Page** tab, in desktop, tablet and
+mobile. Vote and note each section, or switch on **Comment** and click anything to pin a note.
+Any comment can carry a reference (one of your saved images or an upload) and an action:
+*tweak*, *replace this section with the reference*, *add above* or *add below*. Claude sees
+the images, applies each action, and publishes v2, v3…
+
+<img alt="The built page next to its sections, each with votes, notes and attached references" src="docs/board-page.jpg" width="100%">
+
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+
+### PDF report
+A studio-style deliverable: cover, direction, the winners of every section with your notes,
+styles, components, and the current page.
+
+<img alt="Pages of the PDF report" src="docs/report.jpg" width="100%">
+
+</td>
+<td width="50%" valign="top">
+
+### The board
+👍 / 👎 / ★ section by section, *why* tags, notes, and **Send**. **⚡ Quick vote** goes one by
+one with `1` / `2` / `S`, and **✕ Not a footer** (key `X`) removes a misfit for good. It
+autosaves and runs in English or Spanish.
+
+Claude also checks every section on numbered contact sheets, removes what doesn't belong and
+refills, so each section only holds that section.
+
+</td>
+</tr>
+</table>
+
+### Websites, web systems and apps
 
 inspo adapts to what you're making:
 
@@ -66,7 +172,12 @@ inspo adapts to what you're making:
 | **Web system** (SaaS, dashboard, admin, internal tool) | App screens: login, onboarding, dashboard, sidebar, tables, detail, forms, settings, billing, empty states… | A dashboard with your data | A clickable prototype |
 | **Mobile app** (iOS / Android) | App screens: onboarding, login, home, tab bar, feed, detail, search, profile, checkout… | Three phone screens | Phone-size screens |
 
-App screens come from SaaS Interface (real products like Grafana, Ahrefs, Mixpanel, Qonto), Dribbble filtered by platform (no mobile shots in a web system, and the other way around), and Mobbin when you log in once.
+<img alt="A web system rendered in two styles: the same dashboard in Tech Noir and Organic Soft" src="docs/board-app-web.jpg" width="100%">
+<img alt="A mobile app rendered in two styles: three phone screens each" src="docs/board-app-mobile.jpg" width="100%">
+
+App screens come from SaaS Interface (real products like Grafana, Ahrefs, Mixpanel, Qonto),
+Dribbble filtered by platform (no mobile shots in a web system, and the other way around), and
+Mobbin when you log in once.
 
 ## Install
 
@@ -235,6 +346,36 @@ node bin/inspo.js doctor         # check browser, network and every source
 | `INSPO_PORT` | `4777` | Board port (next free port if taken) |
 | `INSPO_HOME` | `~/.inspo` | Persistent browser profile (Mobbin login) |
 
+## How it's built
+
+```mermaid
+flowchart LR
+    YOU([You]) -- idea --> CC[Claude Code<br/>+ the inspo skill]
+    CC -- MCP tools --> MCP[inspo MCP server]
+    MCP -- Playwright + your Chrome --> WEB([Awwwards · Dribbble · Siteinspire<br/>galleries · live sites])
+    MCP --> DATA[(.inspo/&lt;session&gt;<br/>references, votes, builds)]
+    DATA -- live --> BOARD[The board<br/>localhost:4777]
+    BOARD -- Send --> CC
+    CC -- builds --> PAGE[Your page<br/>v1, v2, v3…]
+    PAGE --> BOARD
+```
+
+- **One local server.** The MCP server gives Claude the tools and serves the board on
+  `localhost`. Nothing leaves your machine except the page visits it makes to research.
+- **Your Chrome, driven by Playwright.** It reads galleries, crops live sites into sections and
+  renders the PDF.
+- **Files you can read.** Every session is a folder in `<project>/.inspo/` with the
+  references, your votes (`feedback.json`), the page versions and `DESIGN.md`.
+
+| Piece | Built with |
+|---|---|
+| Tools | [MCP TypeScript SDK](https://github.com/modelcontextprotocol/typescript-sdk) · Node 20+ · zod |
+| Browser | [Playwright](https://playwright.dev) with your installed Chrome |
+| Board | One HTML file, no build step |
+| Lab | Self-contained HTML components (three.js, GSAP, WebGL) |
+| PDF | Rendered by Chrome |
+| Photos | [Openverse](https://openverse.org), CC-licensed and credited |
+
 ## Responsible use
 
 inspo is for private design research, like a designer saving screenshots to a moodboard. It reads public gallery pages at human pace, stores screenshots locally, and links back to every source. Don't redistribute other people's work, and don't clone a site. Take the principles, not the pixels. Openverse photos keep their license credits; for production, commission or license proper photography. Respect each site's terms: Mobbin in particular requires your own account.
@@ -261,7 +402,12 @@ skills/inspo/          the Claude Code skill (workflow + playbooks)
 .claude-plugin/        plugin + marketplace manifests
 ```
 
-PRs are welcome, especially new sources, style presets and Lab components.
+## Contributing
+
+PRs are welcome, especially new sources, style presets and Lab components. Start with
+[CONTRIBUTING.md](CONTRIBUTING.md); questions go to
+[Discussions](https://github.com/brunovareliuu/inspo/discussions), and security issues to a
+[private report](https://github.com/brunovareliuu/inspo/security/advisories/new).
 
 ## License
 

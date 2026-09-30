@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: I have a question
+    url: https://github.com/brunovareliuu/inspo/discussions
+    about: For install or usage questions, ask in Discussions.
+  - name: I found a vulnerability
+    url: https://github.com/brunovareliuu/inspo/security/advisories/new
+    about: Report it privately, never in a public issue.

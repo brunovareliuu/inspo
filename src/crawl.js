@@ -40,12 +40,22 @@ async function shoot(page, sessionId, clip, name, minDensity = 0.016) {
   return `assets/${file}`;
 }
 
+/** What a site says it is: title, descriptions and top headings (not the nav, where a hotel lists its restaurant). */
+const identityText = () =>
+  [
+    document.title,
+    document.querySelector('meta[name="description"]')?.content,
+    document.querySelector('meta[property="og:description"]')?.content,
+    ...[...document.querySelectorAll('h1, h2')].slice(0, 6).map((h) => h.textContent),
+  ].filter(Boolean).join(' ').replace(/\s+/g, ' ').slice(0, 2000);
+
 /**
  * Visit a live site and cut it into section references (navbar, hero, footer, about…).
  * Sections that usually live on their own page (about, shop, pricing…) are followed from the nav.
- * Returns reference items tagged with `section`.
+ * Returns reference items tagged with `section`. With `topic` (a regex source), items get
+ * `topic: true` when the site's own title, description or headings match it.
  */
-export async function crawlSite(sessionId, url, { sections, subpages = true, maxSubpages = 2, lang = 'en', why } = {}) {
+export async function crawlSite(sessionId, url, { sections, subpages = true, maxSubpages = 2, lang = 'en', why, topic } = {}) {
   const context = await getContext();
   const page = await context.newPage();
   const items = [];
@@ -79,6 +89,7 @@ export async function crawlSite(sessionId, url, { sections, subpages = true, max
       if (img) items.push({ section: id, image: img, label: r.label });
     }
     const analysis = await page.evaluate(analyzeInPage).catch(() => null);
+    const onTopic = !!topic && new RegExp(topic, 'i').test(await page.evaluate(identityText).catch(() => ''));
 
     // Sections that weren't on the homepage but have their own page.
     if (subpages) {
@@ -109,6 +120,7 @@ export async function crawlSite(sessionId, url, { sections, subpages = true, max
       image: it.image,
       crop: true,
       note: why,
+      ...(onTopic && { topic: true }),
       analysis: it.section === 'hero' || items.length === 1 ? analysis : undefined,
     }));
   } finally {

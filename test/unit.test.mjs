@@ -201,3 +201,15 @@ test('page comments carry an action and safe attachments', async () => {
   assert.equal(sec.refs[0].title, 'Big footer');
   assert.equal(sec.uploads[0], 'assets/u-abc123.png');
 });
+
+test('industry queries keep the industry in every search', async () => {
+  const { industryQueries, sectionQueries } = await import('../src/sections.js');
+  const { OFF_TOPIC_SHARE } = await import('../src/harvest.js');
+  assert.equal(Math.round(50 * OFF_TOPIC_SHARE), 10, '40 on-topic and 10 general out of 50');
+  const hero = industryQueries('hero', { industry: 'restaurant' });
+  assert.ok(hero.length >= 2 && hero.every((q) => q.startsWith('restaurant ')));
+  assert.ok(industryQueries('navbar', { industry: 'restaurant' }).every((q) => q.startsWith('restaurant ') && /website/.test(q)), 'navbar stays web-specific');
+  assert.ok(industryQueries('dashboard', { industry: 'restaurant', platform: 'mobile' }).every((q) => q.startsWith('restaurant mobile app ')));
+  assert.deepEqual(industryQueries('hero', {}), [], 'no industry, no on-topic queries');
+  assert.ok(sectionQueries('hero', { platform: 'web' }).every((q) => !q.startsWith('restaurant')));
+});

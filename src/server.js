@@ -21,7 +21,7 @@ import { SECTION_TYPES, SECTION_IDS, RECOMMENDED, sectionName, cardMatchesSectio
 import { startHarvest, cancelJob, getJob } from './harvest.js';
 import { contactSheets } from './review.js';
 
-const VERSION = '0.4.0';
+const VERSION = '0.5.0';
 const server = new McpServer({ name: 'inspo', version: VERSION });
 
 const text = (t) => ({ content: [{ type: 'text', text: typeof t === 'string' ? t : JSON.stringify(t, null, 2) }] });
@@ -187,7 +187,8 @@ server.registerTool(
       'Fill every section or app screen with N references (default 50). App screens (dashboard, tables, settings, login, onboarding, tab bar…) come from SaaS Interface, Mobbin (if logged in) and Dribbble filtered by platform. Website sections come from dedicated galleries (footer.design, navbar.gallery), Dribbble, and — the richest source — real award-winning sites (Awwwards, Siteinspire, plus `sites` you pick) automatically cut into sections: navbar, hero, about, catalog, footer… following links to /about, /shop, /pricing when a section lives on its own page. Runs in the background (several minutes) and streams into the board; returns immediately. Check with inspo_status.',
     inputSchema: {
       session: sessionArg,
-      query: z.string().optional().describe('Industry keywords in English, 1-2 words (e.g. "coffee", "fintech", "architecture"). Used on Awwwards, Siteinspire and Dribbble.'),
+      query: z.string().optional().describe('Industry keywords in English, 1-2 words (e.g. "restaurant", "coffee", "fintech"). Used on Awwwards, Siteinspire and Dribbble. With it, ~80% of each section comes from this industry and at most ~20% from general sources (more only if the industry runs out).'),
+      topicWords: z.array(z.string()).optional().describe('Words that prove a live site is in the industry, in English and the project language, matched as prefixes against its title, description and headings (e.g. ["restaurant", "food", "menu", "cuisine", "chef", "dining", "comida", "restaurante"]). Default: the query words.'),
       target: z.number().int().min(5).max(150).optional().describe('References per section. Default 50.'),
       sections: z.array(sectionEnum).optional().describe('Subset of the session sections. Default: all.'),
       sites: z.array(z.string().url()).optional().describe('Live sites you know are excellent for this niche/vibe. Crawled first.'),
@@ -196,11 +197,11 @@ server.registerTool(
       platform: z.enum(['web', 'mobile']).optional().describe('Platform for app screens. Default: mobile when the project type is mobile, else web.'),
     },
   },
-  async ({ session, query, target = 50, sections, sites, awwwardsCategory, maxSites, platform }) => {
+  async ({ session, query, topicWords, target = 50, sections, sites, awwwardsCategory, maxSites, platform }) => {
     try {
       const s = await withSession(session);
       const pf = platform || (s.context?.projectType === 'mobile' ? 'mobile' : 'web');
-      const job = await startHarvest(s.id, { query, target, sections, sites, awwwardsCategory, maxSites, platform: pf, language: s.context?.language });
+      const job = await startHarvest(s.id, { query, topicWords, target, sections, sites, awwwardsCategory, maxSites, platform: pf, language: s.context?.language });
       const b = await startBoard();
       return text({
         job: job.id,
